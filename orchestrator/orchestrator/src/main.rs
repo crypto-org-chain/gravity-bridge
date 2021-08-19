@@ -25,8 +25,7 @@ mod oracle_resync;
 use crate::main_loop::orchestrator_main_loop;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
-use cosmos_gravity::DEFAULT_HD_PATH;
-use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use cosmos_gravity::crypto::{PrivateKey as CosmosPrivateKey, DEFAULT_HD_PATH};
 use docopt::Docopt;
 use env_logger::Env;
 use gravity_utils::connection_prep::{

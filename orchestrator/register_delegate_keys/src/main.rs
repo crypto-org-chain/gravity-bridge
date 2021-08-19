@@ -9,8 +9,8 @@ use log::error;
 
 use clarity::PrivateKey as EthPrivateKey;
 use cosmos_gravity::send::update_gravity_delegate_addresses;
-use cosmos_gravity::DEFAULT_HD_PATH;
-use deep_space::{coin::Coin, mnemonic::Mnemonic, private_key::PrivateKey as CosmosPrivateKey};
+use cosmos_gravity::{crypto::PrivateKey as CosmosPrivateKey, DEFAULT_HD_PATH};
+use deep_space::{coin::Coin, mnemonic::Mnemonic};
 use docopt::Docopt;
 use gravity_utils::connection_prep::check_for_fee_denom;
 use gravity_utils::connection_prep::{create_rpc_connections, wait_for_cosmos_node_ready};

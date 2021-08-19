@@ -1,5 +1,5 @@
-use cosmos_gravity::DEFAULT_HD_PATH;
 use aws_sdk_secretsmanager::client::Client;
+use cosmos_gravity::crypto::DEFAULT_HD_PATH;
 use serde::{Deserialize, Serialize};
 use signatory::FsKeyStore;
 use std::io;
@@ -177,7 +177,7 @@ impl GorcConfig {
         return clarity::PrivateKey::from_slice(&key).expect("Could not convert key");
     }
 
-    pub fn load_deep_space_key(&self, name: String) -> deep_space::private_key::PrivateKey {
+    pub fn load_deep_space_key(&self, name: String) -> cosmos_gravity::crypto::PrivateKey {
         let key = self.load_secret_key(name).to_bytes();
         let key = deep_space::utils::bytes_to_hex_str(&key);
         return key.parse().expect("Could not parse private key");
@@ -218,7 +218,7 @@ pub struct EthereumSection {
     pub key_derivation_path: String,
     pub rpc: String,
     pub gas_price_multiplier: f32,
-    pub blocks_to_search:u64,
+    pub blocks_to_search: u64,
 }
 
 impl Default for EthereumSection {

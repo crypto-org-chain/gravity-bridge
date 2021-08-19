@@ -9,6 +9,7 @@ extern crate log;
 pub const DEFAULT_HD_PATH: &str = "m/44'/118'/0'/0/0";
 
 pub mod build;
+pub mod crypto;
 pub mod query;
 pub mod send;
 pub mod utils;
