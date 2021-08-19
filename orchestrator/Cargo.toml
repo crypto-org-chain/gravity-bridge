@@ -27,15 +27,5 @@ members = [
 	"gorc",
 ]
 
-[dependencies]
-orchestrator = { path = "./orchestrator" }
-cosmos_gravity = { path = "./cosmos_gravity" }
-ethereum_gravity = { path = "./ethereum_gravity" }
-gravity_utils = { path = "./gravity_utils" }
-proto_build = { path = "./proto_build" }
-test_runner = { path = "./test_runner" }
-gravity_proto = { path = "./gravity_proto" }
-client = { path = "./client" }
-register_delegate_keys = { path = "./register_delegate_keys" }
-gorc = { path = "./gorc" }
-relayer = { path = "./relayer" }
+[patch.crates-io]
+deep_space = { git = "https://github.com/yihuang/deep_space/", branch = "ethermint" }
