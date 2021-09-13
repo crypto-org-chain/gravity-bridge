@@ -2,7 +2,7 @@
 
 use crate::{commands::GorcCmd, config::GorcConfig};
 use abscissa_core::{
-    application::{self, AppCell},
+    application::{self, cell::AppCell},
     config::{self, CfgCell},
     trace, Application, EntryPoint, FrameworkError, StandardPaths,
 };
