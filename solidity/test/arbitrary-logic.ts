@@ -28,6 +28,9 @@ async function runTest(opts: {
   barelyEnoughPower?: boolean;
   malformedCurrentValset?: boolean;
   timedOut?: boolean;
+
+  // Issue with relayer permissions
+  relayerNotSet?: boolean;
 }) {
 
 
@@ -45,6 +48,13 @@ async function runTest(opts: {
     testERC20,
     checkpoint: deployCheckpoint
   } = await deployContracts(gravityId, validators, powers, powerThreshold);
+
+  if (!opts.relayerNotSet) {
+    await gravity.grantRole(
+      await gravity.RELAYER(),
+      signers[0].address,
+    );
+  }
 
   // First we deploy the logic batch middleware contract. This makes it easy to call a logic 
   // contract a bunch of times in a batch.

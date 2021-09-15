@@ -71,12 +71,22 @@ async function prep() {
     powerThreshold
   );
 
+  await gravity.grantRole(
+    await gravity.RELAYER(),
+    signers[0].address,
+  );
+
   const ReentrantERC20Contract = await ethers.getContractFactory(
     "ReentrantERC20"
   );
   const reentrantERC20 = (await ReentrantERC20Contract.deploy(
     gravity.address
   )) as ReentrantERC20;
+
+  await gravity.grantRole(
+    await gravity.RELAYER(),
+    reentrantERC20.address,
+  );
 
   return {
     signers,

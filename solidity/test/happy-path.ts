@@ -38,7 +38,10 @@ describe("Gravity happy path valset update + batch submit", function () {
       checkpoint: deployCheckpoint
     } = await deployContracts(gravityId, valset0.validators, valset0.powers, powerThreshold);
 
-
+    await gravity.grantRole(
+      await gravity.RELAYER(),
+      signers[0].address,
+    );
 
 
     // UDPATEVALSET

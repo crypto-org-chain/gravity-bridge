@@ -6,6 +6,7 @@ import { Signer } from "ethers";
 
 type DeployContractsOptions = {
   corruptSig?: boolean;
+  relayerAdminAddress?: string;
 };
 
 export async function deployContracts(
@@ -18,17 +19,19 @@ export async function deployContracts(
   const TestERC20 = await ethers.getContractFactory("TestERC20A");
   const testERC20 = (await TestERC20.deploy()) as TestERC20A;
 
-  const Gravity = await ethers.getContractFactory("Gravity");
+  const Gravity = await ethers.getContractFactory("CronosGravity");
 
   const valAddresses = await getSignerAddresses(validators);
 
   const checkpoint = makeCheckpoint(valAddresses, powers, 0, gravityId);
 
+  const relayerAdmin = opts?.relayerAdminAddress || valAddresses[0];
   const gravity = (await Gravity.deploy(
     gravityId,
     powerThreshold,
     valAddresses,
-    powers
+    powers,
+    relayerAdmin,
   )) as Gravity;
 
   await gravity.deployed();

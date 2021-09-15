@@ -22,6 +22,7 @@ async function runTest(opts: {
   badValidatorSig?: boolean;
   zeroedValidatorSig?: boolean;
   notEnoughPower?: boolean;
+  relayerNotSet?: boolean;
 }) {
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
@@ -37,6 +38,13 @@ async function runTest(opts: {
     testERC20,
     checkpoint: deployCheckpoint
   } = await deployContracts(gravityId, validators, powers, powerThreshold);
+
+  if (!opts.relayerNotSet) {
+    await gravity.grantRole(
+      await gravity.RELAYER(),
+      signers[0].address,
+    );
+  }
 
   let newPowers = examplePowers();
   newPowers[0] -= 3;
@@ -154,6 +162,12 @@ describe("updateValset tests", function () {
   it("throws on not enough signatures", async function () {
     await expect(runTest({ notEnoughPower: true })).to.be.revertedWith(
       "Submitted validator set signatures do not have enough power"
+    );
+  });
+
+  it("throws on relayer not set", async function () {
+    await expect(runTest({ relayerNotSet: true })).to.be.revertedWith(
+      "CronosGravity::Permission Denied"
     );
   });
 
