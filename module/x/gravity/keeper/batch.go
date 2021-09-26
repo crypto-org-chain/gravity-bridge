@@ -88,6 +88,22 @@ func (k Keeper) batchTxExecuted(ctx sdk.Context, tokenContract common.Address, n
 		if (btx.BatchNonce < batchTx.BatchNonce) && (batchTx.TokenContract == tokenContract.Hex()) {
 			k.CancelBatchTx(ctx, tokenContract, btx.BatchNonce)
 		}
+
+		for _, tx := range btx.Transactions {
+		    erc20Contract := tx.GetErc20Token()
+			erc20Fee := tx.GetErc20Fee()
+			ctx.EventManager().EmitEvent(sdk.NewEvent(
+				types.EventTypeEthereumTransactionBatchExecutedHandled,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+				sdk.NewAttribute(types.AttributeKeyOutgoingTXID, strconv.FormatUint(tx.GetId(), 10)),
+				sdk.NewAttribute(types.AttributeKeySender, tx.GetSender()),
+				sdk.NewAttribute(types.AttributeKeyReceiver, tx.GetEthereumRecipient()),
+				sdk.NewAttribute(types.AttributeKeyAmount, erc20Contract.Amount.String()),
+				sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.getBridgeChainID(ctx)))),
+				sdk.NewAttribute(types.AttributeKeyEthereumTokenContract, erc20Contract.GetContract()),
+				sdk.NewAttribute(types.AttributeKeyFee, erc20Fee.Amount.String()),
+			))
+		}
 		return false
 	})
 	k.DeleteOutgoingTx(ctx, batchTx.GetStoreIndex())

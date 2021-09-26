@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"math/big"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -39,6 +40,19 @@ func (k Keeper) Handle(ctx sdk.Context, eve types.EthereumEvent) (err error) {
 			if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
 				return sdkerrors.Wrapf(err, "mint vouchers coins: %s", coins)
 			}
+
+			ctx.EventManager().EmitEvent(sdk.NewEvent(
+				types.EventTypeEthereumSendToCosmosHandled,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+				sdk.NewAttribute(types.AttributeKeySender, event.GetEthereumSender()),
+				sdk.NewAttribute(types.AttributeKeyReceiver, event.GetCosmosReceiver()),
+				sdk.NewAttribute(types.AttributeKeyAmount, coins.String()),
+				sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.getBridgeChainID(ctx)))),
+				sdk.NewAttribute(types.AttributeKeyEthereumTokenContract, event.GetTokenContract()),
+				sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(event.GetEventNonce(), 10)),
+				sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID,
+					string(types.MakeEthereumEventVoteRecordKey(event.GetEventNonce(), event.Hash()))),
+			))
 		}
 
 		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, coins); err != nil {

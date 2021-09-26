@@ -1,14 +1,16 @@
 package types
 
 const (
-	EventTypeObservation              = "observation"
-	EventTypeOutgoingBatch            = "outgoing_batch"
-	EventTypeMultisigUpdateRequest    = "multisig_update_request"
-	EventTypeOutgoingBatchCanceled    = "outgoing_batch_canceled"
-	EventTypeContractCallTxCanceled   = "outgoing_logic_call_canceled"
-	EventTypeBridgeWithdrawalReceived = "withdrawal_received"
-	EventTypeBridgeDepositReceived    = "deposit_received"
-	EventTypeBridgeWithdrawCanceled   = "withdraw_canceled"
+	EventTypeObservation                             = "observation"
+	EventTypeOutgoingBatch                           = "outgoing_batch"
+	EventTypeMultisigUpdateRequest                   = "multisig_update_request"
+	EventTypeOutgoingBatchCanceled                   = "outgoing_batch_canceled"
+	EventTypeContractCallTxCanceled                  = "outgoing_logic_call_canceled"
+	EventTypeBridgeWithdrawalReceived                = "withdrawal_received"
+	EventTypeBridgeDepositReceived                   = "deposit_received"
+	EventTypeBridgeWithdrawCanceled                  = "withdraw_canceled"
+	EventTypeEthereumSendToCosmosHandled             = "ethereum_send_to_cosmos_handled"
+	EventTypeEthereumTransactionBatchExecutedHandled = "ethereum_transaction_batch_executed_handled"
 
 	AttributeKeyEthereumEventVoteRecordID     = "ethereum_event_vote_record_id"
 	AttributeKeyBatchConfirmKey               = "batch_confirm_key"
@@ -31,4 +33,9 @@ const (
 	AttributeKeyContractCallFees              = "contract_call_fees"
 	AttributeKeyEthTxTimeout                  = "eth_tx_timeout"
 	AttributeMissingBridgeBatchSig            = "missing_bridge_batch_signature"
+	AttributeKeyAmount                        = "amount"
+	AttributeKeySender                        = "sender"
+	AttributeKeyReceiver                      = "receiver"
+	AttributeKeyEthereumTokenContract         = "ethereum_token_contract"
+	AttributeKeyFee                           = "fee"
 )

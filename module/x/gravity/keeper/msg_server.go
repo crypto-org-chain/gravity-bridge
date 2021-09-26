@@ -206,24 +206,26 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 		return nil, err
 	}
 
-	txID, err := k.createSendToEthereum(ctx, sender, msg.EthereumRecipient, msg.Amount, msg.BridgeFee)
+	txID, tokenAddress, err := k.createSendToEthereum(ctx, sender, msg.EthereumRecipient, msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
 	}
 
+	txIDString := strconv.FormatUint(txID, 10)
 	ctx.EventManager().EmitEvents([]sdk.Event{
 		sdk.NewEvent(
 			types.EventTypeBridgeWithdrawalReceived,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyContract, k.getBridgeContractAddress(ctx)),
+			sdk.NewAttribute(types.AttributeKeyEthereumTokenContract, tokenAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.getBridgeChainID(ctx)))),
-			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, strconv.Itoa(int(txID))),
-			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(txID)),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, txIDString),
+			sdk.NewAttribute(types.AttributeKeyNonce, txIDString),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, fmt.Sprint(txID)),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, txIDString),
 		),
 	})
 
