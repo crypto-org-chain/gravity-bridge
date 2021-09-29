@@ -46,7 +46,7 @@ describe("EthGravityWrapper tests", function () {
     )) as EthGravityWrapper;
   });
 
-  it("allow eth to be sent", async function () {
+  it("allows eth to be sent", async function () {
     // Check balance before on Gravity.sol
     expect((await testWETH.functions.balanceOf(gravity.address))[0]).to.equal(
       0

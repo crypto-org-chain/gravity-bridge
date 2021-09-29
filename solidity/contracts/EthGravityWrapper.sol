@@ -7,7 +7,7 @@ import "./Gravity.sol";
 contract EthGravityWrapper {
 	address immutable WETH_ADDRESS;
 	address immutable GRAVITY_ADDRESS;
-	uint256 constant MAX_VALUE = uint(-1);
+	uint256 constant MAX_VALUE = uint256(-1);
 
 	event SendToCosmosEthEvent(
 		address indexed _sender,
