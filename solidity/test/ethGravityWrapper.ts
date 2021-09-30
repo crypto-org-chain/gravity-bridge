@@ -47,6 +47,8 @@ describe("EthGravityWrapper tests", function () {
   });
 
   it("allows eth to be sent", async function () {
+    const destination = await signers[1].getAddress();
+
     // Check balance before on Gravity.sol
     expect((await testWETH.functions.balanceOf(gravity.address))[0]).to.equal(
       0
@@ -55,19 +57,12 @@ describe("EthGravityWrapper tests", function () {
     // Sending ETH over
     await testWETH.functions.approve(gravity.address, 100);
     await expect(
-      ethGravityWrapper.functions.sendToCosmosEth(
-        ethers.utils.formatBytes32String("myCosmosAddress"),
-        {
-          value: "100",
-        }
-      )
+      ethGravityWrapper.functions.sendToCronosEth(destination, {
+        value: "100",
+      })
     )
-      .to.emit(ethGravityWrapper, "SendToCosmosEthEvent")
-      .withArgs(
-        await signers[0].getAddress,
-        ethers.utils.formatBytes32String("myCosmosAddress"),
-        100
-      );
+      .to.emit(ethGravityWrapper, "sendToCronosEthEvent")
+      .withArgs(await signers[0].getAddress, destination, 100);
 
     // Check balance after on Gravity.sol
     expect(
@@ -79,6 +74,8 @@ describe("EthGravityWrapper tests", function () {
   });
 
   it("does not reduce WETH allowance for gravity", async function () {
+    const destination = await signers[1].getAddress();
+
     const allowancePrior = await testWETH.allowance(
       ethGravityWrapper.address,
       gravity.address
@@ -86,12 +83,9 @@ describe("EthGravityWrapper tests", function () {
 
     // Sending ETH over
     await testWETH.functions.approve(gravity.address, 10000000);
-    await ethGravityWrapper.functions.sendToCosmosEth(
-      ethers.utils.formatBytes32String("myCosmosAddress"),
-      {
-        value: "10000000",
-      }
-    );
+    await ethGravityWrapper.functions.sendToCronosEth(destination, {
+      value: "10000000",
+    });
 
     const allowanceAfter = await testWETH.allowance(
       ethGravityWrapper.address,
@@ -101,6 +95,8 @@ describe("EthGravityWrapper tests", function () {
   });
 
   it("checks for eth amount > 0", async function () {
+    const destination = await signers[1].getAddress();
+
     // Check balance before on Gravity.sol
     expect((await testWETH.functions.balanceOf(gravity.address))[0]).to.equal(
       0
@@ -109,9 +105,7 @@ describe("EthGravityWrapper tests", function () {
     // Sending ETH over with 0 value
     await testWETH.functions.approve(gravity.address, 100);
     await expect(
-      ethGravityWrapper.functions.sendToCosmosEth(
-        ethers.utils.formatBytes32String("myCosmosAddress")
-      )
+      ethGravityWrapper.functions.sendToCronosEth(destination)
     ).to.be.revertedWith("Amount should be greater than 0");
 
     // Check balance after on Gravity.sol

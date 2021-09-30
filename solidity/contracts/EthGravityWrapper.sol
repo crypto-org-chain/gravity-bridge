@@ -13,9 +13,9 @@ contract EthGravityWrapper {
 
 	uint256 constant MAX_VALUE = uint256(-1);
 
-	event SendToCosmosEthEvent(
+	event sendToCronosEthEvent(
 		address indexed _sender,
-		bytes32 indexed _destination,
+		address indexed _destination,
 		uint256 _amount
 	);
 
@@ -26,13 +26,13 @@ contract EthGravityWrapper {
 		IWETH(_wethAddress).approve(_gravityAddress, MAX_VALUE);
 	}
 
-	function sendToCosmosEth(bytes32 _destination) public payable {
+	function sendToCronosEth(address _destination) public payable {
 		uint256 amount = msg.value;
 		require(amount > 0, "Amount should be greater than 0");
 
 		weth.deposit{ value: amount }();
-		gravity.sendToCosmos(address(weth), _destination, amount);
+		gravity.sendToCronos(address(weth), _destination, amount);
 
-		emit SendToCosmosEthEvent(msg.sender, _destination, amount);
+		emit sendToCronosEthEvent(msg.sender, _destination, amount);
 	}
 }
