@@ -41,7 +41,10 @@ describe("Gravity happy path valset update + batch submit", function () {
       checkpoint: deployCheckpoint
     } = await deployContracts(gravityId, valset0.validators, valset0.powers, powerThreshold);
 
-
+    await gravity.grantRole(
+      await gravity.RELAYER(),
+      signers[0].address,
+    );
 
 
     // UDPATEVALSET
@@ -111,9 +114,9 @@ describe("Gravity happy path valset update + batch submit", function () {
 
     // Transfer out to Cosmos, locking coins
     await testERC20.functions.approve(gravity.address, 1000);
-    await gravity.functions.sendToCosmos(
+    await gravity.functions.sendToCronos(
       testERC20.address,
-      ethers.utils.formatBytes32String("myCosmosAddress"),
+      "0xffffffffffffffffffffffffffffffffffffffff",
       1000
     );
 
