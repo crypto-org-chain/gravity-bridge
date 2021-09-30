@@ -32,11 +32,12 @@ struct Args {
     flag_address_prefix: String,
     flag_ethereum_rpc: String,
     flag_contract_address: String,
+    flag_always_relay: bool,
 }
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-    "Usage: {} --ethereum-key=<key> --cosmos-grpc=<url> --address-prefix=<prefix> --ethereum-rpc=<url> --contract-address=<addr>
+    "Usage: {} --ethereum-key=<key> --cosmos-grpc=<url> --address-prefix=<prefix> --ethereum-rpc=<url> --contract-address=<addr> --always-relay
         Options:
             -h --help                    Show this screen.
             --ethereum-key=<ekey>        An Ethereum private key containing non-trivial funds
@@ -44,6 +45,7 @@ lazy_static! {
             --address-prefix=<prefix>    The prefix for addresses on this Cosmos chain
             --ethereum-grpc=<eurl>       The Ethereum RPC url, Geth light clients work and sync fast
             --contract-address=<addr>    The Ethereum contract address for Gravity
+            --always-relay               If the flag is true, the relayer will always submit the batch ignoring the fee
         About:
             The Gravity relayer component, responsible for relaying data from the Cosmos blockchain
             to the Ethereum blockchain, cosmos key and fees are optional since they are only used
@@ -75,6 +77,7 @@ async fn main() {
         .flag_contract_address
         .parse()
         .expect("Invalid contract address!");
+    let always_relay: bool = args.flag_always_relay;
 
     let connections = create_rpc_connections(
         args.flag_address_prefix,
@@ -110,6 +113,7 @@ async fn main() {
         connections.grpc.unwrap(),
         gravity_contract_address,
         1f32,
+        always_relay
     )
     .await
 }

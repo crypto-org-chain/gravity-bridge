@@ -25,6 +25,9 @@ pub struct StartCommand {
 
     #[clap(short, long)]
     orchestrator_only: bool,
+
+    #[clap(short, long)]
+    always_relay: bool,
 }
 
 impl Runnable for StartCommand {
@@ -112,6 +115,7 @@ impl Runnable for StartCommand {
                 config.cosmos.gas_adjustment,
                 self.orchestrator_only,
                 config.cosmos.msg_batch_size,
+                self.always_relay,
             )
             .await;
         })
