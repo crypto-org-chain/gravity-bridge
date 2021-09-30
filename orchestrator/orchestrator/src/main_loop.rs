@@ -59,6 +59,7 @@ pub async fn orchestrator_main_loop(
     gas_adjustment: f64,
     relayer_opt_out: bool,
     cosmos_msg_batch_size: u32,
+    always_relay: bool,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
@@ -98,6 +99,7 @@ pub async fn orchestrator_main_loop(
             grpc_client.clone(),
             gravity_contract_address,
             eth_gas_price_multiplier,
+            always_relay
         );
         futures::future::join5(a, b, c, d, e).await;
     } else {

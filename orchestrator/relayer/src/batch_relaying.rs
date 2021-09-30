@@ -2,17 +2,20 @@ use cosmos_gravity::query::get_latest_transaction_batches;
 use cosmos_gravity::query::get_transaction_batch_signatures;
 use ethereum_gravity::{
     one_eth_f32, submit_batch::send_eth_transaction_batch, types::EthClient,
-    utils::get_tx_batch_nonce,
+    utils::get_tx_batch_nonce, utils::GasCost,
 };
 use ethers::prelude::*;
 use ethers::types::Address as EthAddress;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::ethereum::downcast_to_f32;
 use gravity_utils::message_signatures::encode_tx_batch_confirm_hashed;
-use gravity_utils::types::{BatchConfirmResponse, TransactionBatch, Valset};
+use gravity_utils::types::{BatchConfirmResponse, Erc20Token, TransactionBatch, Valset, };
 use std::collections::HashMap;
+use std::str::FromStr;
 use std::time::Duration;
+use std::time::Instant;
 use tonic::transport::Channel;
+
 
 #[derive(Debug, Clone)]
 struct SubmittableBatch {
@@ -37,6 +40,8 @@ pub async fn relay_batches(
     gravity_id: String,
     timeout: Duration,
     eth_gas_price_multiplier: f32,
+    next_batch_send_time: &mut HashMap<EthAddress, Instant>,
+    always_relay: bool,
 ) {
     let possible_batches =
         get_batches_and_signatures(current_valset.clone(), grpc_client, gravity_id.clone()).await;
@@ -51,6 +56,8 @@ pub async fn relay_batches(
         timeout,
         eth_gas_price_multiplier,
         possible_batches,
+        next_batch_send_time,
+        always_relay,
     )
     .await;
 }
@@ -133,6 +140,8 @@ async fn submit_batches(
     timeout: Duration,
     eth_gas_price_multiplier: f32,
     possible_batches: HashMap<EthAddress, Vec<SubmittableBatch>>,
+    next_batch_send_time: &mut HashMap<EthAddress, Instant>,
+    always_relay: bool,
 ) {
     let ethereum_block_height = if let Ok(bn) = eth_client.get_block_number().await {
         bn
@@ -199,32 +208,136 @@ async fn submit_batches(
                 let total_cost = total_cost.unwrap();
                 let gas_price_as_f32 = downcast_to_f32(cost.gas_price).unwrap(); // if the total cost isn't greater, this isn't
 
-                info!(
-                    "We have detected latest batch {} but latest on Ethereum is {} This batch is estimated to cost {} Gas / {:.4} ETH to submit",
-                    latest_cosmos_batch_nonce,
-                    latest_ethereum_batch,
-                    cost.gas_price.clone(),
-                    total_cost / one_eth_f32()
-                );
-
-                cost.gas_price = ((gas_price_as_f32 * eth_gas_price_multiplier) as u128).into();
-
-                let res = send_eth_transaction_batch(
-                    current_valset.clone(),
-                    oldest_signed_batch,
-                    &oldest_signatures,
-                    timeout,
-                    gravity_contract_address,
-                    gravity_id.clone(),
-                    cost,
-                    eth_client.clone(),
+                if always_relay || can_send_batch(
+                    &cost,
+                    &oldest_signed_batch.total_fee,
+                    &oldest_signed_batch.token_contract,
+                    next_batch_send_time,
                 )
-                .await;
+                    .await
+                {
+                    let token_contract = oldest_signed_batch.token_contract;
 
-                if res.is_err() {
-                    warn!("Batch submission failed with {:?}", res);
+                    info!(
+                        "We have detected latest batch {} but latest on Ethereum is {} This batch is estimated to cost {} Gas / {:.4} ETH to submit",
+                        latest_cosmos_batch_nonce,
+                        latest_ethereum_batch,
+                        cost.gas_price.clone(),
+                        total_cost / one_eth_f32()
+                    );
+
+                    cost.gas_price = ((gas_price_as_f32 * eth_gas_price_multiplier) as u128).into();
+
+                    let res = send_eth_transaction_batch(
+                        current_valset.clone(),
+                        oldest_signed_batch,
+                        &oldest_signatures,
+                        timeout,
+                        gravity_contract_address,
+                        gravity_id.clone(),
+                        cost,
+                        eth_client.clone(),
+                    )
+                        .await;
+
+                    if res.is_err() {
+                        warn!("Batch submission failed with {:?}", res);
+                    } else {
+                        if !always_relay {
+                            update_next_batch_send_time(next_batch_send_time, token_contract)
+                        }
+                    }
                 }
             }
+        }
+    }
+}
+
+async fn can_send_batch(
+    estimated_cost: &GasCost,
+    batch_fee: &Erc20Token,
+    contract_address: &EthAddress,
+    next_batch_send_time: &mut HashMap<EthAddress, Instant>,
+) -> bool {
+    match next_batch_send_time.get(contract_address) {
+        Some(time) => {
+            if *time < Instant::now() {
+                return true;
+            }
+        }
+        None => update_next_batch_send_time(next_batch_send_time, *contract_address),
+    }
+
+    let token_price = match get_token_price(&batch_fee.token_contract_address).await {
+        Ok(token_price) => token_price,
+        Err(_) => return false,
+    };
+
+    let estimated_fee = estimated_cost.get_total();
+    let batch_value = batch_fee.amount.clone() * token_price;
+
+    batch_value >= estimated_fee
+}
+
+fn update_next_batch_send_time(
+    next_batch_send_time: &mut HashMap<EthAddress, Instant>,
+    contract_address: EthAddress,
+) {
+    let timeout_duration = std::env::var("GRAVITY_BATCH_SENDING_SECS")
+        .map(|value| Duration::from_secs(value.parse().unwrap()))
+        .unwrap_or_else(|_| Duration::from_secs(3600));
+
+    next_batch_send_time.insert(contract_address, Instant::now() + timeout_duration);
+}
+
+async fn get_token_price(contract_address: &EthAddress) -> Result<U256, ()> {
+    // TODO: Use API for fetching price instead of json config file
+
+    let config_file_path =
+        std::env::var("GRAVITY_TOKEN_PRICES").unwrap_or_else(|_| "token_prices.json".to_owned());
+
+    let config_str = match tokio::fs::read_to_string(config_file_path).await {
+        Err(err) => {
+            log::error!("Error while fetching token price: {}", err);
+            return Err(());
+        }
+        Ok(value) => value,
+    };
+
+    let config: serde_json::Map<String, serde_json::Value> = match serde_json::from_str(&config_str)
+    {
+        Err(err) => {
+            log::error!(
+                "Error while parsing token prices json configuration: {}",
+                err
+            );
+            return Err(());
+        }
+        Ok(config) => config,
+    };
+
+    let token_price = config
+        .get(&contract_address.to_string())
+        .ok_or_else(|| ())?;
+
+    if !token_price.is_string() {
+        log::error!("Expected token price in string format");
+        return Err(());
+    }
+
+    match token_price.as_str() {
+        None => {
+            log::error!("Expected token price in string format");
+            Err(())
+        }
+        Some(token_price_str) => {
+            let token_price = U256::from_str(token_price_str);
+
+            if token_price.is_err() {
+                log::error!("Unable to parse token price");
+            }
+
+            token_price.map_err(|_| ())
         }
     }
 }
