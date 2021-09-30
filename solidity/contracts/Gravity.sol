@@ -253,7 +253,7 @@ function updateValset(
 		ValsetArgs calldata _currentValset,
 		// These are arrays of the parts of the current validator's signatures
 		ValSignature[] calldata _sigs
-	) external {
+	) external virtual {
 		// CHECKS
 
 		// Check that the valset nonce is greater than the old one
@@ -356,7 +356,7 @@ function updateValset(
 		// a block height beyond which this batch is not valid
 		// used to provide a fee-free timeout
 		uint256 _batchTimeout
-	) external nonReentrant {
+	) external nonReentrant virtual {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the batch nonce is higher than the last nonce for this token
@@ -456,7 +456,7 @@ function updateValset(
 		// These are arrays of the parts of the validators signatures
 		ValSignature[] calldata _sigs,
 		LogicCallArgs memory _args
-	) external nonReentrant {
+	) external nonReentrant virtual {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the call has not timed out
@@ -551,6 +551,14 @@ function updateValset(
 				state_lastEventNonce
 			);
 		}
+	}
+
+	function sendToCronos(
+		address _tokenContract,
+		address _destination,
+		uint256 _amount
+	) public nonReentrant virtual {
+		sendToCosmos(_tokenContract, bytes32(uint256(uint160(_destination))), _amount);
 	}
 
 	function sendToCosmos(

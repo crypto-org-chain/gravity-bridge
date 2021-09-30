@@ -47,7 +47,10 @@ async function runTest(opts: {}) {
     checkpoint: deployCheckpoint
   } = await deployContracts(gravityId, validators, powers, powerThreshold);
 
-
+  await gravity.grantRole(
+    await gravity.RELAYER(),
+    signers[0].address,
+  );
 
 
   // Deploy ERC20 contract representing Cosmos asset
