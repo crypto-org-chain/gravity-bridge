@@ -6,7 +6,10 @@ use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use ethereum_gravity::utils::get_gravity_id;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use std::time::{Duration, Instant};
+use std::{
+    collections::HashMap,
+    time::{Duration, Instant},
+};
 use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -23,6 +26,8 @@ pub async fn relayer_main_loop(
     gas_multiplier: f32,
 ) {
     let mut grpc_client = grpc_client;
+    let mut next_batch_send_time: HashMap<EthAddress, Instant> = HashMap::new();
+
     loop {
         let loop_start = Instant::now();
 
@@ -63,6 +68,7 @@ pub async fn relayer_main_loop(
             gravity_id.clone(),
             LOOP_SPEED,
             gas_multiplier,
+            &mut next_batch_send_time,
         )
         .await;
 
@@ -74,7 +80,7 @@ pub async fn relayer_main_loop(
             gravity_contract_address,
             gravity_id.clone(),
             LOOP_SPEED,
-            gas_multiplier
+            gas_multiplier,
         )
         .await;
 
