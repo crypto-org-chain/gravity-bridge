@@ -52,6 +52,7 @@ pub async fn orchestrator_main_loop(
     gravity_contract_address: EthAddress,
     gas_price: (f64, String),
     metrics_listen: &net::SocketAddr,
+    enable_relayer: bool,
     eth_gas_multiplier: f32,
     blocks_to_search:u128,
 ) {
@@ -79,22 +80,26 @@ pub async fn orchestrator_main_loop(
         tx.clone(),
     );
 
-    let d = relayer_main_loop(
-        ethereum_key,
-        web3.clone(),
-        grpc_client.clone(),
-        gravity_contract_address,
-        eth_gas_multiplier,
-    );
-
     let e = check_for_eth(ethereum_key.to_public_key().unwrap() , web3.clone());
 
     let f = metrics_main_loop(metrics_listen);
 
     let g = futures::future::join(a, b);
 
-    let h = futures::future::join5(c, d, e, f, g);
-    h.await;
+    if enable_relayer {
+        let d = relayer_main_loop(
+            ethereum_key,
+            web3.clone(),
+            grpc_client.clone(),
+            gravity_contract_address,
+            eth_gas_multiplier,
+        );
+        let h = futures::future::join5(c, d, e, f, g);
+        h.await;
+    } else {
+        let h = futures::future::join4(c, e, f, g);
+        h.await;
+    }
 }
 
 const DELAY: Duration = Duration::from_secs(5);

@@ -47,6 +47,7 @@ struct Args {
     flag_fees: String,
     flag_metrics_listen: String,
     flag_hd_wallet_path: Option<String>,
+    flag_relayer: bool,
 }
 
 lazy_static! {
@@ -63,6 +64,7 @@ lazy_static! {
             --fees=<denom>               The Cosmos Denom in which to pay Cosmos chain fees
             --contract-address=<addr>    The Ethereum contract address for Gravity, this is temporary
             --metrics-listen=<addr>      The address metrics server listens on [default: 127.0.0.1:3000].
+            --relayer                    Enable relayer
         About:
             The Validator companion binary for Gravity. This must be run by all Gravity chain validators
             and is a mix of a relayer + oracle + ethereum signing infrastructure
@@ -103,6 +105,8 @@ async fn main() {
         .flag_metrics_listen
         .parse()
         .expect("Invalid metrics listen address!");
+    let enable_relayer = args
+        .flag_relayer;
 
     let fee_denom = args.flag_fees;
 
@@ -162,6 +166,7 @@ async fn main() {
         contract_address,
         (1f64, fee_denom.to_owned()),
         &metrics_listen,
+        enable_relayer,
         1f32,
         5000u128,
     )

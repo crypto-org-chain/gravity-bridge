@@ -163,6 +163,7 @@ pub struct GorcConfig {
     pub ethereum: EthereumSection,
     pub cosmos: CosmosSection,
     pub metrics: MetricsSection,
+    pub relayer: RelayerSection,
 }
 
 impl GorcConfig {
@@ -192,6 +193,7 @@ impl Default for GorcConfig {
             ethereum: EthereumSection::default(),
             cosmos: CosmosSection::default(),
             metrics: MetricsSection::default(),
+            relayer: RelayerSection::default(),
         }
     }
 }
@@ -284,6 +286,20 @@ impl Default for MetricsSection {
     fn default() -> Self {
         Self {
             listen_addr: "127.0.0.1:3000".parse().unwrap(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct RelayerSection {
+    pub enable: bool,
+}
+
+impl Default for RelayerSection {
+    fn default() -> Self {
+        Self {
+            enable: false,
         }
     }
 }

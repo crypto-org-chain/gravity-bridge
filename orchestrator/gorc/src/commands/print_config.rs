@@ -20,6 +20,7 @@ impl Runnable for PrintConfigCmd {
                 ethereum: config.ethereum.to_owned(),
                 cosmos: config.cosmos.to_owned(),
                 metrics: config.metrics.to_owned(),
+                relayer: config.relayer.to_owned(),
             }
         };
 
