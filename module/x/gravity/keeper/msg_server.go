@@ -218,7 +218,7 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 			sdk.NewAttribute(types.AttributeKeyContract, k.getBridgeContractAddress(ctx)),
 			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.FormatUint(k.getBridgeChainID(ctx), 10)),
 			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, strconv.FormatUint(txID, 10)),
-			// FIXME: There is not nonce concept of SendToEthereum, remove after verifying that no places is using it
+			// FIXME: There is no nonce concept in SendToEthereum, remove after verifying that no places is using it
 			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(txID)),
 		),
 		sdk.NewEvent(
