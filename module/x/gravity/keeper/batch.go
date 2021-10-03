@@ -49,7 +49,7 @@ func (k Keeper) BuildBatchTx(ctx sdk.Context, contractAddress common.Address, ma
 		types.EventTypeOutgoingBatch,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyContract, k.getBridgeContractAddress(ctx)),
-		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.getBridgeChainID(ctx)))),
+		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.FormatUint(k.getBridgeChainID(ctx), 10)),
 		sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, fmt.Sprint(batch.BatchNonce)),
 		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(batch.BatchNonce)),
 	))
@@ -142,7 +142,7 @@ func (k Keeper) CancelBatchTx(ctx sdk.Context, tokenContract common.Address, non
 			types.EventTypeOutgoingBatchCanceled,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyContract, k.getBridgeContractAddress(ctx)),
-			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.getBridgeChainID(ctx)))),
+			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.FormatUint(k.getBridgeChainID(ctx), 10)),
 			sdk.NewAttribute(types.AttributeKeyOutgoingBatchID, fmt.Sprint(nonce)),
 			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(nonce)),
 		),
