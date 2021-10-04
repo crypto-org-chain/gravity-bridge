@@ -4,7 +4,6 @@ use clarity::PrivateKey as EthPrivateKey;
 use deep_space::address::Address;
 use deep_space::coin::Coin;
 use deep_space::error::CosmosGrpcError;
-use deep_space::private_key::PrivateKey as CosmosPrivateKey;
 use deep_space::Contact;
 use deep_space::Fee;
 use deep_space::Msg;
@@ -13,6 +12,8 @@ use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastMode;
 use gravity_proto::gravity as proto;
 use prost::Message;
 use std::time::Duration;
+
+use crate::crypto::PrivateKey as CosmosPrivateKey;
 
 pub const MEMO: &str = "Sent using Althea Orchestrator";
 pub const TIMEOUT: Duration = Duration::from_secs(60);
@@ -40,7 +41,8 @@ pub async fn update_gravity_delegate_addresses(
     let nonce = contact
         .get_account_info(cosmos_key.to_address(&contact.get_prefix()).unwrap())
         .await?
-        .sequence;
+        .get_sequence().unwrap_or( 0 );
+    
 
     let eth_sign_msg = proto::DelegateKeysSignMsg {
         validator_address: our_valoper_address.clone(),
@@ -108,7 +110,7 @@ async fn __send_messages(
 
     let fee = Fee {
         amount: vec![fee],
-        gas_limit: 500_000_000u64 * (messages.len() as u64),
+        gas_limit: 500_000u64 * (messages.len() as u64),
         granter: None,
         payer: None,
     };
@@ -132,7 +134,7 @@ pub async fn send_messages(
 ) -> Result<TxResponse, CosmosGrpcError> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
-    let gas_limit = 500_000_000 * messages.len() as u64;
+    let gas_limit = 500_000 * messages.len() as u64;
 
     let fee_amount: f64 = (gas_limit as f64) * gas_price.0;
     let fee_amount: u64 = fee_amount.abs().ceil() as u64;

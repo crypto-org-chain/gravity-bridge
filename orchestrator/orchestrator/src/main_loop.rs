@@ -19,7 +19,7 @@ use cosmos_gravity::{
 };
 use deep_space::client::ChainStatus;
 use deep_space::error::CosmosGrpcError;
-use deep_space::private_key::PrivateKey as CosmosPrivateKey;
+use cosmos_gravity::crypto::PrivateKey as CosmosPrivateKey;
 use deep_space::{Contact, Msg};
 use ethereum_gravity::utils::get_gravity_id;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
@@ -52,6 +52,8 @@ pub async fn orchestrator_main_loop(
     gravity_contract_address: EthAddress,
     gas_price: (f64, String),
     metrics_listen: &net::SocketAddr,
+    eth_gas_multiplier: f32,
+    blocks_to_search:u128,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
@@ -63,6 +65,7 @@ pub async fn orchestrator_main_loop(
         contact.clone(),
         grpc_client.clone(),
         gravity_contract_address,
+        blocks_to_search,
         tx.clone(),
     );
 
@@ -78,14 +81,20 @@ pub async fn orchestrator_main_loop(
 
     let d = relayer_main_loop(
         ethereum_key,
-        web3,
+        web3.clone(),
         grpc_client.clone(),
         gravity_contract_address,
+        eth_gas_multiplier,
     );
 
-    let e = metrics_main_loop(metrics_listen);
+    let e = check_for_eth(ethereum_key.to_public_key().unwrap() , web3.clone());
 
-    futures::future::join5(a, b, c, d, e).await;
+    let f = metrics_main_loop(metrics_listen);
+
+    let g = futures::future::join(a, b);
+
+    let h = futures::future::join5(c, d, e, f, g);
+    h.await;
 }
 
 const DELAY: Duration = Duration::from_secs(5);
@@ -98,6 +107,7 @@ pub async fn eth_oracle_main_loop(
     contact: Contact,
     grpc_client: GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
+    blocks_to_search:u128,
     msg_sender: tokio::sync::mpsc::Sender<Vec<Msg>>,
 ) {
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
@@ -107,6 +117,7 @@ pub async fn eth_oracle_main_loop(
         our_cosmos_address,
         gravity_contract_address,
         &long_timeout_web30,
+        blocks_to_search,
     )
     .await;
     info!("Oracle resync complete, Oracle now operational");
@@ -214,7 +225,6 @@ pub async fn eth_signer_main_loop(
         return;
     }
     let gravity_id = gravity_id.unwrap();
-    let gravity_id = String::from_utf8(gravity_id).expect("Invalid GravityID");
 
     loop {
         let loop_start = Instant::now();
@@ -366,4 +376,15 @@ pub async fn eth_signer_main_loop(
             delay_for(ETH_SIGNER_LOOP_SPEED - elapsed).await;
         }
     }
+}
+
+pub async fn check_for_eth(orchestrator_address: EthAddress, web3: Web3) {
+    let balance = web3
+        .eth_get_balance(orchestrator_address)
+        .await
+        .unwrap();
+    if balance == 0u8.into() {
+        warn!("You don't have any Ethereum! You will need to send some to {} for this program to work. Dust will do for basic operations, more info about average relaying costs will be presented as the program runs", orchestrator_address);
+    }
+    metrics::set_ethereum_bal(balance);
 }
