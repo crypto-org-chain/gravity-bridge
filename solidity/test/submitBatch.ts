@@ -52,9 +52,9 @@ async function runTest(opts: {
   // Transfer out to Cosmos, locking coins
   // =====================================
   await testERC20.functions.approve(gravity.address, 1000);
-  await gravity.functions.sendToCosmos(
+  await gravity.functions.sendToCronos(
     testERC20.address,
-    ethers.utils.formatBytes32String("myCosmosAddress"),
+    "0xffffffffffffffffffffffffffffffffffffffff",
     1000
   );
 
@@ -270,9 +270,9 @@ describe("submitBatch Go test hash", function () {
     // Transfer out to Cosmos, locking coins
     // =====================================
     await testERC20.functions.approve(gravity.address, 1000);
-    await gravity.functions.sendToCosmos(
+    await gravity.functions.sendToCronos(
       testERC20.address,
-      ethers.utils.formatBytes32String("myCosmosAddress"),
+      "0xffffffffffffffffffffffffffffffffffffffff",
       1000
     );
 

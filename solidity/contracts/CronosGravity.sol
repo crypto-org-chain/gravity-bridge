@@ -106,4 +106,14 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
             _args
         );
     }
+
+    function sendToCronos(
+        address _tokenContract,
+        address _destination,
+        uint256 _amount
+    ) public override whenNotPaused {
+        super.sendToCronos(
+            _tokenContract, _destination, _amount
+        );
+    }
 }

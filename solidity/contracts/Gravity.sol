@@ -525,7 +525,7 @@ contract Gravity is ReentrancyGuard {
 		address _tokenContract,
 		address _destination,
 		uint256 _amount
-	) public nonReentrant {
+	) public nonReentrant virtual {
 		sendToCosmos(_tokenContract, bytes32(uint256(uint160(_destination))), _amount);
 	}
 
