@@ -15,13 +15,12 @@ pub struct SignDelegateKeysCmd {
 impl Runnable for SignDelegateKeysCmd {
     fn run(&self) {
         let config = APP.config();
+        let name = self.args.get(0).expect("ethereum-key-name is required");
+        let key = config.load_clarity_key(name.clone());
+
+        let val = self.args.get(1).expect("validator-address is required");
+        let address = val.parse().expect("Could not parse address");
         abscissa_tokio::run_with_actix(&APP, async {
-            let name = self.args.get(0).expect("ethereum-key-name is required");
-            let key = config.load_clarity_key(name.clone());
-
-            let val = self.args.get(1).expect("validator-address is required");
-            let address = val.parse().expect("Could not parse address");
-
             let nonce: u64 = match self.args.get(2) {
                 Some(nonce) => nonce.parse().expect("cannot parse nonce"),
                 None => {
@@ -31,7 +30,7 @@ impl Runnable for SignDelegateKeysCmd {
                         timeout,
                         &config.cosmos.prefix,
                     )
-                    .expect("Could not create contact");
+                        .expect("Could not create contact");
 
                     let account_info = contact.get_account_info(address).await;
                     let account_info = account_info.expect("Did not receive account info");
