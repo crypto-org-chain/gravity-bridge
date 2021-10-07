@@ -45,7 +45,6 @@ ethermint = [
     "relayer/ethermint",
     "gorc/ethermint",
     "register_delegate_keys/ethermint",
-    "client/ethermint",
 ]
 
 [patch.crates-io]
