@@ -3,6 +3,7 @@ use crate::application::APP;
 use abscissa_core::{Application, Command, Options, Runnable};
 use k256::pkcs8::ToPrivateKey;
 use rand_core::OsRng;
+use crate::config::Keystore;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct AddCosmosKeyCmd {
@@ -30,8 +31,13 @@ impl Runnable for AddCosmosKeyCmd {
         }
 
         let mnemonic = bip32::Mnemonic::random(&mut OsRng, Default::default());
-        eprintln!("**Important** record this bip39-mnemonic in a safe place:");
-        println!("{}", mnemonic.phrase());
+        match &config.keystore {
+            Keystore::File(_path) => {
+                eprintln!("**Important** record this bip39-mnemonic in a safe place:");
+                println!("{}", mnemonic.phrase());
+            }
+            Keystore::Aws => {}
+        }
 
         let seed = mnemonic.to_seed("");
 

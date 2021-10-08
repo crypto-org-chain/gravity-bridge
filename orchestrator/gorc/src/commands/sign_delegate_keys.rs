@@ -30,7 +30,7 @@ impl Runnable for SignDelegateKeysCmd {
                         timeout,
                         &config.cosmos.prefix,
                     )
-                        .expect("Could not create contact");
+                    .expect("Could not create contact");
 
                     let account_info = contact.get_account_info(address).await;
                     let account_info = account_info.expect("Did not receive account info");
