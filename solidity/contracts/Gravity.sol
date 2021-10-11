@@ -526,7 +526,7 @@ contract Gravity is ReentrancyGuard {
 		address _destination,
 		uint256 _amount
 	) public nonReentrant virtual {
-		sendToCosmos(_tokenContract, bytes32(uint256(uint160(_destination))), _amount);
+		_sendToCosmos(_tokenContract, bytes32(uint256(uint160(_destination))), _amount);
 	}
 
 	function sendToCosmos(
@@ -534,6 +534,14 @@ contract Gravity is ReentrancyGuard {
 		bytes32 _destination,
 		uint256 _amount
 	) public nonReentrant virtual {
+		_sendToCosmos(_tokenContract, _destination, _amount);
+	}
+
+	function _sendToCosmos(
+		address _tokenContract,
+		bytes32 _destination,
+		uint256 _amount
+	) private {
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
