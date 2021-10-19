@@ -9,6 +9,7 @@ use crate::{
 };
 use clarity::{address::Address as EthAddress, Uint256};
 use clarity::{utils::bytes_to_hex_str, PrivateKey as EthPrivateKey};
+use cosmos_gravity::crypto::PrivateKey as CosmosPrivateKey;
 use cosmos_gravity::send::send_main_loop;
 use cosmos_gravity::{
     build,
@@ -19,7 +20,6 @@ use cosmos_gravity::{
 };
 use deep_space::client::ChainStatus;
 use deep_space::error::CosmosGrpcError;
-use cosmos_gravity::crypto::PrivateKey as CosmosPrivateKey;
 use deep_space::{Contact, Msg};
 use ethereum_gravity::utils::get_gravity_id;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
@@ -28,7 +28,6 @@ use std::{
     net,
     time::{Duration, Instant},
 };
-use tokio::join;
 use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
 use web30::client::Web3;
@@ -44,6 +43,8 @@ pub const ETH_ORACLE_LOOP_SPEED: Duration = Duration::from_secs(13);
 /// meaning they will occupy the same thread, but since they do
 /// very little actual cpu bound work and spend the vast majority
 /// of all execution time sleeping this shouldn't be an issue at all.
+#[allow(clippy::too_many_arguments)]
+#[allow(clippy::many_single_char_names)]
 pub async fn orchestrator_main_loop(
     cosmos_key: CosmosPrivateKey,
     ethereum_key: EthPrivateKey,
@@ -54,7 +55,7 @@ pub async fn orchestrator_main_loop(
     gas_price: (f64, String),
     metrics_listen: &net::SocketAddr,
     eth_gas_multiplier: f32,
-    blocks_to_search:u128,
+    blocks_to_search: u128,
     relayer_opt_out: bool,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
@@ -107,7 +108,7 @@ pub async fn eth_oracle_main_loop(
     contact: Contact,
     grpc_client: GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
-    blocks_to_search:u128,
+    blocks_to_search: u128,
     msg_sender: tokio::sync::mpsc::Sender<Vec<Msg>>,
 ) {
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
@@ -130,7 +131,7 @@ pub async fn eth_oracle_main_loop(
         let latest_cosmos_block = contact.get_chain_status().await;
         match (latest_eth_block, latest_cosmos_block) {
             (Ok(latest_eth_block), Ok(ChainStatus::Moving { block_height })) => {
-                metrics::set_cosmos_block_height(block_height.clone());
+                metrics::set_cosmos_block_height(block_height);
                 metrics::set_ethereum_block_height(latest_eth_block.clone());
                 trace!(
                     "Latest Eth block {} Latest Cosmos block {}",
@@ -185,10 +186,11 @@ pub async fn eth_oracle_main_loop(
             Err(e) => {
                 metrics::ETHEREUM_EVENT_CHECK_FAILURES.inc();
                 error!("Failed to get events for block range, Check your Eth node and Cosmos gRPC {:?}", e);
-                if let gravity_utils::error::GravityError::CosmosGrpcError(err) = e {
-                    if let CosmosGrpcError::TransactionFailed { tx: _, time: _ } = err {
-                        delay_for(Duration::from_secs(10)).await;
-                    }
+                if let gravity_utils::error::GravityError::CosmosGrpcError(
+                    CosmosGrpcError::TransactionFailed { tx: _, time: _ },
+                ) = e
+                {
+                    delay_for(Duration::from_secs(10)).await;
                 }
             }
         }
@@ -233,7 +235,7 @@ pub async fn eth_signer_main_loop(
         let latest_cosmos_block = contact.get_chain_status().await;
         match (latest_eth_block, latest_cosmos_block) {
             (Ok(latest_eth_block), Ok(ChainStatus::Moving { block_height })) => {
-                metrics::set_cosmos_block_height(block_height.clone());
+                metrics::set_cosmos_block_height(block_height);
                 metrics::set_ethereum_block_height(latest_eth_block.clone());
                 trace!(
                     "Latest Eth block {} Latest Cosmos block {}",
@@ -378,11 +380,9 @@ pub async fn eth_signer_main_loop(
     }
 }
 
+#[allow(dead_code)]
 pub async fn check_for_eth(orchestrator_address: EthAddress, web3: Web3) {
-    let balance = web3
-        .eth_get_balance(orchestrator_address)
-        .await
-        .unwrap();
+    let balance = web3.eth_get_balance(orchestrator_address).await.unwrap();
     if balance == 0u8.into() {
         warn!("You don't have any Ethereum! You will need to send some to {} for this program to work. Dust will do for basic operations, more info about average relaying costs will be presented as the program runs", orchestrator_address);
     }

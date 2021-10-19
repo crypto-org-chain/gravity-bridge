@@ -4,9 +4,9 @@ use crate::get_fee;
 use crate::utils::ValidatorKeys;
 use clarity::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
+use cosmos_gravity::crypto::PrivateKey as CosmosPrivateKey;
 use cosmos_gravity::send::update_gravity_delegate_addresses;
 use deep_space::address::Address as CosmosAddress;
-use cosmos_gravity::crypto::PrivateKey as CosmosPrivateKey;
 use deep_space::Contact;
 use gravity_proto::gravity::{
     query_client::QueryClient as GravityQueryClient, DelegateKeysByEthereumSignerRequest,
@@ -76,7 +76,7 @@ pub async fn orch_keys_update(
         );
         // send in the new delegate keys signed by the validator address
         update_gravity_delegate_addresses(
-            &contact,
+            contact,
             ethereum_key.to_public_key().unwrap(),
             cosmos_address,
             k.validator_key,

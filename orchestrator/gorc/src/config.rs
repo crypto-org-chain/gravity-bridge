@@ -89,7 +89,7 @@ impl Keystore {
             Keystore::File(path) => {
                 let keystore = Path::new(path);
                 let keystore = FsKeyStore::create_or_open(keystore)?;
-                keystore.load(&name)
+                keystore.load(name)
             }
             Keystore::Aws => {
                 let rt = tokio::runtime::Runtime::new()?;
@@ -106,7 +106,7 @@ impl Keystore {
             Keystore::File(path) => {
                 let keystore = Path::new(path);
                 let keystore = FsKeyStore::create_or_open(keystore)?;
-                keystore.info(&name)
+                keystore.info(name)
             }
             Keystore::Aws => {
                 let rt = tokio::runtime::Runtime::new()?;
@@ -126,7 +126,7 @@ impl Keystore {
             Keystore::File(path) => {
                 let keystore = Path::new(path);
                 let keystore = FsKeyStore::create_or_open(keystore)?;
-                keystore.store(&name, der)
+                keystore.store(name, der)
             }
             Keystore::Aws => {
                 let rt = tokio::runtime::Runtime::new()?;
@@ -143,7 +143,7 @@ impl Keystore {
             Keystore::File(path) => {
                 let keystore = Path::new(path);
                 let keystore = FsKeyStore::create_or_open(keystore)?;
-                keystore.delete(&name)
+                keystore.delete(name)
             }
             Keystore::Aws => {
                 let rt = tokio::runtime::Runtime::new()?;
@@ -169,18 +169,18 @@ impl GorcConfig {
     fn load_secret_key(&self, name: String) -> k256::elliptic_curve::SecretKey<k256::Secp256k1> {
         let name = name.parse().expect("Could not parse name");
         let key = self.keystore.load(&name).expect("Could not load key");
-        return key.to_pem().parse().expect("Could not parse pem");
+        key.to_pem().parse().expect("Could not parse pem")
     }
 
     pub fn load_clarity_key(&self, name: String) -> clarity::PrivateKey {
         let key = self.load_secret_key(name).to_bytes();
-        return clarity::PrivateKey::from_slice(&key).expect("Could not convert key");
+        clarity::PrivateKey::from_slice(&key).expect("Could not convert key")
     }
 
     pub fn load_deep_space_key(&self, name: String) -> cosmos_gravity::crypto::PrivateKey {
         let key = self.load_secret_key(name).to_bytes();
         let key = deep_space::utils::bytes_to_hex_str(&key);
-        return key.parse().expect("Could not parse private key");
+        key.parse().expect("Could not parse private key")
     }
 }
 
