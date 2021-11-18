@@ -4,6 +4,7 @@ COMMIT := $(shell git log -1 --format='%H')
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 HTTPS_GIT := https://github.com/peggyjv/gravity-bridge.git
+COVERAGE ?= coverage.txt
 
 build_tags = netgo
 ifeq ($(LEDGER_ENABLED),true)
@@ -58,7 +59,7 @@ go.sum: go.mod
 		GO111MODULE=on go mod verify
 
 test:
-	@go test -mod=readonly $(PACKAGES)
+	@go test -mod=readonly $(PACKAGES) -coverprofile=$(COVERAGE) -covermode=atomic
 
 build:
 	go build -o build/gravity $(BUILD_FLAGS) ./cmd/gravity/main.go
