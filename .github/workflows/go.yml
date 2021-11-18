@@ -30,9 +30,8 @@ jobs:
         run: cd module && make test
         if: "env.GIT_DIFF != '' || github.event_name == 'issue_comment'"
       - name: Upload coverage report
-        run: pwd
-#        uses: codecov/codecov-action@v1
-#        with:
-#          token: ${{ secrets.CODECOV_TOKEN }}
-#          file: ./coverage.txt
-#          flags: unit_tests
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: module/coverage.txt
+          flags: unit_tests
