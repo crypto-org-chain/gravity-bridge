@@ -7,8 +7,8 @@ on:
   pull_request:
 
 jobs:
-  release:
-    name: build-release-assets
+  build:
+    name: build
     runs-on: ubuntu-latest
     steps:
       # Setup Golang Environment
