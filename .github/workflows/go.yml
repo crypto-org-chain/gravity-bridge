@@ -3,7 +3,7 @@ name: Go tests
 on:
   push:
     branches:
-      - main
+      - cronos
   pull_request:
 
 jobs:
