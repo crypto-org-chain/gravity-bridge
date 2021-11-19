@@ -3,7 +3,7 @@ name: Go tests
 on:
   push:
     branches:
-      - main
+      - cronos
   pull_request:
 
 jobs:
@@ -28,10 +28,11 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('module/go.sum') }}
       - name: Run Go tests
         run: cd module && make test
-        if: "env.GIT_DIFF != '' || github.event_name == 'issue_comment'"
       - name: Upload coverage report
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.txt
+          file: module/coverage.txt
           flags: unit_tests
+        if: "env.GIT_DIFF != ''"
+

@@ -1,4 +1,10 @@
 ![Gravity Bridge](./gravity-bridge.svg)
+<br />
+
+<p align="center">
+  <a href="https://github.com/crypto-org-chain/gravity/actions/workflows/build.yml"><img label="Build Status" src="https://github.com/crypto-org-chain/gravity-bridge/actions/workflows/build.yml/badge.svg" /></a>
+  <a href="https://codecov.io/gh/crypto-org-chain/gravity-bridge"><img label="Code Coverage" src="https://codecov.io/gh/crypto-org-chain/gravity-bridge/branch/cronos/graph/badge.svg" /></a>
+</p>
 
 Gravity bridge is Cosmos <-> Ethereum bridge designed to run on the [Cosmos Hub](https://github.com/cosmos/gaia) focused on maximum design simplicity and efficiency.
 
