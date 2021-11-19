@@ -34,3 +34,5 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: module/coverage.txt
           flags: unit_tests
+        if: "env.GIT_DIFF != ''"
+
