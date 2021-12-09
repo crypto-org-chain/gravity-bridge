@@ -216,14 +216,15 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 			types.EventTypeBridgeWithdrawalReceived,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyContract, k.getBridgeContractAddress(ctx)),
-			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.getBridgeChainID(ctx)))),
-			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, strconv.Itoa(int(txID))),
+			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.FormatUint(k.getBridgeChainID(ctx), 10)),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, strconv.FormatUint(txID, 10)),
+			// FIXME: There is no nonce concept in SendToEthereum, remove after verifying that no places is using it
 			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(txID)),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
-			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, fmt.Sprint(txID)),
+			sdk.NewAttribute(types.AttributeKeyOutgoingTXID, strconv.FormatUint(txID, 10)),
 		),
 	})
 
@@ -269,7 +270,7 @@ func (k msgServer) CancelSendToEthereum(c context.Context, msg *types.MsgCancelS
 			types.EventTypeBridgeWithdrawCanceled,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 			sdk.NewAttribute(types.AttributeKeyContract, k.getBridgeContractAddress(ctx)),
-			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.getBridgeChainID(ctx)))),
+			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.FormatUint(k.getBridgeChainID(ctx), 10)),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,

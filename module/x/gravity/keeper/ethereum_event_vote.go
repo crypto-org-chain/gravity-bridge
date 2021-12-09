@@ -99,7 +99,7 @@ func (k Keeper) TryEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.Ether
 					sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 					sdk.NewAttribute(types.AttributeKeyEthereumEventType, fmt.Sprintf("%T", event)),
 					sdk.NewAttribute(types.AttributeKeyContract, k.getBridgeContractAddress(ctx)),
-					sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.getBridgeChainID(ctx)))),
+					sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.FormatUint(k.getBridgeChainID(ctx), 10)),
 					sdk.NewAttribute(types.AttributeKeyEthereumEventVoteRecordID,
 						string(types.MakeEthereumEventVoteRecordKey(event.GetEventNonce(), event.Hash()))),
 					sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(event.GetEventNonce())),
