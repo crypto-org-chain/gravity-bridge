@@ -35,7 +35,6 @@ export async function deployContracts(
     await getSignerAddresses(validators),
     powers,
     relayerAdmin,
-
   )) as Gravity;
 
   await gravity.deployed();

@@ -29,7 +29,6 @@ async function runTest(opts: {
   notEnoughPowerNewSet?: boolean;
   zeroLengthValset?: boolean;
   relayerNotSet?: boolean;
-
 }) {
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
@@ -263,7 +262,7 @@ describe("updateValset tests", function () {
     let { gravity, checkpoint } = await runTest({ withReward: true });
     expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
   });
-  
+
   it("throws on relayer not set", async function () {
     await expect(runTest({ relayerNotSet: true })).to.be.revertedWith(
       "CronosGravity::Permission Denied"
