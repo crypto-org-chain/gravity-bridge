@@ -1,4 +1,4 @@
-pragma solidity ^0.6.6;
+pragma solidity 0.8.10;
 
 import "./Gravity.sol";
 
@@ -11,7 +11,7 @@ contract EthGravityWrapper {
 	IWETH public immutable weth;
 	Gravity public immutable gravity;
 
-	uint256 constant MAX_VALUE = uint256(-1);
+	uint256 constant MAX_VALUE = type(uint256).max;
 
 	event sendToCronosEthEvent(
 		address indexed _sender,

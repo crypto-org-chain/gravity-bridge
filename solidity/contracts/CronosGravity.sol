@@ -1,4 +1,4 @@
-pragma solidity ^0.6.6;
+pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -12,10 +12,10 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
     bytes32 public constant RELAYER = keccak256("RELAYER");
     bytes32 public constant RELAYER_ADMIN = keccak256("RELAYER_ADMIN");
 
-    modifier onlyRole(bytes32 role) {
-        require(hasRole(role, msg.sender), "CronosGravity::Permission Denied");
-        _;
-    }
+//    modifier onlyRole(bytes32 role) {
+//        require(hasRole(role, msg.sender), "CronosGravity::Permission Denied");
+//        _;
+//    }
 
     constructor (
         // A unique identifier for this gravity instance to use in signatures
@@ -26,7 +26,7 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
         address[] memory _validators,
         uint256[] memory _powers,
         address relayerAdmin
-    ) public Gravity(
+    ) Gravity(
         _gravityId,
         _powerThreshold,
         _validators,
