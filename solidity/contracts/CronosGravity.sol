@@ -100,6 +100,16 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
         );
     }
 
+    function sendToCosmos(
+		address _tokenContract,
+		bytes32 _destination,
+        uint256 _amount
+    ) public override whenNotPaused {
+        super.sendToCosmos(
+            _tokenContract, _destination, _amount
+        );
+    }
+
     function transferRelayerAdmin (
         address _newAdmin
     ) public onlyRole(RELAYER_ADMIN) {
