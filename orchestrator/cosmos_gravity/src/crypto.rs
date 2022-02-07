@@ -1,9 +1,11 @@
-use std::str::FromStr;
 use deep_space::private_key::TxParts;
+use std::str::FromStr;
 
+#[cfg(not(feature = "ethermint"))]
+use deep_space::public_key::COSMOS_PUBKEY_URL;
 use deep_space::{
     error::{Bip39Error, HdWalletError, PrivateKeyError},
-    private_key::PrivateKey as InnerPrivateKey,
+    private_key::{PrivateKey as InnerPrivateKey, SignType},
     Address, MessageArgs, Msg,
 };
 
@@ -86,6 +88,17 @@ impl PrivateKey {
         args: MessageArgs,
         memo: impl Into<String>,
     ) -> Result<TxParts, PrivateKeyError> {
-        return self.0.build_tx(messages, args, memo);
+        #[cfg(feature = "ethermint")]
+        return self.0.build_tx(
+            messages,
+            args,
+            memo,
+            "/ethermint.crypto.v1.ethsecp256k1.PubKey",
+            SignType::Ethermint,
+        );
+        #[cfg(not(feature = "ethermint"))]
+        return self
+            .0
+            .build_tx(messages, args, memo, COSMOS_PUBKEY_URL, SignType::Cosmos);
     }
 }

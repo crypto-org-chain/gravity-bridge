@@ -1505,7 +1505,7 @@ dependencies = [
 [[package]]
 name = "deep_space"
 version = "2.4.7"
-source = "git+https://github.com/iqlusioninc/deep_space/?branch=master#5fb0457ed49aed262e3f18eece038146cf62e321"
+source = "git+https://github.com/crypto-org-chain/deep_space/?branch=5fb0457-cronos#01008a1859382331999729ebeae3245b0cd61ae5"
 dependencies = [
  "base64 0.13.0",
  "bech32 0.8.1",
@@ -1528,6 +1528,7 @@ dependencies = [
  "serde_json",
  "sha2 0.9.9",
  "tendermint-proto",
+ "tiny-keccak",
  "tokio 1.15.0",
  "tonic",
  "unicode-normalization",
@@ -5686,8 +5687,3 @@ dependencies = [
  "cc",
  "libc",
 ]
-
-[[patch.unused]]
-name = "deep_space"
-version = "2.4.7"
-source = "git+https://github.com/crypto-org-chain/deep_space/?branch=5fb0457-cronos#01008a1859382331999729ebeae3245b0cd61ae5"
