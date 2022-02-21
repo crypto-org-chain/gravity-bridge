@@ -264,8 +264,10 @@ describe("updateValset tests", function () {
   });
 
   it("throws on relayer not set", async function () {
+    const relayerHash = "0xab4f864e5201b0fde9b5ee3e4cf96384802b0ffdfcf7f9de4699ce21a30afc4f" // keccak256("RELAYER")
+    const signers = await ethers.getSigners();
     await expect(runTest({ relayerNotSet: true })).to.be.revertedWith(
-      "CronosGravity::Permission Denied"
+        `AccessControl: account ${signers[0].address.toLowerCase()} is missing role ${relayerHash}`
     );
   });
 

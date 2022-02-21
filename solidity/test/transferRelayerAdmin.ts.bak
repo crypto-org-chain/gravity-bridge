@@ -1,0 +1,56 @@
+import chai from "chai";
+import { ethers } from "hardhat";
+import { solidity } from "ethereum-waffle";
+
+import { deployContracts } from "../test-utils";
+import {
+    getSignerAddresses,
+    makeCheckpoint,
+    signHash,
+    makeTxBatchHash,
+    examplePowers
+} from "../test-utils/pure";
+
+chai.use(solidity);
+const { expect } = chai;
+
+
+async function runTest(opts: {
+    isRelayerAdmin?: boolean;
+}) {
+
+
+    // Prep and deploy contract
+    // ========================
+    const signers = await ethers.getSigners();
+    const gravityId = ethers.utils.formatBytes32String("foo");
+    // This is the power distribution on the Cosmos hub as of 7/14/2020
+    let powers = examplePowers();
+    let validators = signers.slice(0, powers.length);
+    const powerThreshold = 6666;
+    const {
+        gravity,
+        testERC20,
+        checkpoint: deployCheckpoint
+    } = await deployContracts(gravityId, validators, powers, powerThreshold);
+
+
+    if (!opts.isRelayerAdmin) {
+        await gravity.connect(signers[1]).transferRelayerAdmin(signers[1].address);
+    }
+
+}
+
+describe("transferRelayerAdmin tests", function () {
+    it("Only relayerAdmin can call transferRelayerAdmin", async function () {
+        await expect(runTest({
+            isRelayerAdmin: false
+        })).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("old relayAdmin have no role after transferred", async function () {
+        await expect(runTest({
+            isRelayerAdmin: true
+        })).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+});
