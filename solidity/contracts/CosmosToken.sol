@@ -21,7 +21,7 @@ contract CosmosERC20 is ERC20 {
 		string memory _name,
 		string memory _symbol,
 		uint8 _decimals
-	) public ERC20(_name, _symbol)  {
+	) ERC20(_name, _symbol)  {
 		cosmosDecimals = _decimals;
 		gravity = _gravityAddress;
 		_mint(_gravityAddress, MAX_UINT);

@@ -38,7 +38,7 @@ async function prepareTxBatch(batchSize: number, signers: Signer[]) {
   };
 }
 
-async function sendToCosmos(
+async function sendToCronos(
   gravity: Gravity,
   testERC20: TestERC20A,
   numCoins: number
@@ -46,9 +46,9 @@ async function sendToCosmos(
   // Transfer out to Cosmos, locking coins
   // =====================================
   await testERC20.functions.approve(gravity.address, numCoins);
-  await gravity.functions.sendToCosmos(
+  await gravity.functions.sendToCronos(
     testERC20.address,
-    ethers.utils.formatBytes32String("myCosmosAddress"),
+    "0xffffffffffffffffffffffffffffffffffffffff",
     numCoins
   );
 }
@@ -72,12 +72,22 @@ async function prep() {
     powerThreshold
   );
 
+  await gravity.grantRole(
+    await gravity.RELAYER(),
+    signers[0].address,
+  );
+
   const ReentrantERC20Contract = await ethers.getContractFactory(
     "ReentrantERC20"
   );
   const reentrantERC20 = (await ReentrantERC20Contract.deploy(
     gravity.address
   )) as ReentrantERC20;
+
+  await gravity.grantRole(
+    await gravity.RELAYER(),
+    reentrantERC20.address,
+  );
 
   return {
     signers,
@@ -102,18 +112,18 @@ async function runSubmitBatchTest(opts: { batchSize: number }) {
 
   // Lock tokens in gravity
   // ====================
-  await sendToCosmos(gravity, testERC20, 1000);
+  await sendToCronos(gravity, testERC20, 1000);
 
   expect(
     (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
-    "gravity does not have correct balance after sendToCosmos"
+    "gravity does not have correct balance after sendToCronos"
   ).to.equal(1000);
 
   expect(
     (
       await testERC20.functions.balanceOf(await signers[0].getAddress())
     )[0].toNumber(),
-    "msg.sender does not have correct balance after sendToCosmos"
+    "msg.sender does not have correct balance after sendToCronos"
   ).to.equal(9000);
 
   // Prepare tx batch
@@ -228,18 +238,18 @@ async function runLogicCallTest(opts: {
 
   // Lock tokens in gravity
   // ====================
-  await sendToCosmos(gravity, testERC20, 1000);
+  await sendToCronos(gravity, testERC20, 1000);
 
   expect(
     (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
-    "gravity does not have correct balance after sendToCosmos"
+    "gravity does not have correct balance after sendToCronos"
   ).to.equal(1000);
 
   expect(
     (
       await testERC20.functions.balanceOf(await signers[0].getAddress())
     )[0].toNumber(),
-    "msg.sender does not have correct balance after sendToCosmos"
+    "msg.sender does not have correct balance after sendToCronos"
   ).to.equal(9000);
 
   // Preparing tx batch
