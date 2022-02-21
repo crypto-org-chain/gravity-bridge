@@ -28,6 +28,7 @@ async function runTest(opts: {
   withReward?: boolean;
   notEnoughPowerNewSet?: boolean;
   zeroLengthValset?: boolean;
+  relayerNotSet?: boolean;
 }) {
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
@@ -42,6 +43,13 @@ async function runTest(opts: {
     testERC20,
     checkpoint: deployCheckpoint
   } = await deployContracts(gravityId, validators, powers,powerThreshold);
+
+  if (!opts.relayerNotSet) {
+    await gravity.grantRole(
+      await gravity.RELAYER(),
+      signers[0].address,
+    );
+  }
 
   let newPowers = examplePowers();
   newPowers[0] -= 3;
@@ -254,6 +262,15 @@ describe("updateValset tests", function () {
     let { gravity, checkpoint } = await runTest({ withReward: true });
     expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
   });
+
+  it("throws on relayer not set", async function () {
+    const relayerHash = "0xab4f864e5201b0fde9b5ee3e4cf96384802b0ffdfcf7f9de4699ce21a30afc4f" // keccak256("RELAYER")
+    const signers = await ethers.getSigners();
+    await expect(runTest({ relayerNotSet: true })).to.be.revertedWith(
+        `AccessControl: account ${signers[0].address.toLowerCase()} is missing role ${relayerHash}`
+    );
+  });
+
 
   it("happy path", async function () {
     let { gravity, checkpoint } = await runTest({});

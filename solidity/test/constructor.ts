@@ -53,7 +53,9 @@ describe("constructor tests", function() {
 
 
     await expect(
-      deployContracts(gravityId, validators, powers,0)
+        deployContracts(gravityId, validators, powers,0, {
+          relayerAdminAddress: signers[0].address
+        })
     ).to.be.revertedWith(
       "InsufficientPower(0, 0)"
     );
