@@ -1,7 +1,5 @@
 use crate::application::APP;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
-use signatory::FsKeyStore;
-use std::path::Path;
 
 /// Delete a Cosmos Key
 #[derive(Command, Debug, Default, Parser)]
@@ -13,13 +11,11 @@ pub struct DeleteCosmosKeyCmd {
 impl Runnable for DeleteCosmosKeyCmd {
     fn run(&self) {
         let config = APP.config();
-        // Path where key is stored.
-        let keystore = Path::new(&config.keystore);
-        let keystore = signatory::FsKeyStore::create_or_open(keystore).unwrap();
+        let keystore = &config.keystore;
         // Collect key name from args.
         let name = self.args.get(0).expect("name is required");
         let name = name.parse().expect("Could not parse name");
         // Delete keyname after locating file from path and key name.
-        let _delete_key = FsKeyStore::delete(&keystore, &name).unwrap();
+        let _delete_key = keystore.delete(&name).unwrap();
     }
 }

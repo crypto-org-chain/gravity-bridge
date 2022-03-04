@@ -6,6 +6,8 @@ edition = "2021"
 rust-version = "1.56"
 
 [dependencies]
+aws-config = "0.4"
+aws-sdk-secretsmanager = "0.4"
 clap = "3"
 serde = { version = "1", features = ["serde_derive"] }
 thiserror = "1"

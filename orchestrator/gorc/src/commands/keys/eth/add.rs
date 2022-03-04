@@ -3,8 +3,7 @@ use crate::application::APP;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
 use k256::pkcs8::ToPrivateKey;
 use rand_core::OsRng;
-use signatory::FsKeyStore;
-use std::path;
+use crate::config::Keystore;
 
 /// Add a new Eth Key
 #[derive(Command, Debug, Default, Parser)]
@@ -23,8 +22,7 @@ pub struct AddEthKeyCmd {
 impl Runnable for AddEthKeyCmd {
     fn run(&self) {
         let config = APP.config();
-        let keystore = path::Path::new(&config.keystore);
-        let keystore = FsKeyStore::create_or_open(keystore).expect("Could not open keystore");
+        let keystore = &config.keystore;
 
         let name = self.args.get(0).expect("name is required");
         let name = name.parse().expect("Could not parse name");
@@ -36,8 +34,13 @@ impl Runnable for AddEthKeyCmd {
         }
 
         let mnemonic = bip32::Mnemonic::random(&mut OsRng, Default::default());
-        eprintln!("**Important** record this bip39-mnemonic in a safe place:");
-        println!("{}", mnemonic.phrase());
+        match &config.keystore {
+            Keystore::File(_path) => {
+                eprintln!("**Important** record this bip39-mnemonic in a safe place:");
+                println!("{}", mnemonic.phrase());
+            }
+            Keystore::Aws => {}
+        }
 
         let seed = mnemonic.to_seed("");
 

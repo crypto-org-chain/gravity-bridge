@@ -1,5 +1,5 @@
 use super::show::ShowCosmosKeyCmd;
-use crate::application::APP;
+use crate::{application::APP, config::Keystore};
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
 use std::path::Path;
 
@@ -11,18 +11,20 @@ pub struct ListCosmosKeyCmd {}
 impl Runnable for ListCosmosKeyCmd {
     fn run(&self) {
         let config = APP.config();
-        let keystore = Path::new(&config.keystore);
+        if let Keystore::File(path) = &config.keystore {
+            let keystore = Path::new(&path);
 
-        for entry in keystore.read_dir().expect("Could not read keystore") {
-            let path = entry.unwrap().path();
-            if path.is_file() {
-                if let Some(extension) = path.extension() {
-                    if extension == "pem" {
-                        let name = path.file_stem().unwrap();
-                        let name = name.to_str().unwrap();
-                        let args = vec![name.to_string()];
-                        let show_cmd = ShowCosmosKeyCmd { args };
-                        show_cmd.run();
+            for entry in keystore.read_dir().expect("Could not read keystore") {
+                let path = entry.unwrap().path();
+                if path.is_file() {
+                    if let Some(extension) = path.extension() {
+                        if extension == "pem" {
+                            let name = path.file_stem().unwrap();
+                            let name = name.to_str().unwrap();
+                            let args = vec![name.to_string()];
+                            let show_cmd = ShowCosmosKeyCmd { args };
+                            show_cmd.run();
+                        }
                     }
                 }
             }

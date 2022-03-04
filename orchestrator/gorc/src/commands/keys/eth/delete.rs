@@ -1,7 +1,5 @@
 use crate::application::APP;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
-use signatory::FsKeyStore;
-use std::path;
 
 /// Delete an Eth Key
 #[derive(Command, Debug, Default, Parser)]
@@ -14,8 +12,7 @@ pub struct DeleteEthKeyCmd {
 impl Runnable for DeleteEthKeyCmd {
     fn run(&self) {
         let config = APP.config();
-        let keystore = path::Path::new(&config.keystore);
-        let keystore = FsKeyStore::create_or_open(keystore).expect("Could not open keystore");
+        let keystore = &config.keystore;
 
         let name = self.args.get(0).expect("name is required");
         let name = name.parse().expect("Could not parse name");

@@ -1,6 +1,5 @@
 use crate::application::APP;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
-use std::path;
 
 /// Rename a Cosmos Key
 #[derive(Command, Debug, Default, Parser)]
@@ -15,8 +14,7 @@ pub struct RenameCosmosKeyCmd {
 impl Runnable for RenameCosmosKeyCmd {
     fn run(&self) {
         let config = APP.config();
-        let keystore = path::Path::new(&config.keystore);
-        let keystore = signatory::FsKeyStore::create_or_open(keystore).unwrap();
+        let keystore = &config.keystore;
 
         let name = self.args.get(0).expect("name is required");
         let name = name.parse().expect("Could not parse name");

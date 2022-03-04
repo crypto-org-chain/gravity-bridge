@@ -2,8 +2,6 @@ use super::show::ShowEthKeyCmd;
 use crate::application::APP;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
 use k256::pkcs8::ToPrivateKey;
-use signatory::FsKeyStore;
-use std::path;
 
 /// Recover an Eth Key
 #[derive(Command, Debug, Default, Parser)]
@@ -23,8 +21,7 @@ pub struct RecoverEthKeyCmd {
 impl Runnable for RecoverEthKeyCmd {
     fn run(&self) {
         let config = APP.config();
-        let keystore = path::Path::new(&config.keystore);
-        let keystore = FsKeyStore::create_or_open(keystore).expect("Could not open keystore");
+        let keystore = &config.keystore;
 
         let name = self.args.get(0).expect("name is required");
         let name = name.parse().expect("Could not parse name");
