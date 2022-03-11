@@ -1,6 +1,7 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
@@ -9,6 +10,8 @@ import "./Gravity.sol";
 pragma experimental ABIEncoderV2;
 
 contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
+    using SafeERC20 for IERC20;
+
     bytes32 public constant RELAYER = keccak256("RELAYER");
     bytes32 public constant RELAYER_ADMIN = keccak256("RELAYER_ADMIN");
 
@@ -37,13 +40,40 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
         _setRoleAdmin(RELAYER_ADMIN, RELAYER_ADMIN);
     }
 
+    // Admin functionalities: Those functions are intended to be removed in long term by setting the owner to zero address
+    // however since the gravity is still in an experimental stage, safe guards are needed
+
+    /**
+    * Only owner
+    * pause will deactivate contract functionalities
+    */
     function pause() public onlyOwner {
         _pause();
     }
 
+    /**
+    * Only owner
+    * unpause will re activate contract functionalities
+    */
     function unpause() public onlyOwner {
         _unpause();
     }
+
+    /**
+    * Only owner
+    * migrateToken allows to migrate locked fund to a new gravity contract
+    * in case we need to upgrade it
+    */
+    function migrateToken(
+        address _tokenContract,
+        address _destination,
+        uint256 _amount
+    ) public onlyOwner {
+        IERC20(_tokenContract).safeTransfer(_destination, _amount);
+    }
+
+    // Pausable functionalities:
+    // Those functions override the basic functionalities of the gravity contract
 
     function updateValset(
         // The new version of the validator set
@@ -116,4 +146,5 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
         grantRole(RELAYER_ADMIN, _newAdmin);
         revokeRole(RELAYER_ADMIN, msg.sender);
     }
+
 }
