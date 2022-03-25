@@ -13,6 +13,8 @@ use orchestrator::main_loop::{
 };
 use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
 use std::{cmp::min, sync::Arc};
+use gravity_utils::types::config::RelayerMode;
+use std::str::FromStr;
 
 /// Start the Orchestrator
 #[derive(Command, Debug, Parser)]
@@ -27,7 +29,7 @@ pub struct StartCommand {
     orchestrator_only: bool,
 
     #[clap(short, long)]
-    always_relay: bool,
+    mode: Option<String>,
 }
 
 impl Runnable for StartCommand {
@@ -102,6 +104,11 @@ impl Runnable for StartCommand {
 
             let gas_price = config.cosmos.gas_price.as_tuple();
 
+            let default_mode = String::from("Api");
+            let mode_str = self.mode.as_ref().unwrap_or(&default_mode);
+            let mode = RelayerMode::from_str(mode_str).expect("Incorrect mode, possible value are: AlwaysRelay, Api or File");
+            info!("relayer using mode {}", mode);
+
             orchestrator_main_loop(
                 cosmos_key,
                 contact,
@@ -115,7 +122,7 @@ impl Runnable for StartCommand {
                 config.cosmos.gas_adjustment,
                 self.orchestrator_only,
                 config.cosmos.msg_batch_size,
-                self.always_relay,
+                mode,
             )
             .await;
         })

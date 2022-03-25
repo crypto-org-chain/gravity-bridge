@@ -32,6 +32,8 @@ use std::process::exit;
 use std::{net, time::Duration};
 use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
+use gravity_utils::types::config::RelayerMode;
+use relayer::fee_manager::FeeManager;
 
 /// The execution speed governing all loops in this file
 /// which is to say all loops started by Orchestrator main
@@ -59,7 +61,7 @@ pub async fn orchestrator_main_loop(
     gas_adjustment: f64,
     relayer_opt_out: bool,
     cosmos_msg_batch_size: u32,
-    always_relay: bool,
+    mode: RelayerMode,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
@@ -94,12 +96,14 @@ pub async fn orchestrator_main_loop(
     let d = metrics_main_loop(metrics_listen);
 
     if !relayer_opt_out {
+        let mut fee_manager = FeeManager::new_fee_manager(mode).await;
+
         let e = relayer_main_loop(
             eth_client.clone(),
             grpc_client.clone(),
             gravity_contract_address,
             eth_gas_price_multiplier,
-            always_relay
+            &mut fee_manager
         );
         futures::future::join5(a, b, c, d, e).await;
     } else {

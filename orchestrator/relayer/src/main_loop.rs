@@ -5,11 +5,9 @@ use crate::{
 use ethereum_gravity::{types::EthClient, utils::get_gravity_id, logic_call::LogicCallSkips};
 use ethers::types::Address as EthAddress;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use std::{
-    collections::HashMap,
-    time::{Duration, Instant},
-};
+use std::time::Duration;
 use tonic::transport::Channel;
+use crate::fee_manager::FeeManager;
 
 pub const LOOP_SPEED: Duration = Duration::from_secs(17);
 
@@ -21,10 +19,9 @@ pub async fn relayer_main_loop(
     grpc_client: GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
     eth_gas_price_multiplier: f32,
-    always_relay: bool,
+    fee_manager: &mut FeeManager,
 ) {
     let mut grpc_client = grpc_client;
-    let mut next_batch_send_time: HashMap<EthAddress, Instant> = HashMap::new();
 
     let gravity_id = get_gravity_id(gravity_contract_address, eth_client.clone()).await;
     if gravity_id.is_err() {
@@ -67,8 +64,7 @@ pub async fn relayer_main_loop(
                     gravity_id.clone(),
                     LOOP_SPEED,
                     eth_gas_price_multiplier,
-                    &mut next_batch_send_time,
-                    always_relay
+                    fee_manager,
                 )
                 .await;
 
