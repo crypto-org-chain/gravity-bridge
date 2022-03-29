@@ -9,12 +9,11 @@ use std::collections::HashMap;
 use std::time::Duration;
 use std::time::Instant;
 use gravity_utils::types::config::RelayerMode;
-use serde_json::Map;
 use reqwest::Error;
 
 pub struct FeeManager {
-    token_price_map: Map<String, serde_json::Value>,
-    token_api_path_map: Map<String, serde_json::Value>,
+    token_price_map: HashMap<String, String>,
+    token_api_url_map: HashMap<String, String>,
     next_batch_send_time: HashMap<EthAddress, Instant>,
     mode: RelayerMode,
 }
@@ -27,25 +26,29 @@ struct ApiResponse {
 
 #[derive(serde::Deserialize, Debug)]
 struct ApiResult {
-    token_pair_decimal: u32,
-    aggregated_price: f64,
+    tokenPairDecimal: u32,
+    aggregatedPrice: f64,
 }
 
 impl FeeManager {
     pub async fn new_fee_manager(mode: RelayerMode) -> FeeManager {
         let mut fm =  Self {
             token_price_map: Default::default(),
-            token_api_path_map: Default::default(),
+            token_api_url_map: Default::default(),
             next_batch_send_time: HashMap::new(),
             mode
         };
 
-        fm.init()
+        let success = fm.init()
             .await;
+
+        if !success {
+            panic!("Could not initialize fee manager");
+        }
         return fm;
     }
 
-    async fn init(&mut self) {
+    async fn init(&mut self) -> bool {
         match self.mode {
             RelayerMode::Api => {
                 let token_addresses_path =
@@ -53,20 +56,37 @@ impl FeeManager {
 
                 let token_addresses_str = match tokio::fs::read_to_string(token_addresses_path).await {
                     Err(err) => {
-                        panic!("Error while fetching token pair addresses {}", err);
+                        error!("Error while fetching token pair addresses {}", err);
+                        return false;
                     }
                     Ok(value) => value,
                 };
 
-                let token_addresses: serde_json::Map<String, serde_json::Value> = match serde_json::from_str(&token_addresses_str)
+                let token_addresses: HashMap<String, String> = match serde_json::from_str(&token_addresses_str)
                 {
                     Err(err) => {
-                        panic!("Error while parsing token pair addresses json configuration: {}", err);
+                        error!("Error while parsing token pair addresses json configuration: {}", err);
+                        return false;
                     }
                     Ok(token_addresses) => token_addresses,
                 };
 
-                self.token_api_path_map = token_addresses;
+                let api_url =
+                    std::env::var("TOKEN_API_URL").unwrap_or_else(|_| "https://cronos.org/gravity-testnet2/api/v1/oracle/quotes".to_owned());
+
+                for (key, value) in token_addresses.into_iter() {
+                    if value == "ETH" {
+                        self.token_api_url_map.insert(key, String::from("ETH"));
+                    } else {
+                        let request_url = format!("{url}/{pair}",
+                                                  url = api_url,
+                                                  pair = value);
+
+                        self.token_api_url_map.insert(key, request_url);
+                    }
+                }
+
+                return true;
             }
             RelayerMode::File => {
                 let config_file_path =
@@ -74,22 +94,27 @@ impl FeeManager {
 
                 let config_str = match tokio::fs::read_to_string(config_file_path).await {
                     Err(err) => {
-                        panic!("Error while fetching token prices {}", err);
+                        error!("Error while fetching token prices {}", err);
+                        return false;
                     }
                     Ok(value) => value,
                 };
 
-                let config: serde_json::Map<String, serde_json::Value> = match serde_json::from_str(&config_str)
+                let config: HashMap<String, String> = match serde_json::from_str(&config_str)
                 {
                     Err(err) => {
-                        panic!("Error while parsing token prices json configuration: {}", err);
+                        error!("Error while parsing token prices json configuration: {}", err);
+                        return false;
                     }
                     Ok(config) => config,
                 };
 
                 self.token_price_map = config;
+                return true;
             }
-            _ => {}
+            _ => {
+                return true;
+            }
         }
     }
 
@@ -146,64 +171,47 @@ impl FeeManager {
     async fn get_token_price(&mut self, contract_address: &EthAddress) -> Result<U256, ()> {
         match self.mode {
             RelayerMode::Api => {
-                if self.token_api_path_map.contains_key(&*format_eth_address(*contract_address)) {
-                    let token_path = self.token_api_path_map
-                        .get(&*format_eth_address(*contract_address))
-                        .ok_or_else(|| ())?;
+                if self.token_api_url_map.contains_key(&*format_eth_address(*contract_address)) {
+                    let api_url = self.token_api_url_map
+                        .get(&*format_eth_address(*contract_address));
 
-                    match token_path.as_str() {
-                        None => {
-                            log::error!("Expected token pair in string format");
-                            return Err(());
-                        }
-                        Some(token_path_str) => {
-                            // Return because gas price is quoted in ETH
-                            if token_path_str == "ETH" {
-                                return Ok(U256::from(1))
-                            }
-                            let api_url =
-                                std::env::var("TOKEN_API_URL").unwrap_or_else(|_| "https://cronos.org/gravity-testnet2/api/v1/oracle/quotes".to_owned());
-                            let request_url = format!("{url}/{pair}",
-                                                      url = api_url,
-                                                      pair = token_path_str);
-                            let response = reqwest::get(&request_url).await.expect("Cannot parse response from oracle");
-                            let result : ApiResponse = response.json().await.expect("Cannot parse result from oracle");
-                            // TODO to be updated with new oracle API
-                            let token_price = result.result.aggregated_price * (i32::pow(10, result.result.token_pair_decimal) as f64);
-                            let token_price_u64=  U256::from_dec_str(&token_price.to_string()).expect("Cannot convert token price");
-                            return Ok(token_price_u64);
-                        }
+                    if api_url.is_none() {
+                        log::error!("Api url expected to be string format");
+                        return Err(());
                     }
+                    let request_url = api_url.unwrap();
+
+                    // Return because gas price is quoted in ETH
+                    if request_url == "ETH" {
+                        return Ok(U256::from(1))
+                    }
+
+                    let response = reqwest::get(request_url).await.expect("Cannot parse response from oracle");
+                    let result : ApiResponse = response.json().await.expect("Cannot parse result from oracle");
+                    // TODO to be updated with new oracle API
+                    let token_price = result.result.aggregatedPrice * (i32::pow(10, result.result.tokenPairDecimal) as f64);
+                    let token_price_u64=  U256::from_dec_str(&token_price.to_string()).expect("Cannot convert token price");
+                    return Ok(token_price_u64);
                 } else {
                     log::error!("contract address cannot be found in token pair");
                     return Err(());
                 }
             }
             RelayerMode::File => {
-                let token_price = self.token_price_map
-                    .get(&*format_eth_address(*contract_address))
-                    .ok_or_else(|| ())?;
+                let token_price = self.token_price_map.get(&format_eth_address(*contract_address));
 
-                if !token_price.is_string() {
-                    log::error!("Expected token price in string format");
+                if token_price.is_none() {
+                    info!("Cannot find token price in map");
                     return Err(());
                 }
+                let token_price_str = token_price.unwrap();
+                let token_price = U256::from_dec_str(token_price_str);
 
-                match token_price.as_str() {
-                    None => {
-                        log::error!("Expected token price in string format");
-                        return Err(());
-                    }
-                    Some(token_price_str) => {
-                        let token_price = U256::from_dec_str(token_price_str);
-
-                        if token_price.is_err() {
-                            log::error!("Unable to parse token price");
-                        }
-
-                        return token_price.map_err(|_| ())
-                    }
+                if token_price.is_err() {
+                    log::error!("Unable to parse token price");
                 }
+                return token_price.map_err(|_| ())
+
             }
             _ => { return Err(());}
         }
