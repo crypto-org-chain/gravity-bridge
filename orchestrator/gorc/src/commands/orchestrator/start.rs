@@ -107,7 +107,7 @@ impl Runnable for StartCommand {
             let default_mode = String::from("Api");
             let mode_str = self.mode.as_ref().unwrap_or(&default_mode);
             let mode = RelayerMode::from_str(mode_str).expect("Incorrect mode, possible value are: AlwaysRelay, Api or File");
-            info!("relayer using mode {}", mode);
+            info!("Relayer using mode {:?}", mode);
 
             orchestrator_main_loop(
                 cosmos_key,

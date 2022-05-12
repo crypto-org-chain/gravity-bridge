@@ -13,7 +13,7 @@ use reqwest::Error;
 
 const DEFAULT_TOKEN_PRICES_PATH: &str = "token_prices.json";
 const DEFAULT_TOKEN_ADDRESSES_PATH: &str = "token_addresses.json";
-const DEFAULT_RELAYER_API_URL:  &str = "https://cronos.org/gravity-testnet2/api/v1/oracle/quotes";
+const DEFAULT_RELAYER_API_URL: &str = "https://cronos.org/gravity-testnet2/api/v1/oracle/query";
 
 pub struct FeeManager {
     token_price_map: HashMap<String, String>,
@@ -31,7 +31,7 @@ struct ApiResponse {
 #[derive(serde::Deserialize, Debug)]
 struct ApiResult {
     tokenPairDecimal: u32,
-    aggregatedPrice: f64,
+    aggregatedPriceBn: String,
 }
 
 impl FeeManager {
@@ -43,40 +43,34 @@ impl FeeManager {
             mode
         };
 
-        let success = fm.init().await.unwrap();
-        if !success {
-            return Err(error!("Could not initialize fee manager"));
-        }
+        fm.init().await;
         return Ok(fm);
     }
 
-    async fn init(&mut self) -> Result<bool, ()> {
+    async fn init(&mut self) -> Result<(), ()> {
         match self.mode {
             RelayerMode::Api => {
-                return self.initWithApi().await;
+                self.initWithApi().await;
             }
             RelayerMode::File => {
-                return self.initWithFile().await;
+                self.initWithFile().await;
             }
             RelayerMode::AlwaysRelay => {
-                return Ok(true);
-            }
-            _ => {
-                return Ok(false);
             }
         }
+        return Ok(());
     }
 
-    async fn initWithApi(&mut self) -> Result<bool, ()> {
+    async fn initWithApi(&mut self) -> Result<(), ()> {
         let token_addresses_path =
             std::env::var("TOKEN_ADDRESSES_JSON").unwrap_or_else(|_| DEFAULT_TOKEN_ADDRESSES_PATH.to_owned());
 
-        let token_addresses_str = match tokio::fs::read_to_string(token_addresses_path).await {
-            Err(err) => {
-                return Err(error!("Error while fetching token pair addresses {}", err));
-            }
-            Ok(value) => value,
-        };
+        let token_addresses_str = tokio::fs::read_to_string(token_addresses_path)
+            .await
+            .map_err(|e| {
+                error!("Error while fetching token pair addresses {}", e);
+                ()
+            })?;
 
         let token_addresses: HashMap<String, String> = match serde_json::from_str(&token_addresses_str)
         {
@@ -101,10 +95,10 @@ impl FeeManager {
             }
         }
 
-        return Ok(true);
+        return Ok(());
     }
 
-    async fn initWithFile(&mut self) -> Result<bool, ()> {
+    async fn initWithFile(&mut self) -> Result<(), ()> {
         let config_file_path =
             std::env::var("TOKEN_PRICES_JSON").unwrap_or_else(|_| DEFAULT_TOKEN_PRICES_PATH.to_owned());
 
@@ -124,7 +118,7 @@ impl FeeManager {
         };
 
         self.token_price_map = config;
-        return Ok(true);
+        return Ok(());
     }
 
     // A batch can be send either if
@@ -156,7 +150,7 @@ impl FeeManager {
         };
 
         let estimated_fee = estimated_cost.get_total();
-        let batch_value = batch_fee.amount.clone() * token_price;
+        let batch_value = batch_fee.amount * token_price;
 
         info!("estimate cost is {}, batch value is {}", estimated_fee, batch_value);
         batch_value >= estimated_fee
@@ -183,18 +177,17 @@ impl FeeManager {
                 return if let Some(request_url) = self.token_api_url_map.get(&format_eth_address(*contract_address)) {
                     // Return because gas price is quoted in ETH
                     if request_url == "ETH" {
-                        return Ok(U256::from(1))
+                        return U256::from_dec_str("1").map_err(|e| {
+                            error!("Cannot convert decimal to u256");
+                            ()})
                     }
 
                     let response = reqwest::get(request_url)
                         .await.map_err(|e| error!("Cannot parse response from oracle")).unwrap();
                     let result: ApiResponse = response.json()
                         .await.map_err(|e| error!("Cannot parse result from oracle")).unwrap();
-                    // TODO to be updated with new oracle API
-                    let token_price = result.result.aggregatedPrice * (i32::pow(10, result.result.tokenPairDecimal) as f64);
-                    let token_price_u64 = U256::from_dec_str(&token_price.to_string())
-                        .map_err(|e| error!("Cannot convert token price")).unwrap();
-                    Ok(token_price_u64)
+                    return U256::from_dec_str(&result.result.aggregatedPriceBn)
+                        .map_err(|e| error!("Cannot convert token price"));
                 } else {
                     log::error!("contract address cannot be found in token pair");
                     Err(())

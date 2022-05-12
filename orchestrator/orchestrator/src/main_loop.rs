@@ -96,7 +96,8 @@ pub async fn orchestrator_main_loop(
     let d = metrics_main_loop(metrics_listen);
 
     if !relayer_opt_out {
-        let mut fee_manager = FeeManager::new_fee_manager(mode).await;
+        let mut fee_manager = FeeManager::new_fee_manager(mode)
+            .await.unwrap();
 
         let e = relayer_main_loop(
             eth_client.clone(),
