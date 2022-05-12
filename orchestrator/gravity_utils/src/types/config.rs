@@ -13,20 +13,10 @@ pub enum RelayerMode {
     File,
 }
 
-impl fmt::Display for RelayerMode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
 impl FromStr for RelayerMode {
     type Err = ();
     fn from_str(input: &str) -> Result<RelayerMode, Self::Err> {
-        match input {
-            "AlwaysRelay"  => Ok(RelayerMode::AlwaysRelay),
-            "Api"  => Ok(RelayerMode::Api),
-            "File"  => Ok(RelayerMode::File),
-            _      => Err(()),
-        }
+        let mode = RelayerMode::from_str(input).unwrap();
+        return Ok(mode);
     }
 }
