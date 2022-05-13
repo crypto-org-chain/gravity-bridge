@@ -72,13 +72,11 @@ impl FeeManager {
                 ()
             })?;
 
-        let token_addresses: HashMap<String, String> = match serde_json::from_str(&token_addresses_str)
-        {
-            Err(err) => {
-                return Err(error!("Error while parsing token pair addresses json configuration: {}", err));
-            }
-            Ok(token_addresses) => token_addresses,
-        };
+        let token_addresses: HashMap<String, String> = serde_json::from_str(&token_addresses_str)
+            .map_err(|e| {
+                error!("Error while parsing token pair addresses json configuration: {}", e);
+                ()
+            })?;
 
         let api_url =
             std::env::var("TOKEN_API_URL").unwrap_or_else(|_| DEFAULT_RELAYER_API_URL.to_owned());
@@ -102,20 +100,18 @@ impl FeeManager {
         let config_file_path =
             std::env::var("TOKEN_PRICES_JSON").unwrap_or_else(|_| DEFAULT_TOKEN_PRICES_PATH.to_owned());
 
-        let config_str = match tokio::fs::read_to_string(config_file_path).await {
-            Err(err) => {
-                return Err(error!("Error while fetching token prices {}", err));
-            }
-            Ok(value) => value,
-        };
+        let config_str = tokio::fs::read_to_string(config_file_path)
+            .await
+            .map_err(|e| {
+                error!("Error while fetching token prices {}", e);
+                ()
+            })?;
 
-        let config: HashMap<String, String> = match serde_json::from_str(&config_str)
-        {
-            Err(err) => {
-                return Err(error!("Error while parsing token prices json configuration: {}", err));
-            }
-            Ok(config) => config,
-        };
+        let config: HashMap<String, String> = serde_json::from_str(&config_str)
+            .map_err(|e| {
+                error!("Error while parsing token pair prices json configuration: {}", e);
+                ()
+            })?;
 
         self.token_price_map = config;
         return Ok(());
@@ -195,14 +191,11 @@ impl FeeManager {
             }
             RelayerMode::File => {
                 return if let Some(token_price_str) = self.token_price_map.get(&format_eth_address(*contract_address)) {
-                    let token_price = U256::from_dec_str(token_price_str);
-
-                    if token_price.is_err() {
-                        log::error!("Unable to parse token price");
-                    }
-                    token_price.map_err(|_| ())
+                    let token_price = U256::from_dec_str(token_price_str)
+                        .map_err(|_| {log::error!("Unable to parse token price"); ()})?;
+                    return Ok(token_price)
                 } else {
-                    info!("Cannot find token price in map");
+                    error!("Cannot find token price in map");
                     Err(())
                 }
             }
