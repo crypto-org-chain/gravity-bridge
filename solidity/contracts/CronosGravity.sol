@@ -20,6 +20,17 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
     //        _;
     //    }
 
+    bool public anyoneCanRelay;
+
+    event AnyoneCanRelay(bool anyoneCanRelay);
+
+    modifier checkWhiteList() {
+        if (!anyoneCanRelay) {
+                _checkRole(RELAYER, msg.sender);
+            }
+        _;
+    }
+
     constructor (
         // A unique identifier for this gravity instance to use in signatures
         bytes32 _gravityId,
@@ -82,7 +93,7 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
         ValsetArgs calldata _currentValset,
         // These are arrays of the parts of the current validator's signatures
         ValSignature[] calldata _sigs
-    ) public override whenNotPaused onlyRole(RELAYER) {
+    ) public override whenNotPaused checkWhiteList {
         super.updateValset(_newValset, _currentValset, _sigs);
     }
 
@@ -100,7 +111,7 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
         // a block height beyond which this batch is not valid
         // used to provide a fee-free timeout
         uint256 _batchTimeout
-    ) public override whenNotPaused onlyRole(RELAYER) {
+    ) public override whenNotPaused checkWhiteList {
         super.submitBatch(
             _currentValset, _sigs, _amounts,
             _destinations, _fees, _batchNonce, _tokenContract,
@@ -114,7 +125,7 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
         // These are arrays of the parts of the validators signatures
         ValSignature[] calldata _sigs,
         LogicCallArgs memory _args
-    ) public override whenNotPaused onlyRole(RELAYER) {
+    ) public override whenNotPaused checkWhiteList {
         super.submitLogicCall(
             _currentValset, _sigs, _args
         );
@@ -138,6 +149,13 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
         super.sendToCosmos(
             _tokenContract, _destination, _amount
         );
+    }
+
+    function setAnyoneCanRelay (
+        bool _anyoneCanRelay
+    ) public onlyRole(RELAYER_ADMIN) {
+        anyoneCanRelay = _anyoneCanRelay;
+        emit AnyoneCanRelay(anyoneCanRelay);
     }
 
     function transferRelayerAdmin (
