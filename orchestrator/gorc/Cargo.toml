@@ -10,6 +10,7 @@ aws-config = "0.4"
 aws-sdk-secretsmanager = "0.4"
 clap = "3"
 serde = { version = "1", features = ["serde_derive"] }
+serde-enum-str = "0.2.5"
 thiserror = "1"
 regex = "1.5.4"
 

@@ -2,15 +2,17 @@ use cosmos_gravity::crypto::DEFAULT_HD_PATH;
 use ethers::signers::LocalWallet as EthWallet;
 use aws_sdk_secretsmanager::client::Client;
 use serde::{Deserialize, Serialize};
+use serde_enum_str::{Deserialize_enum_str, Serialize_enum_str};
 use signatory::FsKeyStore;
 use std::io;
 use std::net::SocketAddr;
 use std::path::Path;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize_enum_str, Serialize_enum_str)]
 pub enum Keystore {
-    File(String),
     Aws,
+    #[serde(other)]
+    File(String),
 }
 
 impl Default for Keystore {
