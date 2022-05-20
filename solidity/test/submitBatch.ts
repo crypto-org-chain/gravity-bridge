@@ -29,6 +29,7 @@ async function runTest(opts: {
   malformedCurrentValset?: boolean;
   batchTimeout?: boolean;
   relayerNotSet?: boolean;
+  anyoneCanRelay?: boolean;
 }) {
   // Prep and deploy contract
   // ========================
@@ -50,6 +51,11 @@ async function runTest(opts: {
       signers[0].address,
     );
   }
+
+  if (opts.anyoneCanRelay) {
+    await gravity.setAnyoneCanRelay(true);
+  }
+
   // Transfer out to Cosmos, locking coins
   // =====================================
   await testERC20.functions.approve(gravity.address, 1000);
@@ -237,6 +243,10 @@ describe("submitBatch tests", function () {
     await expect(runTest({ relayerNotSet: true })).to.be.revertedWith(
         `AccessControl: account ${signers[0].address.toLowerCase()} is missing role ${relayerHash}`
     );
+  });
+
+  it("does not throw on anyone can relay", async function () {
+    await runTest({ relayerNotSet: true , anyoneCanRelay: true });
   });
 
   it("does not throw on barely enough signatures", async function () {
