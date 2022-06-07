@@ -1,5 +1,4 @@
 use serde_derive::Deserialize;
-use std::fmt;
 use std::str::FromStr;
 
 /// The various possible modes for relaying

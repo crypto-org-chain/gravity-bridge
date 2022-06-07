@@ -9,51 +9,44 @@ use std::collections::HashMap;
 use std::time::Duration;
 use std::time::Instant;
 use gravity_utils::types::config::RelayerMode;
-use reqwest::Error;
+use reqwest::{Client};
+use serde_json::json;
 
 const DEFAULT_TOKEN_PRICES_PATH: &str = "token_prices.json";
-const DEFAULT_TOKEN_ADDRESSES_PATH: &str = "token_addresses.json";
-const DEFAULT_RELAYER_API_URL: &str = "https://cronos.org/gravity-testnet2/api/v1/oracle/query";
+const DEFAULT_RELAYER_API_URL: &str = "https://cronos.3ona.co/cronos-gt-gravity-bridge-relayer-api/relayer";
 
 pub struct FeeManager {
     token_price_map: HashMap<String, String>,
-    token_api_url_map: HashMap<String, String>,
+    relayer_api_url: String,
     next_batch_send_time: HashMap<EthAddress, Instant>,
     mode: RelayerMode,
 }
 
 #[derive(serde::Deserialize, Debug)]
 struct ApiResponse {
-    status: String,
-    result: ApiResult,
-}
-
-#[derive(serde::Deserialize, Debug)]
-struct ApiResult {
-    tokenPairDecimal: u32,
-    aggregatedPriceBn: String,
+    profitable: bool,
+    in_blacklist: bool,
 }
 
 impl FeeManager {
     pub async fn new_fee_manager(mode: RelayerMode) -> Result<FeeManager, ()> {
         let mut fm =  Self {
             token_price_map: Default::default(),
-            token_api_url_map: Default::default(),
+            relayer_api_url: String::default(),
             next_batch_send_time: HashMap::new(),
             mode
         };
-
-        fm.init().await;
+        fm.init().await?;
         return Ok(fm);
     }
 
     async fn init(&mut self) -> Result<(), ()> {
         match self.mode {
             RelayerMode::Api => {
-                self.initWithApi().await;
+                self.init_with_api()?;
             }
             RelayerMode::File => {
-                self.initWithFile().await;
+                self.init_with_file().await?;
             }
             RelayerMode::AlwaysRelay => {
             }
@@ -61,42 +54,13 @@ impl FeeManager {
         return Ok(());
     }
 
-    async fn initWithApi(&mut self) -> Result<(), ()> {
-        let token_addresses_path =
-            std::env::var("TOKEN_ADDRESSES_JSON").unwrap_or_else(|_| DEFAULT_TOKEN_ADDRESSES_PATH.to_owned());
-
-        let token_addresses_str = tokio::fs::read_to_string(token_addresses_path)
-            .await
-            .map_err(|e| {
-                error!("Error while fetching token pair addresses {}", e);
-                ()
-            })?;
-
-        let token_addresses: HashMap<String, String> = serde_json::from_str(&token_addresses_str)
-            .map_err(|e| {
-                error!("Error while parsing token pair addresses json configuration: {}", e);
-                ()
-            })?;
-
-        let api_url =
-            std::env::var("TOKEN_API_URL").unwrap_or_else(|_| DEFAULT_RELAYER_API_URL.to_owned());
-
-        for (key, value) in token_addresses.into_iter() {
-            if value == "ETH" {
-                self.token_api_url_map.insert(key, String::from("ETH"));
-            } else {
-                let request_url = format!("{url}/{pair}",
-                                          url = api_url,
-                                          pair = value);
-
-                self.token_api_url_map.insert(key, request_url);
-            }
-        }
-
+    fn init_with_api(&mut self) -> Result<(), ()> {
+        self.relayer_api_url =
+            std::env::var("RELYAER_API_URL").unwrap_or_else(|_| DEFAULT_RELAYER_API_URL.to_owned());
         return Ok(());
     }
 
-    async fn initWithFile(&mut self) -> Result<(), ()> {
+    async fn init_with_file(&mut self) -> Result<(), ()> {
         let config_file_path =
             std::env::var("TOKEN_PRICES_JSON").unwrap_or_else(|_| DEFAULT_TOKEN_PRICES_PATH.to_owned());
 
@@ -127,29 +91,81 @@ impl FeeManager {
         batch_fee: &Erc20Token,
         contract_address: &EthAddress,
     ) -> bool {
-        if self.mode == RelayerMode::AlwaysRelay {
-            return true;
-        }
+        match self.mode {
+            RelayerMode::AlwaysRelay => {
+                return true;
+            }
+            RelayerMode::File => {
+                if self.should_send_at_non_profitable_cost(contract_address) {
+                    return true
+                }
+                let token_price = match self.get_token_price(&batch_fee.token_contract_address).await {
+                    Ok(token_price) => token_price,
+                    Err(_) => return false,
+                };
 
+                let estimated_fee = estimated_cost.get_total();
+                let batch_value = batch_fee.amount * token_price;
+
+                info!("estimate cost is {}, batch value is {}", estimated_fee, batch_value);
+                return batch_value >= estimated_fee
+            }
+            RelayerMode::Api => {
+                let body = json!({
+                    "batchFee": {
+                        "amount": batch_fee.amount.as_u64(),
+                        "tokenContractAddress": batch_fee.token_contract_address
+                    },
+                    "estimatedCost": {
+                        "gas": estimated_cost.gas.as_u64(),
+                        "gasPrice": estimated_cost.gas_price.as_u64()
+                    }}
+                );
+
+                return match Client::new()
+                    .post(self.relayer_api_url.as_str())
+                    .json(&body)
+                    .send().await {
+                    Ok(resp) => match resp.json().await {
+                        Ok(json) => {
+                            let api_response: ApiResponse = json;
+                            if api_response.in_blacklist {
+                                return false
+                            }
+                            {
+                                api_response.profitable ||
+                                    self.should_send_at_non_profitable_cost(contract_address)
+                            }
+                        }
+                        Err(err) => {
+                            error!("error on relayer api: {}", err);
+                            false
+                        }
+                    }
+                    Err(err) => {
+                        error!("error on relayer api: {}", err);
+                        false
+                    }
+                }
+            }
+        }
+    }
+
+    fn should_send_at_non_profitable_cost(
+        &mut self,
+        contract_address: &EthAddress,
+    ) -> bool {
         match self.next_batch_send_time.get(contract_address) {
             Some(time) => {
                 if *time < Instant::now() {
                     return true;
+                } else {
+                    return false;
                 }
             }
             None => self.update_next_batch_send_time(*contract_address),
         }
-
-        let token_price = match self.get_token_price(&batch_fee.token_contract_address).await {
-            Ok(token_price) => token_price,
-            Err(_) => return false,
-        };
-
-        let estimated_fee = estimated_cost.get_total();
-        let batch_value = batch_fee.amount * token_price;
-
-        info!("estimate cost is {}, batch value is {}", estimated_fee, batch_value);
-        batch_value >= estimated_fee
+        return true
     }
 
     pub fn update_next_batch_send_time(
@@ -168,38 +184,13 @@ impl FeeManager {
     }
 
     async fn get_token_price(&mut self, contract_address: &EthAddress) -> Result<U256, ()> {
-        match self.mode {
-            RelayerMode::Api => {
-                return if let Some(request_url) = self.token_api_url_map.get(&format_eth_address(*contract_address)) {
-                    // Return because gas price is quoted in ETH
-                    if request_url == "ETH" {
-                        return U256::from_dec_str("1").map_err(|e| {
-                            error!("Cannot convert decimal to u256");
-                            ()})
-                    }
-
-                    let response = reqwest::get(request_url)
-                        .await.map_err(|e| error!("Cannot parse response from oracle")).unwrap();
-                    let result: ApiResponse = response.json()
-                        .await.map_err(|e| error!("Cannot parse result from oracle")).unwrap();
-                    return U256::from_dec_str(&result.result.aggregatedPriceBn)
-                        .map_err(|e| error!("Cannot convert token price"));
-                } else {
-                    log::error!("contract address cannot be found in token pair");
-                    Err(())
-                }
-            }
-            RelayerMode::File => {
-                return if let Some(token_price_str) = self.token_price_map.get(&format_eth_address(*contract_address)) {
-                    let token_price = U256::from_dec_str(token_price_str)
-                        .map_err(|_| {log::error!("Unable to parse token price"); ()})?;
-                    return Ok(token_price)
-                } else {
-                    error!("Cannot find token price in map");
-                    Err(())
-                }
-            }
-            _ => {  Err(()) }
+        return if let Some(token_price_str) = self.token_price_map.get(&format_eth_address(*contract_address)) {
+            let token_price = U256::from_dec_str(token_price_str)
+                .map_err(|_| {log::error!("Unable to parse token price"); ()})?;
+            return Ok(token_price)
+        } else {
+            error!("Cannot find token price in map");
+            Err(())
         }
     }
 }
