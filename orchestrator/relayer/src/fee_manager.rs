@@ -157,11 +157,7 @@ impl FeeManager {
     ) -> bool {
         match self.next_batch_send_time.get(contract_address) {
             Some(time) => {
-                if *time < Instant::now() {
-                    return true;
-                } else {
-                    return false;
-                }
+                return *time < Instant::now()
             }
             None => self.update_next_batch_send_time(*contract_address),
         }
