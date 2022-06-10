@@ -12,17 +12,28 @@ use relayer::main_loop::{
     relayer_main_loop, LOOP_SPEED as RELAYER_LOOP_SPEED
 };
 use std::sync::Arc;
+use gravity_utils::types::config::RelayerMode;
+use std::str::FromStr;
+use relayer::fee_manager::FeeManager;
 
 /// Start the relayer
 #[derive(Command, Debug, Parser)]
 pub struct StartCommand {
     #[clap(short, long)]
     ethereum_key: String,
+
+    #[clap(short, long)]
+    mode: Option<String>,
 }
 
 impl Runnable for StartCommand {
     fn run(&self) {
         openssl_probe::init_ssl_cert_env_vars();
+
+        let default_mode = String::from("Api");
+        let mode_str = self.mode.as_ref().unwrap_or(&default_mode);
+        let mode = RelayerMode::from_str(mode_str).expect("Incorrect mode, possible value are: AlwaysRelay, Api or File");
+        info!("Relayer using mode {:?}", mode);
 
         let config = APP.config();
         let cosmos_prefix = config.cosmos.prefix.clone();
@@ -69,11 +80,15 @@ impl Runnable for StartCommand {
             // historic chain state while syncing occurs
             wait_for_cosmos_node_ready(&contact).await;
             check_for_eth(ethereum_address, eth_client.clone()).await;
+
+            let mut fee_manager = FeeManager::new_fee_manager(mode)
+                .await.unwrap();
             relayer_main_loop(
                 eth_client,
                 grpc,
                 contract_address,
                 config.ethereum.gas_price_multiplier,
+                &mut fee_manager
             )
                 .await;
 
