@@ -106,8 +106,10 @@ impl FeeManager {
                 };
 
                 let estimated_fee = estimated_cost.get_total();
-                let batch_value = batch_fee.amount * token_price;
-
+                let batch_value = batch_fee.amount.checked_mul(token_price).unwrap_or_else(|| {
+                    error!("estimate cost value exceeded");
+                    return U256::from(0);
+                });
                 info!("estimate cost is {}, batch value is {}", estimated_fee, batch_value);
                 return batch_value >= estimated_fee
             }
@@ -142,12 +144,12 @@ impl FeeManager {
                             }
                         }
                         Err(err) => {
-                            error!("error on relayer api: {}", err);
+                            error!("error deserializing response from relayer api: {}", err);
                             false
                         }
                     }
                     Err(err) => {
-                        error!("error on relayer api: {}", err);
+                        error!("error getting response from relayer api: {}", err);
                         false
                     }
                 }
@@ -168,7 +170,7 @@ impl FeeManager {
         return true
     }
 
-    pub fn update_next_batch_send_time(
+    pub (crate) fn update_next_batch_send_time(
         &mut self,
         contract_address: EthAddress,
     ) {
