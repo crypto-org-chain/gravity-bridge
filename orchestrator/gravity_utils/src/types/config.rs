@@ -1,8 +1,8 @@
 use serde_derive::Deserialize;
-use std::str::FromStr;
+use strum_macros::EnumString;
 
 /// The various possible modes for relaying
-#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone, EnumString)]
 pub enum RelayerMode {
     /// Always relay batches, profitable or not
     AlwaysRelay,
@@ -10,15 +10,4 @@ pub enum RelayerMode {
     Api,
     /// Use file to fetch the token price for the cost estimation
     File,
-}
-
-impl FromStr for RelayerMode {
-    type Err = ();
-    fn from_str(input: &str) -> Result<RelayerMode, Self::Err> {
-        let mode = RelayerMode::from_str(input).map_err(|_|{
-            error!("cannot parse mode from string");
-            ()
-        })?;
-        return Ok(mode);
-    }
 }
