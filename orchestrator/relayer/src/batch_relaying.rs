@@ -44,28 +44,10 @@ pub async fn relay_batches(
     eth_gas_price_multiplier: f32,
     fee_manager: &mut FeeManager,
 ) {
-    let mut possible_batches =
+    let possible_batches =
         get_batches_and_signatures(current_valset.clone(), grpc_client, gravity_id.clone()).await;
 
     debug!("possible batches {:?}", possible_batches);
-
-
-    let sb = SubmittableBatch {
-        batch: TransactionBatch {
-            nonce: 0,
-            batch_timeout: 0,
-            transactions: vec![],
-            total_fee: Erc20Token {
-                amount: U256::from_str("1").expect("bad"),
-                token_contract_address: EthAddress::from_str("0x2260fac5e5542a773aa44fbcfedf7c193bc2c599").expect("bad address")
-            },
-            token_contract: EthAddress::from_str("0x2260fac5e5542a773aa44fbcfedf7c193bc2c599").expect("bad address")
-        },
-        sigs: vec![]
-    };
-    possible_batches = HashMap::new();
-    possible_batches.insert(EthAddress::random(), vec![sb]);
-
 
     submit_batches(
         current_valset,
@@ -188,8 +170,16 @@ async fn submit_batches(
             let oldest_signed_batch = batch.batch;
             let oldest_signatures = batch.sigs;
 
+            if oldest_signed_batch.batch_timeout < ethereum_block_height.as_u64() {
+                warn!(
+                    "Batch {}/{} has timed out and can not be submitted",
+                    oldest_signed_batch.nonce, oldest_signed_batch.token_contract
+                );
+                continue;
+            }
+
             let latest_cosmos_batch_nonce = oldest_signed_batch.clone().nonce;
-            if true {
+            if latest_cosmos_batch_nonce > latest_ethereum_batch {
                 let cost = ethereum_gravity::submit_batch::estimate_tx_batch_cost(
                     current_valset.clone(),
                     oldest_signed_batch.clone(),
@@ -235,6 +225,24 @@ async fn submit_batches(
                     );
 
                     cost.gas_price = ((gas_price_as_f32 * eth_gas_price_multiplier) as u128).into();
+
+                    let res = send_eth_transaction_batch(
+                        current_valset.clone(),
+                        oldest_signed_batch,
+                        &oldest_signatures,
+                        timeout,
+                        gravity_contract_address,
+                        gravity_id.clone(),
+                        cost,
+                        eth_client.clone(),
+                    )
+                        .await;
+
+                    if res.is_err() {
+                        warn!("Batch submission failed with {:?}", res);
+                    } else {
+                        fee_manager.update_next_batch_send_time(token_contract)
+                    }
                 }
             }
         }
