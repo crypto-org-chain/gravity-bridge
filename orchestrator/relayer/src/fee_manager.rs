@@ -13,7 +13,7 @@ use reqwest::{Client};
 use serde_json::json;
 
 const DEFAULT_TOKEN_PRICES_PATH: &str = "token_prices.json";
-const DEFAULT_RELAYER_API_URL: &str = "https://cronos.3ona.co/cronos-gt-gravity-bridge-relayer-api/relayer";
+const DEFAULT_RELAYER_API_URL: &str = "";
 
 pub struct FeeManager {
     token_price_map: HashMap<String, String>,
@@ -23,9 +23,10 @@ pub struct FeeManager {
 }
 
 #[derive(serde::Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct ApiResponse {
-    profitable: bool,
-    in_blacklist: bool,
+    can_send: bool,
+    reason_type: u32,
 }
 
 impl FeeManager {
@@ -113,12 +114,12 @@ impl FeeManager {
             RelayerMode::Api => {
                 let body = json!({
                     "batchFee": {
-                        "amount": batch_fee.amount.as_u64(),
+                        "amount": batch_fee.amount.to_string(),
                         "tokenContractAddress": batch_fee.token_contract_address
                     },
                     "estimatedCost": {
-                        "gas": estimated_cost.gas.as_u64(),
-                        "gasPrice": estimated_cost.gas_price.as_u64()
+                        "gas": estimated_cost.gas.to_string(),
+                        "gasPrice": estimated_cost.gas_price.to_string()
                     }}
                 );
 
@@ -126,14 +127,17 @@ impl FeeManager {
                     .post(self.relayer_api_url.as_str())
                     .json(&body)
                     .send().await {
-                    Ok(resp) => match resp.json().await {
+                    Ok(resp) =>
+                        match resp.json().await {
                         Ok(json) => {
                             let api_response: ApiResponse = json;
-                            if api_response.in_blacklist {
-                                return false
-                            }
-                            {
-                                api_response.profitable ||
+                            return if api_response.can_send {
+                                true
+                            } else {
+                                // code 5 means that it is not profitable but limit has not been
+                                // exceeded or no addresses are blacklisted
+                                // in that case we check if we should send at non profitable cost
+                                api_response.reason_type == 5 &&
                                     self.should_send_at_non_profitable_cost(contract_address)
                             }
                         }
