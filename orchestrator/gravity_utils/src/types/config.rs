@@ -15,7 +15,7 @@ pub enum RelayerMode {
 impl FromStr for RelayerMode {
     type Err = ();
     fn from_str(input: &str) -> Result<RelayerMode, Self::Err> {
-        let mode = RelayerMode::from_str(input).map_err(|e|{
+        let mode = RelayerMode::from_str(input).map_err(|_|{
             error!("cannot parse mode from string");
             ()
         })?;

@@ -5,16 +5,15 @@ use cosmos_gravity::query::get_latest_transaction_batches;
 use cosmos_gravity::query::get_transaction_batch_signatures;
 use ethereum_gravity::{
     one_eth_f32, submit_batch::send_eth_transaction_batch, types::EthClient,
-    utils::get_tx_batch_nonce, utils::GasCost,
+    utils::get_tx_batch_nonce,
 };
 use ethers::prelude::*;
 use ethers::types::Address as EthAddress;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use gravity_utils::ethereum::{downcast_to_f32, format_eth_address};
+use gravity_utils::ethereum::{downcast_to_f32};
 use gravity_utils::message_signatures::encode_tx_batch_confirm_hashed;
-use gravity_utils::types::{BatchConfirmResponse, Erc20Token, TransactionBatch, Valset, };
+use gravity_utils::types::{BatchConfirmResponse, TransactionBatch, Valset, };
 use std::collections::HashMap;
-use std::str::FromStr;
 use std::time::Duration;
 use tonic::transport::Channel;
 
@@ -224,7 +223,7 @@ async fn submit_batches(
                         total_cost / one_eth_f32()
                     );
 
-                    cost.gas_price = ((gas_price_as_f32 * eth_gas_price_multiplier) as u128).into();
+                    cost.gas_price = ((gas_price_as_f32 as u128 * eth_gas_price_multiplier as u128) as u128).into();
 
                     let res = send_eth_transaction_batch(
                         current_valset.clone(),
