@@ -57,7 +57,7 @@ impl FeeManager {
 
     fn init_with_api(&mut self) -> Result<(), ()> {
         self.relayer_api_url =
-            std::env::var("RELYAER_API_URL").unwrap_or_else(|_| DEFAULT_RELAYER_API_URL.to_owned());
+            std::env::var("RELAYER_API_URL").unwrap_or_else(|_| DEFAULT_RELAYER_API_URL.to_owned());
         return Ok(());
     }
 
