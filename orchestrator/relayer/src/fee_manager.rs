@@ -1,16 +1,14 @@
-use ethereum_gravity::{
-    utils::GasCost,
-};
+use ethereum_gravity::utils::GasCost;
 use ethers::prelude::*;
 use ethers::types::Address as EthAddress;
-use gravity_utils::ethereum::{format_eth_address};
-use gravity_utils::types::{ Erc20Token, };
+use gravity_utils::ethereum::format_eth_address;
+use gravity_utils::types::config::RelayerMode;
+use gravity_utils::types::Erc20Token;
+use reqwest::Client;
+use serde_json::json;
 use std::collections::HashMap;
 use std::time::Duration;
 use std::time::Instant;
-use gravity_utils::types::config::RelayerMode;
-use reqwest::{Client};
-use serde_json::json;
 
 const DEFAULT_TOKEN_PRICES_PATH: &str = "token_prices.json";
 const DEFAULT_RELAYER_API_URL: &str = "";
@@ -31,11 +29,11 @@ struct ApiResponse {
 
 impl FeeManager {
     pub async fn new_fee_manager(mode: RelayerMode) -> Result<FeeManager, ()> {
-        let mut fm =  Self {
+        let mut fm = Self {
             token_price_map: Default::default(),
             relayer_api_url: String::default(),
             next_batch_send_time: HashMap::new(),
-            mode
+            mode,
         };
         fm.init().await?;
         Ok(fm)
@@ -44,26 +42,24 @@ impl FeeManager {
     async fn init(&mut self) -> Result<(), ()> {
         match self.mode {
             RelayerMode::Api => {
-                self.init_with_api()?;
+                self.init_with_api();
             }
             RelayerMode::File => {
                 self.init_with_file().await?;
             }
-            RelayerMode::AlwaysRelay => {
-            }
+            RelayerMode::AlwaysRelay => {}
         }
         Ok(())
     }
 
-    fn init_with_api(&mut self) -> Result<(), ()> {
+    fn init_with_api(&mut self) {
         self.relayer_api_url =
             std::env::var("RELAYER_API_URL").unwrap_or_else(|_| DEFAULT_RELAYER_API_URL.to_owned());
-        Ok(())
     }
 
     async fn init_with_file(&mut self) -> Result<(), ()> {
-        let config_file_path =
-            std::env::var("TOKEN_PRICES_JSON").unwrap_or_else(|_| DEFAULT_TOKEN_PRICES_PATH.to_owned());
+        let config_file_path = std::env::var("TOKEN_PRICES_JSON")
+            .unwrap_or_else(|_| DEFAULT_TOKEN_PRICES_PATH.to_owned());
 
         let config_str = tokio::fs::read_to_string(config_file_path)
             .await
@@ -71,10 +67,12 @@ impl FeeManager {
                 error!("Error while fetching token prices {}", e);
             })?;
 
-        let config: HashMap<String, String> = serde_json::from_str(&config_str)
-            .map_err(|e| {
-                error!("Error while parsing token pair prices json configuration: {}", e);
-            })?;
+        let config: HashMap<String, String> = serde_json::from_str(&config_str).map_err(|e| {
+            error!(
+                "Error while parsing token pair prices json configuration: {}",
+                e
+            );
+        })?;
 
         self.token_price_map = config;
         Ok(())
@@ -91,24 +89,31 @@ impl FeeManager {
         contract_address: &EthAddress,
     ) -> bool {
         match self.mode {
-            RelayerMode::AlwaysRelay => {
-                true
-            }
+            RelayerMode::AlwaysRelay => true,
             RelayerMode::File => {
                 if self.should_send_at_non_profitable_cost(contract_address) {
-                    return true
+                    return true;
                 }
-                let token_price = match self.get_token_price(&batch_fee.token_contract_address).await {
+                let token_price = match self
+                    .get_token_price(&batch_fee.token_contract_address)
+                    .await
+                {
                     Ok(token_price) => token_price,
                     Err(_) => return false,
                 };
 
                 let estimated_fee = estimated_cost.get_total();
-                let batch_value = batch_fee.amount.checked_mul(token_price).unwrap_or_else(|| {
-                    error!("estimate cost value exceeded");
-                    U256::from(0)
-                });
-                info!("estimate cost is {}, batch value is {}", estimated_fee, batch_value);
+                let batch_value = batch_fee
+                    .amount
+                    .checked_mul(token_price)
+                    .unwrap_or_else(|| {
+                        error!("estimate cost value exceeded");
+                        U256::from(0)
+                    });
+                info!(
+                    "estimate cost is {}, batch value is {}",
+                    estimated_fee, batch_value
+                );
                 batch_value >= estimated_fee
             }
             RelayerMode::Api => {
@@ -126,9 +131,10 @@ impl FeeManager {
                 return match Client::new()
                     .post(self.relayer_api_url.as_str())
                     .json(&body)
-                    .send().await {
-                    Ok(resp) =>
-                        match resp.json().await {
+                    .send()
+                    .await
+                {
+                    Ok(resp) => match resp.json().await {
                         Ok(json) => {
                             let api_response: ApiResponse = json;
                             return if api_response.can_send {
@@ -137,41 +143,33 @@ impl FeeManager {
                                 // code 5 means that it is not profitable but limit has not been
                                 // exceeded or no addresses are blacklisted
                                 // in that case we check if we should send at non profitable cost
-                                api_response.reason_type == 5 &&
-                                    self.should_send_at_non_profitable_cost(contract_address)
-                            }
+                                api_response.reason_type == 5
+                                    && self.should_send_at_non_profitable_cost(contract_address)
+                            };
                         }
                         Err(err) => {
                             error!("error deserializing response from relayer api: {}", err);
                             false
                         }
-                    }
+                    },
                     Err(err) => {
                         error!("error getting response from relayer api: {}", err);
                         false
                     }
-                }
+                };
             }
         }
     }
 
-    fn should_send_at_non_profitable_cost(
-        &mut self,
-        contract_address: &EthAddress,
-    ) -> bool {
+    fn should_send_at_non_profitable_cost(&mut self, contract_address: &EthAddress) -> bool {
         match self.next_batch_send_time.get(contract_address) {
-            Some(time) => {
-                return *time < Instant::now()
-            }
+            Some(time) => return *time < Instant::now(),
             None => self.update_next_batch_send_time(*contract_address),
         }
         true
     }
 
-    pub (crate) fn update_next_batch_send_time(
-        &mut self,
-        contract_address: EthAddress,
-    ) {
+    pub(crate) fn update_next_batch_send_time(&mut self, contract_address: EthAddress) {
         if self.mode == RelayerMode::AlwaysRelay {
             return;
         }
@@ -180,17 +178,22 @@ impl FeeManager {
             .map(|value| Duration::from_secs(value.parse().unwrap()))
             .unwrap_or_else(|_| Duration::from_secs(3600));
 
-        self.next_batch_send_time.insert(contract_address, Instant::now() + timeout_duration);
+        self.next_batch_send_time
+            .insert(contract_address, Instant::now() + timeout_duration);
     }
 
     async fn get_token_price(&mut self, contract_address: &EthAddress) -> Result<U256, ()> {
-        return if let Some(token_price_str) = self.token_price_map.get(&format_eth_address(*contract_address)) {
-            let token_price = U256::from_dec_str(token_price_str)
-                .map_err(|_| {log::error!("Unable to parse token price");})?;
-            return Ok(token_price)
+        return if let Some(token_price_str) = self
+            .token_price_map
+            .get(&format_eth_address(*contract_address))
+        {
+            let token_price = U256::from_dec_str(token_price_str).map_err(|_| {
+                log::error!("Unable to parse token price");
+            })?;
+            return Ok(token_price);
         } else {
             error!("Cannot find token price in map");
             Err(())
-        }
+        };
     }
 }

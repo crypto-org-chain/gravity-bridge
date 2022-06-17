@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::fee_manager::FeeManager;
 use crate::main_loop::relayer_main_loop;
 use crate::main_loop::LOOP_SPEED;
 use docopt::Docopt;
@@ -7,19 +8,18 @@ use env_logger::Env;
 use ethers::prelude::*;
 use ethers::signers::LocalWallet as EthWallet;
 use ethers::types::Address as EthAddress;
+use gravity_utils::types::config::RelayerMode;
 use gravity_utils::{
     connection_prep::{check_for_eth, create_rpc_connections, wait_for_cosmos_node_ready},
     ethereum::{downcast_to_u64, format_eth_address},
 };
-use crate::fee_manager::FeeManager;
-use gravity_utils::types::config::RelayerMode;
 
 pub mod batch_relaying;
+pub mod fee_manager;
 pub mod find_latest_valset;
 pub mod logic_call_relaying;
 pub mod main_loop;
 pub mod valset_relaying;
-pub mod fee_manager;
 
 #[macro_use]
 extern crate serde_derive;
@@ -80,7 +80,7 @@ async fn main() {
         .flag_contract_address
         .parse()
         .expect("Invalid contract address!");
-    let mode= args.flag_mode;
+    let mode = args.flag_mode;
     info!("Relayer using mode: {:?}", mode);
 
     let connections = create_rpc_connections(
@@ -112,14 +112,13 @@ async fn main() {
     wait_for_cosmos_node_ready(&contact).await;
     check_for_eth(public_eth_key, eth_client.clone()).await;
 
-    let mut fee_manager = FeeManager::new_fee_manager(mode)
-        .await.unwrap();
+    let mut fee_manager = FeeManager::new_fee_manager(mode).await.unwrap();
     relayer_main_loop(
         eth_client,
         connections.grpc.unwrap(),
         gravity_contract_address,
         1f32,
-        &mut fee_manager
+        &mut fee_manager,
     )
     .await
 }
