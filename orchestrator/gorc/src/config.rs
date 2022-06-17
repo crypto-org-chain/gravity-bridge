@@ -172,7 +172,7 @@ impl GorcConfig {
     fn load_secret_key(&self, name: String) -> k256::elliptic_curve::SecretKey<k256::Secp256k1> {
         let name = name.parse().expect("Could not parse name");
         let key = self.keystore.load(&name).expect("Could not load key");
-        return key.to_pem().parse().expect("Could not parse pem");
+        key.to_pem().parse().expect("Could not parse pem")
     }
 
     pub fn load_clarity_key(&self, name: String) -> clarity::PrivateKey {

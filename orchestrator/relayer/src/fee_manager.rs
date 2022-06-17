@@ -38,7 +38,7 @@ impl FeeManager {
             mode
         };
         fm.init().await?;
-        return Ok(fm);
+        Ok(fm)
     }
 
     async fn init(&mut self) -> Result<(), ()> {
@@ -52,13 +52,13 @@ impl FeeManager {
             RelayerMode::AlwaysRelay => {
             }
         }
-        return Ok(());
+        Ok(())
     }
 
     fn init_with_api(&mut self) -> Result<(), ()> {
         self.relayer_api_url =
             std::env::var("RELAYER_API_URL").unwrap_or_else(|_| DEFAULT_RELAYER_API_URL.to_owned());
-        return Ok(());
+        Ok(())
     }
 
     async fn init_with_file(&mut self) -> Result<(), ()> {
@@ -69,17 +69,15 @@ impl FeeManager {
             .await
             .map_err(|e| {
                 error!("Error while fetching token prices {}", e);
-                ()
             })?;
 
         let config: HashMap<String, String> = serde_json::from_str(&config_str)
             .map_err(|e| {
                 error!("Error while parsing token pair prices json configuration: {}", e);
-                ()
             })?;
 
         self.token_price_map = config;
-        return Ok(());
+        Ok(())
     }
 
     // A batch can be send either if
@@ -94,7 +92,7 @@ impl FeeManager {
     ) -> bool {
         match self.mode {
             RelayerMode::AlwaysRelay => {
-                return true;
+                true
             }
             RelayerMode::File => {
                 if self.should_send_at_non_profitable_cost(contract_address) {
@@ -108,10 +106,10 @@ impl FeeManager {
                 let estimated_fee = estimated_cost.get_total();
                 let batch_value = batch_fee.amount.checked_mul(token_price).unwrap_or_else(|| {
                     error!("estimate cost value exceeded");
-                    return U256::from(0);
+                    U256::from(0)
                 });
                 info!("estimate cost is {}, batch value is {}", estimated_fee, batch_value);
-                return batch_value >= estimated_fee
+                batch_value >= estimated_fee
             }
             RelayerMode::Api => {
                 let body = json!({
@@ -167,7 +165,7 @@ impl FeeManager {
             }
             None => self.update_next_batch_send_time(*contract_address),
         }
-        return true
+        true
     }
 
     pub (crate) fn update_next_batch_send_time(
@@ -188,7 +186,7 @@ impl FeeManager {
     async fn get_token_price(&mut self, contract_address: &EthAddress) -> Result<U256, ()> {
         return if let Some(token_price_str) = self.token_price_map.get(&format_eth_address(*contract_address)) {
             let token_price = U256::from_dec_str(token_price_str)
-                .map_err(|_| {log::error!("Unable to parse token price"); ()})?;
+                .map_err(|_| {log::error!("Unable to parse token price");})?;
             return Ok(token_price)
         } else {
             error!("Cannot find token price in map");
