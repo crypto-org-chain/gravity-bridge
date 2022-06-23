@@ -165,6 +165,7 @@ pub async fn send_messages(
     let response = contact
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
+    info!("Sent cosmos transaction: {:?}", response.txhash);
 
     Ok(contact.wait_for_tx(response, TIMEOUT).await?)
 }
