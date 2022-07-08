@@ -490,7 +490,7 @@ func TestEthVerify(t *testing.T) {
 	// ==========================================================================
 	// signature verification
 	// ==========================================================================
-	cdc := MakeTestMarshaler()
+	cdc, _ := MakeTestMarshaler()
 
 	valAddr := "cosmosvaloper16k7rf90uvt4tgslqh280wvdzxp5q9ah6nxxupc"
 	signMsgBz, err := cdc.Marshal(&types.DelegateKeysSignMsg{

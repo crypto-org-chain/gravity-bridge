@@ -5,9 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
@@ -36,7 +39,10 @@ func TestSignerSetTxCreationUponUnbonding(t *testing.T) {
 
 	input.Context = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	// begin unbonding
-	sh := staking.NewHandler(input.StakingKeeper)
+	router := baseapp.NewMsgServiceRouter()
+	router.SetInterfaceRegistry(input.InterfaceRegistry)
+	stakingtypes.RegisterMsgServer(router, stakingkeeper.NewMsgServerImpl(input.StakingKeeper))
+	sh := router.Handler(&stakingtypes.MsgUndelegate{})
 	undelegateMsg := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[0], keeper.StakingAmount)
 	sh(input.Context, undelegateMsg)
 
@@ -131,7 +137,10 @@ func TestSignerSetTxSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testi
 	// Validator-1  Unbond slash window is not expired. if not attested, slash
 	// Validator-2  Unbond slash window is not expired. if attested, don't slash
 	input.Context = ctx.WithBlockHeight(valUnbondingHeight)
-	sh := staking.NewHandler(input.StakingKeeper)
+	router := baseapp.NewMsgServiceRouter()
+	router.SetInterfaceRegistry(input.InterfaceRegistry)
+	stakingtypes.RegisterMsgServer(router, stakingkeeper.NewMsgServerImpl(input.StakingKeeper))
+	sh := router.Handler(&stakingtypes.MsgUndelegate{})
 	undelegateMsg1 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[0], keeper.StakingAmount)
 	sh(input.Context, undelegateMsg1)
 	undelegateMsg2 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[1], keeper.StakingAmount)
@@ -152,12 +161,12 @@ func TestSignerSetTxSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testi
 	// Assertions
 	val1 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
 	require.True(t, val1.IsJailed())
-	fmt.Println("val1  tokens", val1.GetTokens().ToDec())
+	fmt.Println("val1  tokens", sdk.NewDecFromInt(val1.GetTokens()))
 	// check if tokens are slashed for val1.
 
 	val2 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
 	require.True(t, val2.IsJailed())
-	fmt.Println("val2  tokens", val2.GetTokens().ToDec())
+	fmt.Println("val2  tokens", sdk.NewDecFromInt(val2.GetTokens()))
 	// check if tokens shouldn't be slashed for val2.
 }
 

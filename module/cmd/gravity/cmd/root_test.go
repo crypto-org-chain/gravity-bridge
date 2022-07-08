@@ -9,8 +9,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/cli"
@@ -31,6 +34,7 @@ func TestKeyGen(t *testing.T) {
 		WithHomeDir("/foo/bar").
 		WithChainID("test-chain").
 		WithKeyringDir("/foo/bar").
+		WithCodec(MakeTestMarshaler()).
 		WithInput(input)
 
 	// generate key from binary
@@ -62,7 +66,7 @@ func TestKeyGen(t *testing.T) {
 	require.NoError(t, err)
 
 	// generate a memory key directly
-	kb, err := keyring.New("testnet", keyring.BackendMemory, "", nil)
+	kb, err := keyring.New("testnet", keyring.BackendMemory, "", nil, initClientCtx.Codec)
 	if err != nil {
 		return
 	}
@@ -76,5 +80,15 @@ func TestKeyGen(t *testing.T) {
 	account, err := kb.NewAccount("", mnemonic, "", "m/44'/118'/0'/0/0", algo)
 	require.NoError(t, err)
 
-	require.Equal(t, account.GetAddress().String(), key.Address)
+	addr, err := account.GetAddress()
+	require.NoError(t, err)
+
+	require.Equal(t, addr.String(), key.Address)
+}
+
+// MakeTestMarshaler creates a proto codec for use in testing
+func MakeTestMarshaler() codec.Codec {
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+	std.RegisterInterfaces(interfaceRegistry)
+	return codec.NewProtoCodec(interfaceRegistry)
 }
