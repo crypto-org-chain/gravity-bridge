@@ -82,6 +82,7 @@ impl Runnable for StartCommand {
                 contract_address,
                 config.ethereum.gas_price_multiplier,
                 &mut fee_manager,
+                config.ethereum.gas_multiplier,
             )
             .await;
         })

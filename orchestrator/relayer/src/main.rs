@@ -119,6 +119,7 @@ async fn main() {
         gravity_contract_address,
         1f32,
         &mut fee_manager,
+        1.1f32,
     )
     .await
 }

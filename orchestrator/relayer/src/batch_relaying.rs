@@ -39,6 +39,7 @@ pub async fn relay_batches(
     timeout: Duration,
     eth_gas_price_multiplier: f32,
     fee_manager: &mut FeeManager,
+    eth_gas_multiplier: f32,
 ) {
     let possible_batches =
         get_batches_and_signatures(current_valset.clone(), grpc_client, gravity_id.clone()).await;
@@ -52,6 +53,7 @@ pub async fn relay_batches(
         gravity_id,
         timeout,
         eth_gas_price_multiplier,
+        eth_gas_multiplier,
         possible_batches,
         fee_manager,
     )
@@ -135,6 +137,7 @@ async fn submit_batches(
     gravity_id: String,
     timeout: Duration,
     eth_gas_price_multiplier: f32,
+    eth_gas_multiplier: f32,
     possible_batches: HashMap<EthAddress, Vec<SubmittableBatch>>,
     fee_manager: &mut FeeManager,
 ) {
@@ -202,6 +205,7 @@ async fn submit_batches(
                 }
                 let total_cost = total_cost.unwrap();
                 let gas_price_as_f32 = downcast_to_f32(cost.gas_price).unwrap(); // if the total cost isn't greater, this isn't
+                let gas_as_f32 = downcast_to_f32(cost.gas).unwrap(); // same as above re: total cost
 
                 if fee_manager
                     .can_send_batch(
@@ -224,6 +228,8 @@ async fn submit_batches(
                     cost.gas_price = ((gas_price_as_f32 as u128 * eth_gas_price_multiplier as u128)
                         as u128)
                         .into();
+
+                    cost.gas = ((gas_as_f32 * eth_gas_multiplier) as u128).into();
 
                     let res = send_eth_transaction_batch(
                         current_valset.clone(),

@@ -10,6 +10,7 @@ use std::time::Duration;
 use tonic::transport::Channel;
 
 pub const LOOP_SPEED: Duration = Duration::from_secs(17);
+pub const PENDING_TX_TIMEOUT: Duration = Duration::from_secs(120);
 
 /// This function contains the orchestrator primary loop, it is broken out of the main loop so that
 /// it can be called in the test runner for easier orchestration of multi-node tests
@@ -20,6 +21,7 @@ pub async fn relayer_main_loop(
     gravity_contract_address: EthAddress,
     eth_gas_price_multiplier: f32,
     fee_manager: &mut FeeManager,
+    eth_gas_multiplier: f32,
 ) {
     let mut grpc_client = grpc_client;
 
@@ -52,7 +54,9 @@ pub async fn relayer_main_loop(
                     &mut grpc_client,
                     gravity_contract_address,
                     gravity_id.clone(),
-                    LOOP_SPEED,
+                    PENDING_TX_TIMEOUT,
+                    eth_gas_price_multiplier,
+                    eth_gas_multiplier,
                 )
                 .await;
 
@@ -62,9 +66,10 @@ pub async fn relayer_main_loop(
                     &mut grpc_client,
                     gravity_contract_address,
                     gravity_id.clone(),
-                    LOOP_SPEED,
+                    PENDING_TX_TIMEOUT,
                     eth_gas_price_multiplier,
                     fee_manager,
+                    eth_gas_multiplier,
                 )
                 .await;
 
@@ -74,8 +79,9 @@ pub async fn relayer_main_loop(
                     &mut grpc_client,
                     gravity_contract_address,
                     gravity_id.clone(),
-                    LOOP_SPEED,
+                    PENDING_TX_TIMEOUT,
                     eth_gas_price_multiplier,
+                    eth_gas_multiplier,
                     &mut logic_call_skips,
                 )
                 .await;
