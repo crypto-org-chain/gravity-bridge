@@ -225,6 +225,7 @@ jobs:
       matrix:
         test_type: [
             "HappyPath",
+            "ValsetUpdate",
         ]
 
     steps:
