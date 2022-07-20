@@ -2,10 +2,9 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	accType "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types"
 )
 
@@ -71,8 +70,7 @@ func sumUnconfirmedBatchModuleBalances(ctx sdk.Context, k Keeper, expectedBals m
 		// Collect the send amount + fee amount for each tx
 		batch, _ := otx.(*types.BatchTx)
 		for _, tx := range batch.Transactions {
-			newTotal := batchTotal.Add(tx.Erc20Token.Amount.Add(tx.Erc20Fee.Amount))
-			batchTotal = newTotal
+			batchTotal = batchTotal.Add(tx.Erc20Token.Amount.Add(tx.Erc20Fee.Amount))
 		}
 		contract := batch.TokenContract
 		_, denom := k.ERC20ToDenomLookup(ctx, common.HexToAddress(contract))
