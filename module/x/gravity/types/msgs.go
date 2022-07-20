@@ -83,11 +83,8 @@ func (msg *MsgSubmitEthereumEvent) ValidateBasic() (err error) {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Signer)
 	}
 
-	event, err := UnpackEvent(msg.Event)
-	if err != nil {
-		return err
-	}
-	return event.Validate()
+	_, err = UnpackEvent(msg.Event)
+	return err
 }
 
 // GetSignBytes encodes the message for signing

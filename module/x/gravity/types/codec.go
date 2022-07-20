@@ -107,6 +107,10 @@ func UnpackEvent(any *types.Any) (EthereumEvent, error) {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "cannot unpack Any into EthereumEvent %T", any)
 	}
 
+	if err := event.Validate(); err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnpackAny, "invalid EthereumEvent %+v", event)
+	}
+
 	return event, nil
 }
 
