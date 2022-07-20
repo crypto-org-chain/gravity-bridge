@@ -157,9 +157,6 @@ func (k Keeper) DeleteEthereumEventVoteRecord(ctx sdk.Context, eventVoteRecord *
 	if err != nil {
 		panic(fmt.Sprintf("couldn't cast to event: %s", err))
 	}
-	if err := event.Validate(); err != nil {
-		panic(fmt.Sprintf("invalid event: %s", err))
-	}
 	ctx.KVStore(k.storeKey).Delete(types.MakeEthereumEventVoteRecordKey(event.GetEventNonce(), event.Hash()))
 }
 
@@ -258,7 +255,7 @@ func (k Keeper) getLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 		//
 		// We return the LastObservedEventNonce
 		lowestObserved := k.GetLastObservedEventNonce(ctx)
-		
+
 		// return the latest event minus one so that the validator
 		// can submit that event and avoid slashing. special case
 		// for zero
