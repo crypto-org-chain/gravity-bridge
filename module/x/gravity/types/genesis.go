@@ -65,9 +65,6 @@ var (
 	//  ParamStoreUnbondSlashingSignerSetTxsWindow stores unbond slashing valset window
 	ParamStoreUnbondSlashingSignerSetTxsWindow = []byte("UnbondSlashingSignerSetTxsWindow")
 
-	// ParamStoreEthereumBlacklist allows storage of blocked Ethereum addresses blocked for use with the bridge
-	ParamStoreEthereumBlacklist = []byte("EthereumBlacklist")
-
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
 )
@@ -137,9 +134,6 @@ func DefaultParams() *Params {
 		SlashFractionEthereumSignature:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionConflictingEthereumSignature: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		UnbondSlashingSignerSetTxsWindow:          10000,
-		EthereumBlacklist: []string{
-			ZeroAddressString,
-		},
 	}
 }
 
@@ -191,10 +185,6 @@ func (p Params) ValidateBasic() error {
 		return sdkerrors.Wrap(err, "unbond slashing signersettx window")
 	}
 
-	if err := validateEthereumBlacklistAddresses(p.EthereumBlacklist); err != nil {
-		return sdkerrors.Wrap(err, "ethereum blacklist addresses")
-	}
-
 	return nil
 }
 
@@ -222,7 +212,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionEthereumSignature, &p.SlashFractionEthereumSignature, validateSlashFractionEthereumSignature),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionConflictingEthereumSignature, &p.SlashFractionConflictingEthereumSignature, validateSlashFractionConflictingEthereumSignature),
 		paramtypes.NewParamSetPair(ParamStoreUnbondSlashingSignerSetTxsWindow, &p.UnbondSlashingSignerSetTxsWindow, validateUnbondSlashingSignerSetTxsWindow),
-		paramtypes.NewParamSetPair(ParamStoreEthereumBlacklist, &p.EthereumBlacklist, validateEthereumBlacklistAddresses),
 	}
 }
 
@@ -367,19 +356,6 @@ func validateSlashFractionConflictingEthereumSignature(i interface{}) error {
 	// TODO: do we want to set some bounds on this value?
 	if _, ok := i.(sdk.Dec); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	return nil
-}
-
-func validateEthereumBlacklistAddresses(i interface{}) error {
-	strArr, ok := i.([]string)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-	for _, value := range strArr {
-		if err := ValidateEthAddress(value); err != nil {
-			return err
-		}
 	}
 	return nil
 }

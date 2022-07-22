@@ -31,15 +31,6 @@ func (k Keeper) BuildBatchTx(ctx sdk.Context, contractAddress common.Address, ma
 
 	var selectedStes []*types.SendToEthereum
 	k.iterateUnbatchedSendToEthereumsByContract(ctx, contractAddress, func(ste *types.SendToEthereum) bool {
-		dest, err := types.NewEthAddress(ste.EthereumRecipient)
-		if err != nil {
-			// should not happen as we verify before
-			panic("invalid destination address in unbatched SendToEthereum pool")
-		}
-		if k.IsOnBlacklist(ctx, *dest) {
-			return false
-		}
-
 		selectedStes = append(selectedStes, ste)
 		k.deleteUnbatchedSendToEthereum(ctx, ste.Id, ste.Erc20Fee)
 		return len(selectedStes) == maxElements
@@ -101,14 +92,6 @@ func (k Keeper) getBatchFeesByTokenType(ctx sdk.Context, tokenContractAddr commo
 	feeAmount := sdk.ZeroInt()
 	i := 0
 	k.iterateUnbatchedSendToEthereumsByContract(ctx, tokenContractAddr, func(tx *types.SendToEthereum) bool {
-		dest, err := types.NewEthAddress(tx.EthereumRecipient)
-		if err != nil {
-			// should not happen as we verify before
-			panic("invalid destination address in unbatched SendToEthereum pool")
-		}
-		if k.IsOnBlacklist(ctx, *dest) {
-			return false
-		}
 		feeAmount = feeAmount.Add(tx.Erc20Fee.Amount)
 		i++
 		return i == maxElements
@@ -125,14 +108,6 @@ func (k Keeper) GetBatchFeesByTokenType(ctx sdk.Context, tokenContractAddr commo
 	feeAmount := sdk.ZeroInt()
 	i := 0
 	k.iterateUnbatchedSendToEthereumsByContract(ctx, tokenContractAddr, func(tx *types.SendToEthereum) bool {
-		dest, err := types.NewEthAddress(tx.EthereumRecipient)
-		if err != nil {
-			// should not happen as we verify before
-			panic("invalid destination address in unbatched SendToEthereum pool")
-		}
-		if k.IsOnBlacklist(ctx, *dest) {
-			return false
-		}
 		feeAmount = feeAmount.Add(tx.Erc20Fee.Amount)
 		i++
 		return i == maxElements

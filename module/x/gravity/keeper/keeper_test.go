@@ -661,28 +661,6 @@ func TestKeeper_Migration(t *testing.T) {
 
 }
 
-func TestKeeper_IsOnBlacklist(t *testing.T) {
-	t.Run("check blacklisted address, should return true", func(t *testing.T) {
-		env := CreateTestEnv(t)
-		ctx := env.Context
-		gk := env.GravityKeeper
-
-		zeroAddress, _ := types.NewEthAddress(types.ZeroAddressString)
-		result := gk.IsOnBlacklist(ctx, *zeroAddress)
-		require.True(t, result)
-	})
-
-	t.Run("check non blacklisted address, should return false", func(t *testing.T) {
-		env := CreateTestEnv(t)
-		ctx := env.Context
-		gk := env.GravityKeeper
-
-		zeroAddress, _ := types.NewEthAddress("0x0000000000000000000000000000000000000001")
-		result := gk.IsOnBlacklist(ctx, *zeroAddress)
-		require.False(t, result)
-	})
-}
-
 // TODO(levi) review/ensure coverage for:
 // PaginateOutgoingTxsByType
 // GetUnbondingvalidators(unbondingVals []byte) stakingtypes.ValAddresses

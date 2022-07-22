@@ -726,21 +726,3 @@ func (k Keeper) MigrateGravityContract(ctx sdk.Context, newBridgeAddress string,
 	params.BridgeEthereumAddress = newBridgeAddress
 	k.setParams(ctx, params)
 }
-
-// IsOnBlacklist Checks if the provided Ethereum address is on the Governance blacklist
-func (k Keeper) IsOnBlacklist(ctx sdk.Context, addr types.EthAddress) bool {
-	params := k.GetParams(ctx)
-	// Checks the address if it's inside the blacklisted address list and marks
-	// if it's inside the list.
-	for index := 0; index < len(params.EthereumBlacklist); index++ {
-		baddr, err := types.NewEthAddress(params.EthereumBlacklist[index])
-		if err != nil {
-			// this should not be possible we validate on genesis load
-			panic("unvalidated black list address!")
-		}
-		if *baddr == addr {
-			return true
-		}
-	}
-	return false
-}

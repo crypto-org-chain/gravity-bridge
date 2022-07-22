@@ -196,9 +196,6 @@ var (
 		SlashFractionBatch:                        sdk.NewDecWithPrec(1, 2),
 		SlashFractionEthereumSignature:            sdk.NewDecWithPrec(1, 2),
 		SlashFractionConflictingEthereumSignature: sdk.NewDecWithPrec(1, 2),
-		EthereumBlacklist: []string{
-			types.ZeroAddressString,
-		},
 	}
 )
 
