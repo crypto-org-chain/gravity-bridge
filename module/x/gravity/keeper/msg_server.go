@@ -217,6 +217,12 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 	types.NormalizeCoinDenom(&msg.Amount)
 	types.NormalizeCoinDenom(&msg.BridgeFee)
 
+	// ensure that the destination address is a correct hex address
+	err = types.ValidateEthAddress(msg.EthereumRecipient)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid eth dest")
+	}
+
 	txID, err := k.createSendToEthereum(ctx, sender, msg.EthereumRecipient, msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
