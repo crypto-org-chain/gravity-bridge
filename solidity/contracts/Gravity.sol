@@ -1,6 +1,5 @@
 pragma solidity 0.8.10;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -63,7 +62,6 @@ struct ValSignature {
 }
 
 contract Gravity is ReentrancyGuard {
-	using SafeMath for uint256;
 	using SafeERC20 for IERC20;
 
 	// These are updated often
@@ -614,7 +612,7 @@ function updateValset(
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
 		// Fire an event to let the Cosmos module know
-		state_lastEventNonce = state_lastEventNonce.add(1);
+		state_lastEventNonce = state_lastEventNonce + 1;
 		emit ERC20DeployedEvent(
 			_cosmosDenom,
 			address(erc20),
