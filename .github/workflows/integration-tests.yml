@@ -226,6 +226,7 @@ jobs:
         test_type: [
             "HappyPath",
             "ValsetUpdate",
+            "TransactionStress",
         ]
 
     steps:
