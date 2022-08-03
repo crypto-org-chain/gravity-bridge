@@ -82,7 +82,7 @@ jobs:
             orchestrator/target/x86_64-unknown-linux-musl/release/relayer
             orchestrator/target/x86_64-unknown-linux-musl/release/test-runner
             module/build/gravity
-            solidity/artifacts/contracts/CronosGravity.sol/CronosGravity.json
+            solidity/artifacts/contracts/Gravity.sol/Gravity.json
             solidity/artifacts/contracts/EthGravityWrapper.sol/EthGravityWrapper.json
             solidity/artifacts/contracts/TestERC20A.sol/TestERC20A.json
             solidity/artifacts/contracts/TestERC20B.sol/TestERC20B.json

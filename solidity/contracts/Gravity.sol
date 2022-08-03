@@ -1,8 +1,11 @@
 pragma solidity 0.8.10;
 
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./CosmosToken.sol";
@@ -67,9 +70,11 @@ struct TransferReverted {
 	uint256 amount;
 }
 
-
-contract Gravity is ReentrancyGuard {
+contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 	using SafeERC20 for IERC20;
+
+	bytes32 public constant RELAYER = keccak256("RELAYER");
+	bytes32 public constant RELAYER_ADMIN = keccak256("RELAYER_ADMIN");
 
 	// These are updated often
 	bytes32 public state_lastValsetCheckpoint;
@@ -85,9 +90,32 @@ contract Gravity is ReentrancyGuard {
 	// This is set once at initialization
 	bytes32 public immutable state_gravityId;
 
+	// Timelock variable for the migration
+	bool public migration;
+	uint256 public migrationHeight;
+	// Migration period is 3 days
+	uint256 public constant MIGRATION_PERIOD = 21600;
+
 	// Store vouchers for reverted cases
 	mapping(uint256 => TransferReverted) public state_RevertedVouchers;
 	uint256 public state_lastRevertedNonce = 1;
+
+	//    modifier onlyRole(bytes32 role) {
+	//        require(hasRole(role, msg.sender), "Gravity::Permission Denied");
+	//        _;
+	//    }
+
+	bool public anyoneCanRelay;
+
+	event AnyoneCanRelay(bool anyoneCanRelay);
+	event Migration(bool migration);
+
+	modifier checkWhiteList() {
+		if (!anyoneCanRelay) {
+			_checkRole(RELAYER, msg.sender);
+		}
+		_;
+	}
 
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
@@ -255,6 +283,7 @@ contract Gravity is ReentrancyGuard {
 		}
 		// Success
 	}
+
 	// This updates the valset by checking that the validators in the current valset have signed off on the
 	// new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
 	// generated from the new valset.
@@ -267,7 +296,7 @@ contract Gravity is ReentrancyGuard {
 		ValsetArgs calldata _currentValset,
 		// These are arrays of the parts of the current validator's signatures
 		ValSignature[] calldata _sigs
-	) public virtual {
+	) external nonReentrant whenNotPaused checkWhiteList {
 		// CHECKS
 
 		// Check that the valset nonce is greater than the old one
@@ -370,7 +399,7 @@ contract Gravity is ReentrancyGuard {
 		// a block height beyond which this batch is not valid
 		// used to provide a fee-free timeout
 		uint256 _batchTimeout
-	) public nonReentrant virtual {
+	) external nonReentrant whenNotPaused checkWhiteList {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the batch nonce is higher than the last nonce for this token
@@ -493,7 +522,7 @@ contract Gravity is ReentrancyGuard {
 		// These are arrays of the parts of the validators signatures
 		ValSignature[] calldata _sigs,
 		LogicCallArgs memory _args
-	) public nonReentrant virtual {
+	) external nonReentrant whenNotPaused checkWhiteList {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the call has not timed out
@@ -594,7 +623,7 @@ contract Gravity is ReentrancyGuard {
 		address _tokenContract,
 		address _destination,
 		uint256 _amount
-	) public nonReentrant virtual {
+	) public nonReentrant whenNotPaused {
 		_sendToCosmos(_tokenContract, bytes32(uint256(uint160(_destination))), _amount);
 	}
 
@@ -602,7 +631,7 @@ contract Gravity is ReentrancyGuard {
 		address _tokenContract,
 		bytes32 _destination,
 		uint256 _amount
-	) public nonReentrant virtual {
+	) public nonReentrant whenNotPaused {
 		_sendToCosmos(_tokenContract, _destination, _amount);
 	}
 
@@ -662,6 +691,81 @@ contract Gravity is ReentrancyGuard {
 		);
 	}
 
+	// Admin functionalities: Those functions are intended to be removed in long term by setting the owner to zero address
+	// however since the gravity is still in an experimental stage, safe guards are needed
+
+	/**
+	* Only owner
+	* pause will deactivate contract functionalities
+	*/
+	function pause() public onlyOwner {
+		_pause();
+	}
+
+	/**
+	* Only owner
+	* unpause will re activate contract functionalities
+	*/
+	function unpause() public onlyOwner {
+		_unpause();
+	}
+
+	/**
+	* Only owner
+	* Notify the start of the migration
+	*/
+	function startMigration() public onlyOwner {
+		migrationHeight = block.number + MIGRATION_PERIOD;
+		migration = true;
+		emit Migration(true);
+	}
+
+	/**
+	* Only owner
+	* Stop the migration
+	*/
+	function stopMigration() public onlyOwner {
+		migrationHeight = 0;
+		migration = false;
+		emit Migration(false);
+	}
+
+	/**
+	* Only owner
+	* migrateToken allows to migrate locked fund to a new gravity contract
+	* in case we need to upgrade it
+	*/
+	function migrateToken(
+		address _tokenContract,
+		address _newGravityAddress,
+		uint256 _amount,
+		bool isCosmosToken
+	) public onlyOwner {
+		require(migration == true, "Migration has not started");
+		require(migrationHeight != 0, "Migration height cannot be zero");
+		require(block.number >= migrationHeight, "Migration is not allowed yet");
+		require(block.number <= migrationHeight + MIGRATION_PERIOD, "Migration time has exceeded");
+		if (isCosmosToken) {
+			ICosmosToken(_tokenContract).setGravityContract(_newGravityAddress);
+		} else {
+			IERC20(_tokenContract).safeTransfer(_newGravityAddress, _amount);
+		}
+	}
+
+	function setAnyoneCanRelay (
+		bool _anyoneCanRelay
+	) public onlyRole(RELAYER_ADMIN) {
+		anyoneCanRelay = _anyoneCanRelay;
+		emit AnyoneCanRelay(anyoneCanRelay);
+	}
+
+	function transferRelayerAdmin (
+		address _newAdmin
+	) public onlyRole(RELAYER_ADMIN) {
+		grantRole(RELAYER_ADMIN, _newAdmin);
+		revokeRole(RELAYER_ADMIN, msg.sender);
+	}
+
 	constructor(
 		// A unique identifier for this gravity instance to use in signatures
 		bytes32 _gravityId,
@@ -669,7 +773,8 @@ contract Gravity is ReentrancyGuard {
 		uint256 _powerThreshold,
 		// The validator set
 		address[] memory _validators,
-		uint256[] memory _powers
+		uint256[] memory _powers,
+		address relayerAdmin
 	) {
 		// CHECKS
 
@@ -705,6 +810,12 @@ contract Gravity is ReentrancyGuard {
 		state_gravityId = _gravityId;
 		state_powerThreshold = _powerThreshold;
 		state_lastValsetCheckpoint = newCheckpoint;
+
+		// ACL
+
+		_setupRole(RELAYER_ADMIN, relayerAdmin);
+		_setRoleAdmin(RELAYER, RELAYER_ADMIN);
+		_setRoleAdmin(RELAYER_ADMIN, RELAYER_ADMIN);
 
 		// LOGS
 
