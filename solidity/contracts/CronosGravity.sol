@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "./Gravity.sol";
+import "./ICosmosToken.sol";
 
 pragma experimental ABIEncoderV2;
 
@@ -77,10 +78,15 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
     */
     function migrateToken(
         address _tokenContract,
-        address _destination,
-        uint256 _amount
+        address _newGravityAddress,
+        uint256 _amount,
+        bool isCosmosToken
     ) public onlyOwner {
-        IERC20(_tokenContract).safeTransfer(_destination, _amount);
+        if (isCosmosToken) {
+            ICosmosToken(_tokenContract).setGravityContract(_newGravityAddress);
+        } else {
+            IERC20(_tokenContract).safeTransfer(_newGravityAddress, _amount);
+        }
     }
 
     // Pausable functionalities:
