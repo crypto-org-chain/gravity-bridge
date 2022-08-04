@@ -196,6 +196,10 @@ var (
 		SlashFractionBatch:                        sdk.NewDecWithPrec(1, 2),
 		SlashFractionEthereumSignature:            sdk.NewDecWithPrec(1, 2),
 		SlashFractionConflictingEthereumSignature: sdk.NewDecWithPrec(1, 2),
+		BridgeActive:                              true,
+		BatchCreationPeriod:                       10,
+		BatchMaxElement:                           100,
+		ObserveEthereumHeightPeriod:               50,
 	}
 )
 

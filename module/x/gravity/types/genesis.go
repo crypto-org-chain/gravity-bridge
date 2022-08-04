@@ -405,8 +405,10 @@ func validateBridgeActive(i interface{}) error {
 }
 
 func validateBatchCreationPeriod(i interface{}) error {
-	if _, ok := i.(uint64); !ok {
+	if period, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
+	} else if period == 0 {
+		return fmt.Errorf("cannot be zero")
 	}
 	return nil
 }
@@ -419,8 +421,10 @@ func validateBatchMaxElement(i interface{}) error {
 }
 
 func validateObserveEthereumHeightPeriod(i interface{}) error {
-	if _, ok := i.(uint64); !ok {
+	if period, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
+	} else if period == 0 {
+		return fmt.Errorf("cannot be zero")
 	}
 	return nil
 }

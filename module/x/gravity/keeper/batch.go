@@ -22,6 +22,9 @@ const BatchTxSize = 100
 // - persist an outgoing batch object with an incrementing ID = nonce
 // - emit an event
 func (k Keeper) BuildBatchTx(ctx sdk.Context, contractAddress common.Address, maxElements int) *types.BatchTx {
+	if maxElements == 0 {
+		return nil
+	}
 	// if there is a more profitable batch for this token type do not create a new batch
 	if lastBatch := k.getLastOutgoingBatchByTokenType(ctx, contractAddress); lastBatch != nil {
 		if lastBatch.GetFees().GTE(k.getBatchFeesByTokenType(ctx, contractAddress, maxElements)) {
