@@ -32,8 +32,14 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 }
 
 func createBatchTxs(ctx sdk.Context, k keeper.Keeper) {
-	// TODO: this needs some more work, is super naieve
-	if ctx.BlockHeight()%10 == 0 {
+	// TODO: this needs some more work, is super naive
+	params := k.GetParams(ctx)
+	// bridge is currently disabled, do not create batch anymore
+	if !params.BridgeActive {
+		return
+	}
+	period := int64(params.BatchCreationPeriod)
+	if ctx.BlockHeight()%period == 0 {
 		cm := map[string]bool{}
 		k.IterateUnbatchedSendToEthereums(ctx, func(ste *types.SendToEthereum) bool {
 			cm[ste.Erc20Token.Contract] = true
@@ -46,9 +52,10 @@ func createBatchTxs(ctx sdk.Context, k keeper.Keeper) {
 		}
 		sort.Strings(contracts)
 
+		maxElement := int(params.BatchMaxElement)
 		for _, c := range contracts {
 			// NOTE: this doesn't emit events which would be helpful for client processes
-			k.BuildBatchTx(ctx, common.HexToAddress(c), 100)
+			k.BuildBatchTx(ctx, common.HexToAddress(c), maxElement)
 		}
 	}
 }
@@ -111,6 +118,12 @@ func pruneSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 // an attestation that has not passed the threshold
 // Also prune records that are older than the current nonce and no longer have any use
 func eventVoteRecordPruneAndTally(ctx sdk.Context, k keeper.Keeper) {
+	params := k.GetParams(ctx)
+	// bridge is currently disabled, do not process attestations from Ethereum
+	if !params.BridgeActive {
+		return
+	}
+
 	attmap := k.GetEthereumEventVoteRecordMapping(ctx)
 
 	// We make a slice with all the event nonces that are in the attestation mapping
@@ -170,7 +183,8 @@ func eventVoteRecordPruneAndTally(ctx sdk.Context, k keeper.Keeper) {
 //    we observed an Ethereum event from the bridge
 func updateObservedEthereumHeight(ctx sdk.Context, k keeper.Keeper) {
 	// wait some minutes before checking the height votes
-	if ctx.BlockHeight()%50 != 0 {
+	observeHeightPeriod := int64(k.GetParams(ctx).ObserveEthereumHeightPeriod)
+	if ctx.BlockHeight()%observeHeightPeriod != 0 {
 		return
 	}
 

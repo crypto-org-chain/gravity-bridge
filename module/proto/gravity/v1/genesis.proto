@@ -100,6 +100,10 @@ message Params {
     (gogoproto.nullable) = false
   ];
   uint64 unbond_slashing_signer_set_txs_window = 17;
+  bool bridge_active = 18;
+  uint64 batch_creation_period = 19;
+  uint64 batch_max_element = 20;
+  uint64 observe_ethereum_height_period = 21;
 }
 
 // GenesisState struct
