@@ -23,7 +23,13 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
 
     bool public anyoneCanRelay;
 
+    // Timelock variables for the migration
+    bool public migration;
+    uint256 public migrationHeight;
+    uint256 public migrationPeriod;
+
     event AnyoneCanRelay(bool anyoneCanRelay);
+    event Migration(bool migration);
 
     modifier checkWhiteList() {
         if (!anyoneCanRelay) {
@@ -50,6 +56,9 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
         _setupRole(RELAYER_ADMIN, relayerAdmin);
         _setRoleAdmin(RELAYER, RELAYER_ADMIN);
         _setRoleAdmin(RELAYER_ADMIN, RELAYER_ADMIN);
+
+        // Set to approximately one day
+        migrationPeriod = 6500;
     }
 
     // Admin functionalities: Those functions are intended to be removed in long term by setting the owner to zero address
@@ -73,6 +82,36 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
 
     /**
     * Only owner
+    * Notify the start of the migration
+    */
+    function startMigration() public onlyOwner {
+        migrationHeight = block.number + migrationPeriod;
+        migration = true;
+        emit Migration(true);
+    }
+
+    /**
+    * Only owner
+    * Stop the migration
+    */
+    function stopMigration() public onlyOwner {
+        // add approximately one day to the migration start height
+        migrationHeight = 0;
+        migration = false;
+        emit Migration(false);
+    }
+
+    /**
+    * Only owner
+    * Set a new migration period
+    */
+    function setMigrationPeriod(uint256 _migrationPeriod) public onlyOwner {
+        require(_migrationPeriod >= 6500, "Migration period cannot be lower than 6500");
+        migrationPeriod = _migrationPeriod;
+    }
+
+    /**
+    * Only owner
     * migrateToken allows to migrate locked fund to a new gravity contract
     * in case we need to upgrade it
     */
@@ -82,6 +121,10 @@ contract CronosGravity is Gravity, AccessControl, Pausable, Ownable {
         uint256 _amount,
         bool isCosmosToken
     ) public onlyOwner {
+        require(migration == true, "Migration has not started");
+        require(migrationHeight != 0, "Migration height cannot be zero");
+        require(block.number >= migrationHeight, "Migration is not allowed yet");
+        require(block.number <= migrationHeight + migrationPeriod, "Migration time has exceeded");
         if (isCosmosToken) {
             ICosmosToken(_tokenContract).setGravityContract(_newGravityAddress);
         } else {
