@@ -65,7 +65,6 @@ struct TransferReverted {
 	address tokenContract;
 	address destination;
 	uint256 amount;
-	bool activate;
 }
 
 
@@ -458,7 +457,7 @@ contract Gravity is ReentrancyGuard {
 	function transferNoRevert(address token, address to, uint value) internal {
 		try this.safeTransferSelf(token,to, value) {
 		} catch {
-			state_RevertedVouchers[state_lastRevertedNonce] = TransferReverted(token, to, value, true);
+			state_RevertedVouchers[state_lastRevertedNonce] = TransferReverted(token, to, value);
 			state_lastRevertedNonce = state_lastRevertedNonce + 1;
 		}
 	}
@@ -471,13 +470,12 @@ contract Gravity is ReentrancyGuard {
 		uint256 _nonce,
 		address _newDestination
 	) public nonReentrant {
-		if(state_RevertedVouchers[_nonce].activate){
-			TransferReverted memory voucher = state_RevertedVouchers[_nonce];
-			require(voucher.destination == msg.sender, "Can only be redeemed by intended recipient");
-			state_RevertedVouchers[_nonce].activate = false;
-			state_RevertedVouchers[_nonce].amount = 0;
-			IERC20(voucher.tokenContract).safeTransfer(_newDestination, voucher.amount);
-		}
+		TransferReverted memory voucher = state_RevertedVouchers[_nonce];
+		require(voucher.destination == msg.sender, "Can only be redeemed by intended recipient");
+		require(state_RevertedVouchers[_nonce].amount > 0, "Voucher has been redeemed already");
+		// redeemVoucher
+		state_RevertedVouchers[_nonce].amount = 0;
+		IERC20(voucher.tokenContract).safeTransfer(_newDestination, voucher.amount);
 	}
 
 	// This makes calls to contracts that execute arbitrary logic
