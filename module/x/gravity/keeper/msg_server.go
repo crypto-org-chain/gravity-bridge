@@ -208,6 +208,11 @@ func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEt
 // SendToEthereum handles MsgSendToEthereum
 func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereum) (*types.MsgSendToEthereumResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+	params := k.GetParams(ctx)
+	if !params.BridgeActive {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "the bridge is disabled")
+	}
+
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
