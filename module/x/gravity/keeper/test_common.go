@@ -445,7 +445,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		),
 	)
 
-	k.setParams(ctx, TestingGravityParams)
+	k.SetParams(ctx, TestingGravityParams)
 
 	return TestInput{
 		GravityKeeper:   k,

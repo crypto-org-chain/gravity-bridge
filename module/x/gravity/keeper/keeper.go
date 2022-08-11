@@ -334,8 +334,8 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	return
 }
 
-// setParams sets the parameters in the store
-func (k Keeper) setParams(ctx sdk.Context, ps types.Params) {
+// SetParams sets the parameters in the store
+func (k Keeper) SetParams(ctx sdk.Context, ps types.Params) {
 	k.paramSpace.SetParamSet(ctx, &ps)
 }
 
@@ -724,5 +724,5 @@ func (k Keeper) MigrateGravityContract(ctx sdk.Context, newBridgeAddress string,
 	// Update the bridge contract address
 	params := k.GetParams(ctx)
 	params.BridgeEthereumAddress = newBridgeAddress
-	k.setParams(ctx, params)
+	k.SetParams(ctx, params)
 }
