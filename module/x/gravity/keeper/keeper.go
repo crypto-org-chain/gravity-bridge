@@ -727,7 +727,7 @@ func (k Keeper) MigrateGravityContract(ctx sdk.Context, newBridgeAddress string,
 	k.SetParams(ctx, params)
 }
 
-// getBridgeChainID returns the chain id of the ETH chain we are running against
+// disableBridge disable the bridge processing all outgoing and ingoing transactions
 func (k Keeper) disableBridge(ctx sdk.Context) {
 	gravityParam := k.GetParams(ctx)
 	gravityParam.BridgeActive = false
