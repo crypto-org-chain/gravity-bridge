@@ -732,4 +732,6 @@ func (k Keeper) disableBridge(ctx sdk.Context) {
 	gravityParam := k.GetParams(ctx)
 	gravityParam.BridgeActive = false
 	k.SetParams(ctx, gravityParam)
+
+	k.Logger(ctx).Info("BridgeActivate is set to false")
 }
