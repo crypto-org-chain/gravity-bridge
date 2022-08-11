@@ -726,3 +726,10 @@ func (k Keeper) MigrateGravityContract(ctx sdk.Context, newBridgeAddress string,
 	params.BridgeEthereumAddress = newBridgeAddress
 	k.SetParams(ctx, params)
 }
+
+// getBridgeChainID returns the chain id of the ETH chain we are running against
+func (k Keeper) disableBridge(ctx sdk.Context) {
+	gravityParam := k.GetParams(ctx)
+	gravityParam.BridgeActive = false
+	k.SetParams(ctx, gravityParam)
+}

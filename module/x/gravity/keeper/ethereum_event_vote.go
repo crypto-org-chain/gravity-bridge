@@ -119,9 +119,11 @@ func (k Keeper) processEthereumEvent(ctx sdk.Context, event types.EthereumEvent)
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
 	if err := k.Handle(xCtx, event); err != nil { // execute with a transient storage
-		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
+		// If the attestation fails, something has gone wrong and we can't recover it. Disable the bridge,
+		// log the error and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
+		k.disableBridge(ctx)
 		k.Logger(ctx).Error(
 			"ethereum event vote record failed",
 			"cause", err.Error(),
