@@ -1,12 +1,13 @@
 package keeper
 
 import (
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 // Tests that the gravity module's balance is accounted for with unbatched txs, including tx cancellation
@@ -17,12 +18,12 @@ func TestModuleBalanceUnbatchedTxs(t *testing.T) {
 
 	ctx := input.Context
 	var (
-		mySender, _         = sdk.AccAddressFromBech32("gravity1ahx7f8wyertuus9r20284ej0asrs085ceqtfnm")
+		mySender, _         = sdk.AccAddressFromBech32("cosmos12luku6uxehhak02py4rcz65zu0swh7wj8a5enl")
 		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
 		myTokenContractAddr = common.HexToAddress("0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5")
 		myTokenDenom        = "gravity0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
 	)
-	
+
 	// mint some voucher first
 	voucher := sdk.NewCoin(myTokenDenom, sdk.NewInt(99999))
 	allVouchers := sdk.Coins{voucher}
