@@ -65,7 +65,9 @@ func (k Keeper) TryEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.Ether
 	if !eventVoteRecord.Accepted {
 		var event types.EthereumEvent
 		if err := k.cdc.UnpackAny(eventVoteRecord.Event, &event); err != nil {
-			panic("unpacking packed any")
+			k.DisableBridge(ctx)
+			k.Logger(ctx).Error("TryEventVoteRecord: unpacking packed any")
+			return
 		}
 
 		// Sum the current powers of all validators who have voted and see if it passes the current threshold
@@ -82,10 +84,13 @@ func (k Keeper) TryEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.Ether
 			// process the attestation, set Observed to true, and break
 			if eventVotePower.GTE(requiredPower) {
 				lastEventNonce := k.GetLastObservedEventNonce(ctx)
-				// this check is performed at the next level up so this should never panic
+				// this check is performed at the next level up so this should never happen
 				// outside of programmer error.
 				if event.GetEventNonce() != lastEventNonce+1 {
-					panic("attempting to apply events to state out of order")
+					k.DisableBridge(ctx)
+					k.Logger(ctx).Error(
+						"TryEventVoteRecord: attempting to apply events to state out of order")
+					return
 				}
 				k.setLastObservedEventNonce(ctx, event.GetEventNonce())
 				k.SetLastObservedEthereumBlockHeight(ctx, event.GetEthereumHeight())
@@ -109,8 +114,11 @@ func (k Keeper) TryEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.Ether
 			}
 		}
 	} else {
-		// We panic here because this should never happen
-		panic("attempting to process observed ethereum event")
+		// We disable the bridge here because this should never happen
+		k.DisableBridge(ctx)
+		k.Logger(ctx).Error(
+			"TryEventVoteRecord: attempting to process observed ethereum event")
+		return
 	}
 }
 
@@ -123,7 +131,7 @@ func (k Keeper) processEthereumEvent(ctx sdk.Context, event types.EthereumEvent)
 		// log the error and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
-		k.disableBridge(ctx)
+		k.DisableBridge(ctx)
 		k.Logger(ctx).Error(
 			"ethereum event vote record failed",
 			"cause", err.Error(),
@@ -157,7 +165,10 @@ func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, c
 func (k Keeper) DeleteEthereumEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.EthereumEventVoteRecord) {
 	event, err := types.UnpackEvent(eventVoteRecord.Event)
 	if err != nil {
-		panic(fmt.Sprintf("couldn't cast to event: %s", err))
+		k.DisableBridge(ctx)
+		k.Logger(ctx).Error(
+			fmt.Sprintf("DeleteEthereumEventVoteRecord: couldn't cast to event: %s", err))
+		return
 	}
 	ctx.KVStore(k.storeKey).Delete(types.MakeEthereumEventVoteRecordKey(event.GetEventNonce(), event.Hash()))
 }

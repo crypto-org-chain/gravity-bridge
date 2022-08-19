@@ -317,7 +317,10 @@ func outgoingTxSlashing(ctx sdk.Context, k keeper.Keeper) {
 	for i, val := range bondedVals {
 		consAddr, err := val.GetConsAddr()
 		if err != nil {
-			panic(fmt.Sprintf("failed to get consensus address: %s", err))
+			k.DisableBridge(ctx)
+			k.Logger(ctx).Error(
+				fmt.Sprintf("outgoingTxSlashing: failed to get consensus address: %s", err))
+			return
 		}
 
 		sigs, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
@@ -337,14 +340,20 @@ func outgoingTxSlashing(ctx sdk.Context, k keeper.Keeper) {
 		for _, valAddr := range unbondingValidators.Addresses {
 			addr, err := sdk.ValAddressFromBech32(valAddr)
 			if err != nil {
-				panic(fmt.Sprintf("failed to bech32 decode validator address: %s", err))
+				k.DisableBridge(ctx)
+				k.Logger(ctx).Error(
+					fmt.Sprintf("outgoingTxSlashing: failed to bech32 decode validator address: %s", err))
+				return
 			}
 
 			validator, _ := k.StakingKeeper.GetValidator(ctx, addr)
 
 			valConsAddr, err := validator.GetConsAddr()
 			if err != nil {
-				panic(fmt.Sprintf("failed to get validator consensus address: %s", err))
+				k.DisableBridge(ctx)
+				k.Logger(ctx).Error(
+					fmt.Sprintf("outgoingTxSlashing: failed to get validator consensus address: %s", err))
+				return
 			}
 
 			valSigningInfo, exist := k.SlashingKeeper.GetValidatorSigningInfo(ctx, valConsAddr)

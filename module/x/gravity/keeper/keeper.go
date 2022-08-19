@@ -728,8 +728,8 @@ func (k Keeper) MigrateGravityContract(ctx sdk.Context, newBridgeAddress string,
 	k.SetParams(ctx, params)
 }
 
-// disableBridge disable the bridge processing all outgoing and ingoing transactions
-func (k Keeper) disableBridge(ctx sdk.Context) {
+// DisableBridge disable the bridge processing all outgoing and ingoing transactions
+func (k Keeper) DisableBridge(ctx sdk.Context) {
 	gravityParam := k.GetParams(ctx)
 	gravityParam.BridgeActive = false
 	k.SetParams(ctx, gravityParam)
