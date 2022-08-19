@@ -469,7 +469,8 @@ async fn submit_duplicate_erc20_send(
 
         let gas_price = get_gas_price();
         let res =
-            send::send_messages::<LocalWallet>(contact, cosmos_key, gas_price, messages, 1.0).await;
+            send::send_messages::<LocalWallet>(contact, cosmos_key, None, gas_price, messages, 1.0)
+                .await;
 
         let res = res.unwrap();
         trace!("Submitted duplicate sendToCosmos event: {:?}", res);
