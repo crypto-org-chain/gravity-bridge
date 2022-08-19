@@ -27,13 +27,19 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	outgoingTxSlashing(ctx, k)
-	eventVoteRecordTally(ctx, k)
+	eventVoteRecordPruneAndTally(ctx, k)
 	updateObservedEthereumHeight(ctx, k)
 }
 
 func createBatchTxs(ctx sdk.Context, k keeper.Keeper) {
-	// TODO: this needs some more work, is super naieve
-	if ctx.BlockHeight()%10 == 0 {
+	// TODO: this needs some more work, is super naive
+	params := k.GetParams(ctx)
+	// bridge is currently disabled, do not create batch anymore
+	if !params.BridgeActive {
+		return
+	}
+	period := int64(params.BatchCreationPeriod)
+	if ctx.BlockHeight()%period == 0 {
 		cm := map[string]bool{}
 		k.IterateUnbatchedSendToEthereums(ctx, func(ste *types.SendToEthereum) bool {
 			cm[ste.Erc20Token.Contract] = true
@@ -46,9 +52,10 @@ func createBatchTxs(ctx sdk.Context, k keeper.Keeper) {
 		}
 		sort.Strings(contracts)
 
+		maxElement := int(params.BatchMaxElement)
 		for _, c := range contracts {
 			// NOTE: this doesn't emit events which would be helpful for client processes
-			k.BuildBatchTx(ctx, common.HexToAddress(c), 100)
+			k.BuildBatchTx(ctx, common.HexToAddress(c), maxElement)
 		}
 	}
 }
@@ -109,7 +116,14 @@ func pruneSignerSetTxs(ctx sdk.Context, k keeper.Keeper) {
 // Iterate over all attestations currently being voted on in order of nonce and
 // "Observe" those who have passed the threshold. Break the loop once we see
 // an attestation that has not passed the threshold
-func eventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
+// Also prune records that are older than the current nonce and no longer have any use
+func eventVoteRecordPruneAndTally(ctx sdk.Context, k keeper.Keeper) {
+	params := k.GetParams(ctx)
+	// bridge is currently disabled, do not process attestations from Ethereum
+	if !params.BridgeActive {
+		return
+	}
+
 	attmap := k.GetEthereumEventVoteRecordMapping(ctx)
 
 	// We make a slice with all the event nonces that are in the attestation mapping
@@ -120,6 +134,9 @@ func eventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 	// Then we sort it
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
+	// we delete all attestations earlier than the current event nonce
+	lastNonce := uint64(k.GetLastObservedEventNonce(ctx))
+
 	// This iterates over all keys (event nonces) in the attestation mapping. Each value contains
 	// a slice with one or more attestations at that event nonce. There can be multiple attestations
 	// at one event nonce when validators disagree about what event happened at that nonce.
@@ -128,6 +145,10 @@ func eventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 		// They are ordered by when the first attestation at the event nonce was received.
 		// This order is not important.
 		for _, att := range attmap[nonce] {
+			// delete all before the last nonce
+			if nonce < lastNonce {
+				k.DeleteEthereumEventVoteRecord(ctx, att)
+			}
 			// We check if the event nonce is exactly 1 higher than the last attestation that was
 			// observed. If it is not, we just move on to the next nonce. This will skip over all
 			// attestations that have already been observed.
@@ -144,7 +165,7 @@ func eventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 			// we skip the other attestations and move on to the next nonce again.
 			// If no attestation becomes observed, when we get to the next nonce, every attestation in
 			// it will be skipped. The same will happen for every nonce after that.
-			if nonce == uint64(k.GetLastObservedEventNonce(ctx))+1 {
+			if nonce == lastNonce+1 {
 				k.TryEventVoteRecord(ctx, att)
 			}
 		}
@@ -162,7 +183,8 @@ func eventVoteRecordTally(ctx sdk.Context, k keeper.Keeper) {
 //    we observed an Ethereum event from the bridge
 func updateObservedEthereumHeight(ctx sdk.Context, k keeper.Keeper) {
 	// wait some minutes before checking the height votes
-	if ctx.BlockHeight()%50 != 0 {
+	observeHeightPeriod := int64(k.GetParams(ctx).ObserveEthereumHeightPeriod)
+	if ctx.BlockHeight()%observeHeightPeriod != 0 {
 		return
 	}
 
@@ -366,7 +388,7 @@ func outgoingTxSlashing(ctx sdk.Context, k keeper.Keeper) {
 			for _, valInfo := range unbondingValInfos {
 				// Only slash validators who joined after valset is created and they are
 				// unbonding and UNBOND_SLASHING_WINDOW didn't pass.
-				if valInfo.exist && valInfo.sigs.StartHeight < int64(sstx.Nonce) &&
+				if valInfo.exist && valInfo.sigs.StartHeight < int64(sstx.Height) &&
 					valInfo.val.IsUnbonding() &&
 					sstx.Height < uint64(valInfo.val.UnbondingHeight)+params.UnbondSlashingSignerSetTxsWindow {
 					// check if validator has confirmed valset or not

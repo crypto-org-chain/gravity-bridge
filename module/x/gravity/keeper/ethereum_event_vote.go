@@ -119,9 +119,11 @@ func (k Keeper) processEthereumEvent(ctx sdk.Context, event types.EthereumEvent)
 	// then execute in a new Tx so that we can store state on failure
 	xCtx, commit := ctx.CacheContext()
 	if err := k.Handle(xCtx, event); err != nil { // execute with a transient storage
-		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
+		// If the attestation fails, something has gone wrong and we can't recover it. Disable the bridge,
+		// log the error and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
+		k.disableBridge(ctx)
 		k.Logger(ctx).Error(
 			"ethereum event vote record failed",
 			"cause", err.Error(),
@@ -149,6 +151,15 @@ func (k Keeper) GetEthereumEventVoteRecord(ctx sdk.Context, eventNonce uint64, c
 		k.cdc.MustUnmarshal(bz, &out)
 		return &out
 	}
+}
+
+// DeleteEthereumEventVoteRecord deletes a vote record
+func (k Keeper) DeleteEthereumEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.EthereumEventVoteRecord) {
+	event, err := types.UnpackEvent(eventVoteRecord.Event)
+	if err != nil {
+		panic(fmt.Sprintf("couldn't cast to event: %s", err))
+	}
+	ctx.KVStore(k.storeKey).Delete(types.MakeEthereumEventVoteRecordKey(event.GetEventNonce(), event.Hash()))
 }
 
 // GetEthereumEventVoteRecordMapping returns a mapping of eventnonce -> attestations at that nonce
@@ -244,30 +255,9 @@ func (k Keeper) getLastEventNonceByValidator(ctx sdk.Context, validator sdk.ValA
 		// them to replay the entire history of all events ever we can't start
 		// at zero
 		//
-		// We could start at the LastObservedEventNonce but if we do that this
-		// validator will be slashed, because they are responsible for making a claim
-		// on any attestation that has not yet passed the slashing window.
-		//
-		// Therefore we need to return to them the lowest attestation that is still within
-		// the slashing window. Since we delete attestations after the slashing window that's
-		// just the lowest observed event in the store. If no claims have been submitted in for
-		// params.SignedClaimsWindow we may have no attestations in our nonce. At which point
-		// the last observed which is a persistent and never cleaned counter will suffice.
+		// We return the LastObservedEventNonce
 		lowestObserved := k.GetLastObservedEventNonce(ctx)
-		attmap := k.GetEthereumEventVoteRecordMapping(ctx)
-		// no new claims in params.SignedClaimsWindow, we can return the current value
-		// because the validator can't be slashed for an event that has already passed.
-		// so they only have to worry about the *next* event to occur
-		if len(attmap) == 0 {
-			return lowestObserved
-		}
-		for nonce, atts := range attmap {
-			for att := range atts {
-				if atts[att].Accepted && nonce < lowestObserved {
-					lowestObserved = nonce
-				}
-			}
-		}
+
 		// return the latest event minus one so that the validator
 		// can submit that event and avoid slashing. special case
 		// for zero

@@ -1,7 +1,8 @@
 pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "./ICosmosToken.sol";
 
-contract CosmosERC20 is ERC20 {
+contract CosmosERC20 is ERC20, ICosmosToken {
 	uint256 private MAX_UINT = 2**256 - 1;
 
 	address public gravity;
@@ -46,14 +47,15 @@ contract CosmosERC20 is ERC20 {
 
 
 	/**
-	 * @dev Sets the gravity contract to a new address.
+	 * @dev Sets the gravity contract and transfer the balance to the new address.
 	 *
 	 * Requirements:
 	 *
 	 * - `msg.sender` must be the current gravity contract
 	 */
 	function setGravityContract(address _gravityAddress) external onlyGravity {
-
+		require(balanceOf(_gravityAddress) == 0, "new gravity address balance should be zero");
+		_transfer(gravity, _gravityAddress, balanceOf(gravity));
 		gravity = _gravityAddress;
 	 }
 

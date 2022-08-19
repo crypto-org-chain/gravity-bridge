@@ -12,7 +12,7 @@ import (
 
 // InitGenesis starts a chain from a genesis state
 func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
-	k.setParams(ctx, *data.Params)
+	k.SetParams(ctx, *data.Params)
 
 	// reset pool transactions in state
 	for _, tx := range data.UnbatchedSendToEthereumTxs {
@@ -24,9 +24,6 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		event, err := types.UnpackEvent(evr.Event)
 		if err != nil {
 			panic(fmt.Sprintf("couldn't cast to event: %s", err))
-		}
-		if err := event.Validate(); err != nil {
-			panic(fmt.Sprintf("invalid event in genesis: %s", err))
 		}
 		k.setEthereumEventVoteRecord(ctx, event.GetEventNonce(), event.Hash(), evr)
 	}

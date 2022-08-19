@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -54,13 +55,23 @@ func (k Keeper) Handle(ctx sdk.Context, eve types.EthereumEvent) (err error) {
 		return nil
 
 	case *types.BatchExecutedEvent:
-		k.batchTxExecuted(ctx, common.HexToAddress(event.TokenContract), event.BatchNonce)
+		if err := k.batchTxExecuted(ctx, common.HexToAddress(event.TokenContract), event.BatchNonce); err != nil {
+			return err
+		}
 		k.AfterBatchExecutedEvent(ctx, *event)
 		return nil
 
 	case *types.ERC20DeployedEvent:
 		if err := k.verifyERC20DeployedEvent(ctx, event); err != nil {
-			return err
+			// log the error and return nil, otherwise the bridge will be desactivated
+			k.Logger(ctx).Error(
+				"verify erc20 deployed event failed",
+				"cause", err.Error(),
+				"event type", fmt.Sprintf("%T", event),
+				"id", types.MakeEthereumEventVoteRecordKey(event.GetEventNonce(), event.Hash()),
+				"nonce", fmt.Sprint(event.GetEventNonce()),
+			)
+			return nil
 		}
 
 		// add to denom-erc20 mapping
@@ -146,17 +157,17 @@ func (k Keeper) verifyERC20DeployedEvent(ctx sdk.Context, event *types.ERC20Depl
 }
 
 func verifyERC20Token(metadata banktypes.Metadata, event *types.ERC20DeployedEvent) error {
-	if event.Erc20Name != metadata.Display {
+	if event.Erc20Name != metadata.Name {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidERC20Event,
-			"ERC20 name %s does not match the denom display %s", event.Erc20Name, metadata.Display,
+			"ERC20 name %s does not match the denom name %s", event.Erc20Name, metadata.Name,
 		)
 	}
 
-	if event.Erc20Symbol != metadata.Display {
+	if event.Erc20Symbol != metadata.Symbol {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidERC20Event,
-			"ERC20 symbol %s does not match denom display %s", event.Erc20Symbol, metadata.Display,
+			"ERC20 symbol %s does not match denom symbol %s", event.Erc20Symbol, metadata.Symbol,
 		)
 	}
 

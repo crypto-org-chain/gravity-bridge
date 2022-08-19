@@ -30,6 +30,7 @@ pub async fn update_gravity_delegate_addresses<S: Signer>(
     delegate_eth_address: EthAddress,
     delegate_cosmos_address: Address,
     cosmos_key: CosmosPrivateKey,
+    cosmos_granter: Option<String>,
     ethereum_wallet: S,
     gas_price: (f64, String),
     gas_adjustment: f64,
@@ -70,13 +71,14 @@ pub async fn update_gravity_delegate_addresses<S: Signer>(
     };
     let msg = Msg::new("/gravity.v1.MsgDelegateKeys", msg);
 
-    send_messages(contact, cosmos_key, gas_price, vec![msg], gas_adjustment).await
+    send_messages(contact, cosmos_key, cosmos_granter, gas_price, vec![msg], gas_adjustment).await
 }
 
 /// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
 /// they will require some time to be included in a batch
 pub async fn send_to_eth<S: Signer>(
     cosmos_key: CosmosPrivateKey,
+    cosmos_granter: Option<String>,
     destination: EthAddress,
     amount: Coin,
     bridge_fee: Coin,
@@ -102,11 +104,12 @@ pub async fn send_to_eth<S: Signer>(
         bridge_fee: Some(bridge_fee.clone().into()),
     };
     let msg = Msg::new("/gravity.v1.MsgSendToEthereum", msg);
-    send_messages(contact, cosmos_key, gas_price, vec![msg], gas_adjustment).await
+    send_messages(contact, cosmos_key, cosmos_granter, gas_price, vec![msg], gas_adjustment).await
 }
 
 pub async fn send_request_batch_tx<S: Signer>(
     cosmos_key: CosmosPrivateKey,
+    cosmos_granter: Option<String>,
     denom: String,
     gas_price: (f64, String),
     contact: &Contact,
@@ -118,12 +121,13 @@ pub async fn send_request_batch_tx<S: Signer>(
         denom,
     };
     let msg = Msg::new("/gravity.v1.MsgRequestBatchTx", msg_request_batch);
-    send_messages(contact, cosmos_key, gas_price, vec![msg], gas_adjustment).await
+    send_messages(contact, cosmos_key, cosmos_granter, gas_price, vec![msg], gas_adjustment).await
 }
 
 pub async fn send_messages<S: Signer>(
     contact: &Contact,
     cosmos_key: CosmosPrivateKey,
+    cosmos_granter: Option<String>,
     gas_price: (f64, String),
     messages: Vec<Msg>,
     gas_adjustment: f64,
@@ -138,7 +142,7 @@ pub async fn send_messages<S: Signer>(
     let fee = Fee {
         amount: vec![fee_amount],
         gas_limit: 0,
-        granter: None,
+        granter: cosmos_granter,
         payer: None,
     };
 
@@ -164,6 +168,7 @@ pub async fn send_messages<S: Signer>(
     let response = contact
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
+    info!("Sent cosmos transaction: {:?}", response.txhash);
 
     Ok(contact.wait_for_tx(response, TIMEOUT).await?)
 }
@@ -171,6 +176,7 @@ pub async fn send_messages<S: Signer>(
 pub async fn send_main_loop<S: Signer>(
     contact: &Contact,
     cosmos_key: CosmosPrivateKey,
+    cosmos_granter: Option<String>,
     gas_price: (f64, String),
     mut rx: tokio::sync::mpsc::Receiver<Vec<Msg>>,
     gas_adjustment: f64,
@@ -181,6 +187,7 @@ pub async fn send_main_loop<S: Signer>(
             match send_messages::<S>(
                 contact,
                 cosmos_key,
+                cosmos_granter.to_owned(),
                 gas_price.to_owned(),
                 msg_chunk.to_vec(),
                 gas_adjustment,

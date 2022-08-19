@@ -208,6 +208,11 @@ func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEt
 // SendToEthereum handles MsgSendToEthereum
 func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereum) (*types.MsgSendToEthereumResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+	params := k.GetParams(ctx)
+	if !params.BridgeActive {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "the bridge is disabled")
+	}
+
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, err
@@ -216,6 +221,12 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 	// ensure the denoms provided in the message will map correctly if they are gravity denoms
 	types.NormalizeCoinDenom(&msg.Amount)
 	types.NormalizeCoinDenom(&msg.BridgeFee)
+
+	// ensure that the destination address is a correct hex address
+	err = types.ValidateEthAddress(msg.EthereumRecipient)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid eth dest")
+	}
 
 	txID, err := k.createSendToEthereum(ctx, sender, msg.EthereumRecipient, msg.Amount, msg.BridgeFee)
 	if err != nil {

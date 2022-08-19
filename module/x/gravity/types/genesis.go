@@ -62,8 +62,20 @@ var (
 	// ParamsStoreSlashFractionConflictingEthereumSignature stores the slash fraction ConflictingEthereumSignature
 	ParamsStoreSlashFractionConflictingEthereumSignature = []byte("SlashFractionConflictingEthereumSignature")
 
-	//  ParamStoreUnbondSlashingSignerSetTxsWindow stores unbond slashing valset window
+	// ParamStoreUnbondSlashingSignerSetTxsWindow stores unbond slashing valset window
 	ParamStoreUnbondSlashingSignerSetTxsWindow = []byte("UnbondSlashingSignerSetTxsWindow")
+
+	// ParamStoreBridgeActive store the parameter to stop the bridge
+	ParamStoreBridgeActive = []byte("BridgeActive")
+
+	// ParamStoreBatchCreationPeriod store the batch creation period
+	ParamStoreBatchCreationPeriod = []byte("BatchCreationPeriod")
+
+	// ParamStoreBatchMaxElement store batch max element
+	ParamStoreBatchMaxElement = []byte("BatchMaxElement")
+
+	// ParamStoreObserveEthereumHeightPeriod store the observe ethereum height period
+	ParamStoreObserveEthereumHeightPeriod = []byte("ObserveEthereumHeightPeriod")
 
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
@@ -134,6 +146,10 @@ func DefaultParams() *Params {
 		SlashFractionEthereumSignature:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionConflictingEthereumSignature: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		UnbondSlashingSignerSetTxsWindow:          10000,
+		BridgeActive:                              true,
+		BatchCreationPeriod:                       10,
+		BatchMaxElement:                           100,
+		ObserveEthereumHeightPeriod:               50,
 	}
 }
 
@@ -212,6 +228,10 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionEthereumSignature, &p.SlashFractionEthereumSignature, validateSlashFractionEthereumSignature),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionConflictingEthereumSignature, &p.SlashFractionConflictingEthereumSignature, validateSlashFractionConflictingEthereumSignature),
 		paramtypes.NewParamSetPair(ParamStoreUnbondSlashingSignerSetTxsWindow, &p.UnbondSlashingSignerSetTxsWindow, validateUnbondSlashingSignerSetTxsWindow),
+		paramtypes.NewParamSetPair(ParamStoreBridgeActive, &p.BridgeActive, validateBridgeActive),
+		paramtypes.NewParamSetPair(ParamStoreBatchCreationPeriod, &p.BatchCreationPeriod, validateBatchCreationPeriod),
+		paramtypes.NewParamSetPair(ParamStoreBatchMaxElement, &p.BatchMaxElement, validateBatchMaxElement),
+		paramtypes.NewParamSetPair(ParamStoreObserveEthereumHeightPeriod, &p.ObserveEthereumHeightPeriod, validateObserveEthereumHeightPeriod),
 	}
 }
 
@@ -375,4 +395,36 @@ func byteArrayToFixByteArray(b []byte) (out [32]byte, err error) {
 	}
 	copy(out[:], b)
 	return out, nil
+}
+
+func validateBridgeActive(i interface{}) error {
+	if _, ok := i.(bool); !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
+}
+
+func validateBatchCreationPeriod(i interface{}) error {
+	if period, ok := i.(uint64); !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	} else if period == 0 {
+		return fmt.Errorf("cannot be zero")
+	}
+	return nil
+}
+
+func validateBatchMaxElement(i interface{}) error {
+	if _, ok := i.(uint64); !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
+}
+
+func validateObserveEthereumHeightPeriod(i interface{}) error {
+	if period, ok := i.(uint64); !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	} else if period == 0 {
+		return fmt.Errorf("cannot be zero")
+	}
+	return nil
 }

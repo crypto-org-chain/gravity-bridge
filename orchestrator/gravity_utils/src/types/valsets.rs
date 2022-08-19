@@ -5,6 +5,7 @@ use crate::{
 };
 use deep_space::error::CosmosGrpcError;
 use ethers::types::{Address as EthAddress, Signature as EthSignature};
+use ethers::core::utils::to_checksum;
 use std::convert::TryFrom;
 use std::fmt::Debug;
 use std::{
@@ -339,7 +340,13 @@ impl Ord for ValsetMember {
         if self.power != other.power {
             self.power.cmp(&other.power)
         } else {
-            self.eth_address.cmp(&other.eth_address).reverse()
+            // Since gravity-bridge uses checksum addresses
+            // we need to convert in order to do the comparison.
+            let checksum_addr =
+                to_checksum(&self.eth_address.unwrap_or_default(), None);
+            let checksum_other = to_checksum(
+                &other.eth_address.unwrap_or_default(), None);
+            checksum_addr.cmp(&checksum_other).reverse()
         }
     }
 }

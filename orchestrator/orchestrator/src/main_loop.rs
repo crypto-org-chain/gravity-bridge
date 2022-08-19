@@ -50,6 +50,7 @@ pub const ETH_ORACLE_LOOP_SPEED: Duration = Duration::from_secs(13);
 #[allow(clippy::too_many_arguments)]
 pub async fn orchestrator_main_loop<S: Signer>(
     cosmos_key: CosmosPrivateKey,
+    cosmos_granter: Option<String>,
     contact: Contact,
     eth_client: EthClient<S>,
     grpc_client: GravityQueryClient<Channel>,
@@ -57,6 +58,7 @@ pub async fn orchestrator_main_loop<S: Signer>(
     gas_price: (f64, String),
     metrics_listen: &net::SocketAddr,
     eth_gas_price_multiplier: f32,
+    eth_gas_multiplier: f32,
     blocks_to_search: u64,
     gas_adjustment: f64,
     relayer_opt_out: bool,
@@ -68,6 +70,7 @@ pub async fn orchestrator_main_loop<S: Signer>(
     let a = send_main_loop::<S>(
         &contact,
         cosmos_key,
+        cosmos_granter,
         gas_price,
         rx,
         gas_adjustment,
@@ -104,6 +107,7 @@ pub async fn orchestrator_main_loop<S: Signer>(
             gravity_contract_address,
             eth_gas_price_multiplier,
             &mut fee_manager,
+            eth_gas_multiplier,
         );
         futures::future::join5(a, b, c, d, e).await;
     } else {
