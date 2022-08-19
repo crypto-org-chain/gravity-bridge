@@ -14,7 +14,7 @@ use std::{result::Result, time::Duration};
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided validator set and signatures.
 #[allow(clippy::too_many_arguments)]
-pub async fn send_eth_valset_update(
+pub async fn send_eth_valset_update<S: Signer>(
     new_valset: Valset,
     old_valset: Valset,
     confirms: &[ValsetConfirmResponse],
@@ -22,8 +22,8 @@ pub async fn send_eth_valset_update(
     gravity_contract_address: EthAddress,
     gravity_id: String,
     gas_cost: GasCost,
-    eth_client: EthClient,
-) -> Result<(), GravityError> {
+    eth_client: EthClient<S>,
+) -> Result<(), GravityError<S>> {
     let old_nonce = old_valset.nonce;
     let new_nonce = new_valset.nonce;
 
@@ -84,14 +84,14 @@ pub async fn send_eth_valset_update(
 }
 
 /// Returns the cost in Eth of sending this valset update
-pub async fn estimate_valset_cost(
+pub async fn estimate_valset_cost<S: Signer>(
     new_valset: &Valset,
     old_valset: &Valset,
     confirms: &[ValsetConfirmResponse],
     gravity_contract_address: EthAddress,
     gravity_id: String,
-    eth_client: EthClient,
-) -> Result<GasCost, GravityError> {
+    eth_client: EthClient<S>,
+) -> Result<GasCost, GravityError<S>> {
     let contract_call = build_valset_update_contract_call(
         new_valset,
         old_valset,
@@ -107,14 +107,14 @@ pub async fn estimate_valset_cost(
     })
 }
 
-pub fn build_valset_update_contract_call(
+pub fn build_valset_update_contract_call<S: Signer>(
     new_valset: &Valset,
     old_valset: &Valset,
     confirms: &[ValsetConfirmResponse],
     gravity_contract_address: EthAddress,
     gravity_id: String,
-    eth_client: EthClient,
-) -> Result<ContractCall<EthSignerMiddleware, ()>, GravityError> {
+    eth_client: EthClient<S>,
+) -> Result<ContractCall<EthSignerMiddleware<S>, ()>, GravityError<S>> {
     let (old_addresses, old_powers) = old_valset.filter_empty_addresses();
     let (new_addresses, new_powers) = new_valset.filter_empty_addresses();
     let old_powers: Vec<U256> = old_powers.iter().map(|power| (*power).into()).collect();

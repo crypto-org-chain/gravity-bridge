@@ -15,7 +15,7 @@ use std::{result::Result, time::Duration};
 /// denom. If an existing contract is already deployed representing this asset this call will cost
 /// Gas but not actually do anything. Returns the new contract address or an error
 #[allow(clippy::too_many_arguments)]
-pub async fn deploy_erc20(
+pub async fn deploy_erc20<S: Signer>(
     cosmos_denom: String,
     erc20_name: String,
     erc20_symbol: String,
@@ -23,8 +23,8 @@ pub async fn deploy_erc20(
     gravity_contract: Address,
     wait_timeout: Option<Duration>,
     gas_multiplier: f64,
-    eth_client: EthClient,
-) -> Result<TxHash, GravityError> {
+    eth_client: EthClient<S>,
+) -> Result<TxHash, GravityError<S>> {
     let contract_call = Gravity::new(gravity_contract, eth_client.clone()).deploy_erc20(
         cosmos_denom,
         erc20_name,

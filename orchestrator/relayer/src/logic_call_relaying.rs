@@ -6,6 +6,7 @@ use ethereum_gravity::utils::handle_contract_error;
 use ethereum_gravity::{
     logic_call::send_eth_logic_call, types::EthClient, utils::get_logic_call_nonce,
 };
+use ethers::signers::Signer;
 use ethers::types::Address as EthAddress;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::ethereum::{bytes_to_hex_str, downcast_to_f32};
@@ -15,10 +16,10 @@ use std::time::Duration;
 use tonic::transport::Channel;
 
 #[allow(clippy::too_many_arguments)]
-pub async fn relay_logic_calls(
+pub async fn relay_logic_calls<S: Signer>(
     // the validator set currently in the contract on Ethereum
     current_valset: Valset,
-    eth_client: EthClient,
+    eth_client: EthClient<S>,
     grpc_client: &mut GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
     gravity_id: String,
@@ -26,7 +27,7 @@ pub async fn relay_logic_calls(
     eth_gas_price_multiplier: f32,
     logic_call_skips: &mut LogicCallSkips,
 ) {
-    let latest_calls = match get_latest_logic_calls(grpc_client).await {
+    let latest_calls = match get_latest_logic_calls::<S>(grpc_client).await {
         Ok(calls) => {
             debug!("Latest Logic calls {:?}", calls);
             calls
@@ -56,7 +57,7 @@ pub async fn relay_logic_calls(
             continue;
         }
 
-        let sigs = get_logic_call_signatures(
+        let sigs = get_logic_call_signatures::<S>(
             grpc_client,
             call.invalidation_id.clone(),
             call.invalidation_nonce,
@@ -66,7 +67,10 @@ pub async fn relay_logic_calls(
         if let Ok(sigs) = sigs {
             let hash = encode_logic_call_confirm_hashed(gravity_id.clone(), call.clone());
             // this checks that the signatures for the logic call are actually possible to submit to the chain
-            if current_valset.order_sigs(&hash, &sigs).is_ok() {
+            if current_valset
+                .order_sigs::<LogicCallConfirmResponse, S>(&hash, &sigs)
+                .is_ok()
+            {
                 oldest_signed_call = Some(call);
                 oldest_signatures = Some(sigs);
             } else {

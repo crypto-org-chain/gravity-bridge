@@ -330,7 +330,7 @@ async fn test_batch(
         "Sending {}{} from {} on Cosmos back to Ethereum",
         amount, token_name, dest_cosmos_address
     );
-    let res = send_to_eth(
+    let res = send_to_eth::<LocalWallet>(
         dest_cosmos_private_key,
         dest_eth_address,
         Coin {
@@ -347,7 +347,7 @@ async fn test_batch(
     info!("Sent tokens to Ethereum with {:?}", res);
 
     info!("Requesting transaction batch");
-    send_request_batch_tx(
+    send_request_batch_tx::<LocalWallet>(
         requester_cosmos_private_key,
         token_name.clone(),
         (10f64, "footoken".to_string()),
@@ -361,7 +361,7 @@ async fn test_batch(
     let requester_address = requester_cosmos_private_key
         .to_address(&contact.get_prefix())
         .unwrap();
-    get_oldest_unsigned_transaction_batch(grpc_client, requester_address)
+    get_oldest_unsigned_transaction_batch::<LocalWallet>(grpc_client, requester_address)
         .await
         .expect("Failed to get batch to sign");
 
@@ -466,7 +466,8 @@ async fn submit_duplicate_erc20_send(
         );
 
         let gas_price = get_gas_price();
-        let res = send::send_messages(contact, cosmos_key, gas_price, messages, 1.0).await;
+        let res =
+            send::send_messages::<LocalWallet>(contact, cosmos_key, gas_price, messages, 1.0).await;
         let res = res.unwrap();
         trace!("Submitted duplicate sendToCosmos event: {:?}", res);
     }

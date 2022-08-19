@@ -1,10 +1,10 @@
 mod batches;
+pub mod config;
 mod ethereum_events;
 mod gravity_contract_errors;
 mod logic_call;
 mod signatures;
 mod valsets;
-pub mod config;
 
 use crate::error::GravityError;
 use ethers::prelude::*;
@@ -26,7 +26,9 @@ pub struct Erc20Token {
 }
 
 impl Erc20Token {
-    pub fn from_proto(input: gravity_proto::gravity::Erc20Token) -> Result<Self, GravityError> {
+    pub fn from_proto<S: Signer>(
+        input: gravity_proto::gravity::Erc20Token,
+    ) -> Result<Self, GravityError<S>> {
         Ok(Erc20Token {
             amount: U256::from_dec_str(input.amount.as_str())?,
             token_contract_address: input.contract.parse()?,

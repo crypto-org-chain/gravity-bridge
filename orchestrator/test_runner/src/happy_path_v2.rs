@@ -149,7 +149,7 @@ pub async fn happy_path_test_v2(
     send_one_eth(user.eth_address, (*MINER_CLIENT).clone()).await;
     info!("Sent 1 eth to user address {}", user.eth_address);
 
-    let res = send_to_eth(
+    let res = send_to_eth::<LocalWallet>(
         user.cosmos_key,
         user.eth_address,
         send_to_eth_coin,
@@ -166,7 +166,7 @@ pub async fn happy_path_test_v2(
         amount_to_bridge, token_to_send_to_eth
     );
 
-    let res = send_request_batch_tx(
+    let res = send_request_batch_tx::<LocalWallet>(
         keys[0].validator_key,
         token_to_send_to_eth.clone(),
         (10f64, "footoken".to_string()),

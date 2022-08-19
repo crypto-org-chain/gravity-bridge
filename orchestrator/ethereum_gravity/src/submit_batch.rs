@@ -14,7 +14,7 @@ use std::{result::Result, time::Duration};
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided transaction batch
 #[allow(clippy::too_many_arguments)]
-pub async fn send_eth_transaction_batch(
+pub async fn send_eth_transaction_batch<S: Signer>(
     current_valset: Valset,
     batch: TransactionBatch,
     confirms: &[BatchConfirmResponse],
@@ -22,8 +22,8 @@ pub async fn send_eth_transaction_batch(
     gravity_contract_address: EthAddress,
     gravity_id: String,
     gas_cost: GasCost,
-    eth_client: EthClient,
-) -> Result<(), GravityError> {
+    eth_client: EthClient<S>,
+) -> Result<(), GravityError<S>> {
     let new_batch_nonce = batch.nonce;
     info!(
         "Ordering signatures and submitting TransactionBatch {}:{} to Ethereum",
@@ -101,14 +101,14 @@ pub async fn send_eth_transaction_batch(
 }
 
 /// Returns the cost in Eth of sending this batch
-pub async fn estimate_tx_batch_cost(
+pub async fn estimate_tx_batch_cost<S: Signer>(
     current_valset: Valset,
     batch: TransactionBatch,
     confirms: &[BatchConfirmResponse],
     gravity_contract_address: EthAddress,
     gravity_id: String,
-    eth_client: EthClient,
-) -> Result<GasCost, GravityError> {
+    eth_client: EthClient<S>,
+) -> Result<GasCost, GravityError<S>> {
     let contract_call = build_submit_batch_contract_call(
         current_valset,
         &batch,
@@ -124,14 +124,14 @@ pub async fn estimate_tx_batch_cost(
     })
 }
 
-pub fn build_submit_batch_contract_call(
+pub fn build_submit_batch_contract_call<S: Signer>(
     current_valset: Valset,
     batch: &TransactionBatch,
     confirms: &[BatchConfirmResponse],
     gravity_contract_address: EthAddress,
     gravity_id: String,
-    eth_client: EthClient,
-) -> Result<ContractCall<EthSignerMiddleware, ()>, GravityError> {
+    eth_client: EthClient<S>,
+) -> Result<ContractCall<EthSignerMiddleware<S>, ()>, GravityError<S>> {
     let (current_addresses, current_powers) = current_valset.filter_empty_addresses();
     let current_powers: Vec<U256> = current_powers.iter().map(|power| (*power).into()).collect();
     let current_valset_nonce = current_valset.nonce;

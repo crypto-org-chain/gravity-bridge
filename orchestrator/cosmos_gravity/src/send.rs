@@ -25,15 +25,15 @@ pub const TIMEOUT: Duration = Duration::from_secs(60);
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
-pub async fn update_gravity_delegate_addresses(
+pub async fn update_gravity_delegate_addresses<S: Signer>(
     contact: &Contact,
     delegate_eth_address: EthAddress,
     delegate_cosmos_address: Address,
     cosmos_key: CosmosPrivateKey,
-    ethereum_wallet: LocalWallet,
+    ethereum_wallet: S,
     gas_price: (f64, String),
     gas_adjustment: f64,
-) -> Result<TxResponse, GravityError> {
+) -> Result<TxResponse, GravityError<S>> {
     let our_valoper_address = cosmos_key
         .to_address(&contact.get_prefix())
         .unwrap()
@@ -58,7 +58,10 @@ pub async fn update_gravity_delegate_addresses(
     Message::encode(&eth_sign_msg, &mut data).expect("encoding failed");
 
     let data_hash = keccak256(data);
-    let eth_signature = ethereum_wallet.sign_message(data_hash).await?;
+    let eth_signature = ethereum_wallet
+        .sign_message(data_hash)
+        .await
+        .map_err(GravityError::EthersWalletError)?;
     let msg = proto::MsgDelegateKeys {
         validator_address: our_valoper_address.to_string(),
         orchestrator_address: delegate_cosmos_address.to_string(),
@@ -72,7 +75,7 @@ pub async fn update_gravity_delegate_addresses(
 
 /// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
 /// they will require some time to be included in a batch
-pub async fn send_to_eth(
+pub async fn send_to_eth<S: Signer>(
     cosmos_key: CosmosPrivateKey,
     destination: EthAddress,
     amount: Coin,
@@ -80,7 +83,7 @@ pub async fn send_to_eth(
     gas_price: (f64, String),
     contact: &Contact,
     gas_adjustment: f64,
-) -> Result<TxResponse, GravityError> {
+) -> Result<TxResponse, GravityError<S>> {
     if amount.denom != bridge_fee.denom {
         return Err(GravityError::CosmosGrpcError(CosmosGrpcError::BadInput(
             format!(
@@ -102,13 +105,13 @@ pub async fn send_to_eth(
     send_messages(contact, cosmos_key, gas_price, vec![msg], gas_adjustment).await
 }
 
-pub async fn send_request_batch_tx(
+pub async fn send_request_batch_tx<S: Signer>(
     cosmos_key: CosmosPrivateKey,
     denom: String,
     gas_price: (f64, String),
     contact: &Contact,
     gas_adjustment: f64,
-) -> Result<TxResponse, GravityError> {
+) -> Result<TxResponse, GravityError<S>> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
     let msg_request_batch = proto::MsgRequestBatchTx {
         signer: cosmos_address.to_string(),
@@ -118,13 +121,13 @@ pub async fn send_request_batch_tx(
     send_messages(contact, cosmos_key, gas_price, vec![msg], gas_adjustment).await
 }
 
-pub async fn send_messages(
+pub async fn send_messages<S: Signer>(
     contact: &Contact,
     cosmos_key: CosmosPrivateKey,
     gas_price: (f64, String),
     messages: Vec<Msg>,
     gas_adjustment: f64,
-) -> Result<TxResponse, GravityError> {
+) -> Result<TxResponse, GravityError<S>> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
     let fee_amount = Coin {
@@ -165,7 +168,7 @@ pub async fn send_messages(
     Ok(contact.wait_for_tx(response, TIMEOUT).await?)
 }
 
-pub async fn send_main_loop(
+pub async fn send_main_loop<S: Signer>(
     contact: &Contact,
     cosmos_key: CosmosPrivateKey,
     gas_price: (f64, String),
@@ -175,7 +178,7 @@ pub async fn send_main_loop(
 ) {
     while let Some(messages) = rx.recv().await {
         for msg_chunk in messages.chunks(msg_batch_size) {
-            match send_messages(
+            match send_messages::<S>(
                 contact,
                 cosmos_key,
                 gas_price.to_owned(),

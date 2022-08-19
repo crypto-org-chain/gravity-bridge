@@ -167,7 +167,7 @@ pub async fn transaction_stress_test(
                 denom: send_coin.denom.clone(),
                 amount: 1u8.into(),
             };
-            let res = send_to_eth(
+            let res = send_to_eth::<LocalWallet>(
                 c_key,
                 e_dest_addr,
                 send_coin,
@@ -191,7 +191,7 @@ pub async fn transaction_stress_test(
 
     for denom in denoms {
         info!("Requesting batch for {}", denom);
-        let res = send_request_batch_tx(
+        let res = send_request_batch_tx::<LocalWallet>(
             keys[0].validator_key,
             denom,
             (0f64, "".to_string()),

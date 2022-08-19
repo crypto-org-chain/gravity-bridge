@@ -48,10 +48,10 @@ pub const ETH_ORACLE_LOOP_SPEED: Duration = Duration::from_secs(13);
 /// of all execution time sleeping this shouldn't be an issue at all.
 #[allow(clippy::many_single_char_names)]
 #[allow(clippy::too_many_arguments)]
-pub async fn orchestrator_main_loop(
+pub async fn orchestrator_main_loop<S: Signer>(
     cosmos_key: CosmosPrivateKey,
     contact: Contact,
-    eth_client: EthClient,
+    eth_client: EthClient<S>,
     grpc_client: GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
     gas_price: (f64, String),
@@ -65,7 +65,7 @@ pub async fn orchestrator_main_loop(
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
-    let a = send_main_loop(
+    let a = send_main_loop::<S>(
         &contact,
         cosmos_key,
         gas_price,
@@ -120,10 +120,10 @@ const HEIGHT_UPDATE_INTERVAL: u32 = 50;
 /// This function is responsible for making sure that Ethereum events are retrieved from the Ethereum blockchain
 /// and ferried over to Cosmos where they will be used to issue tokens or process batches.
 #[allow(unused_variables)]
-pub async fn eth_oracle_main_loop(
+pub async fn eth_oracle_main_loop<S: Signer>(
     cosmos_key: CosmosPrivateKey,
     contact: Contact,
-    eth_client: EthClient,
+    eth_client: EthClient<S>,
     grpc_client: GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
     blocks_to_search: u64,
@@ -248,10 +248,10 @@ pub async fn eth_oracle_main_loop(
 /// since these are provided directly by a trusted Cosmsos node they can simply be assumed to be
 /// valid and signed off on.
 #[allow(unused_variables)]
-pub async fn eth_signer_main_loop(
+pub async fn eth_signer_main_loop<S: Signer>(
     cosmos_key: CosmosPrivateKey,
     contact: Contact,
-    eth_client: EthClient,
+    eth_client: EthClient<S>,
     grpc_client: GravityQueryClient<Channel>,
     contract_address: EthAddress,
     msg_sender: tokio::sync::mpsc::Sender<Vec<Msg>>,
@@ -308,7 +308,7 @@ pub async fn eth_signer_main_loop(
                 }
 
                 // sign the last unsigned valsets
-                match get_oldest_unsigned_valsets(&mut grpc_client, our_cosmos_address).await {
+                match get_oldest_unsigned_valsets::<S>(&mut grpc_client, our_cosmos_address).await {
                     Ok(valsets) => {
                         if valsets.is_empty() {
                             trace!("No validator sets to sign, node is caught up!")
@@ -342,8 +342,11 @@ pub async fn eth_signer_main_loop(
                 }
 
                 // sign the last unsigned batch, TODO check if we already have signed this
-                match get_oldest_unsigned_transaction_batch(&mut grpc_client, our_cosmos_address)
-                    .await
+                match get_oldest_unsigned_transaction_batch::<S>(
+                    &mut grpc_client,
+                    our_cosmos_address,
+                )
+                .await
                 {
                     Ok(Some(last_unsigned_batch)) => {
                         info!(
@@ -378,7 +381,7 @@ pub async fn eth_signer_main_loop(
                 }
 
                 let logic_calls =
-                    get_oldest_unsigned_logic_call(&mut grpc_client, our_cosmos_address).await;
+                    get_oldest_unsigned_logic_call::<S>(&mut grpc_client, our_cosmos_address).await;
                 if let Ok(logic_calls) = logic_calls {
                     for logic_call in logic_calls {
                         info!(
@@ -413,7 +416,7 @@ pub async fn eth_signer_main_loop(
     }
 }
 
-pub async fn check_for_eth(orchestrator_address: EthAddress, eth_client: EthClient) {
+pub async fn check_for_eth<S: Signer>(orchestrator_address: EthAddress, eth_client: EthClient<S>) {
     let balance = eth_client
         .get_balance(orchestrator_address, None)
         .await

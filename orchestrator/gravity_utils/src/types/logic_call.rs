@@ -16,7 +16,9 @@ pub struct LogicCall {
 }
 
 impl LogicCall {
-    pub fn from_proto(input: gravity_proto::gravity::ContractCallTx) -> Result<Self, GravityError> {
+    pub fn from_proto<S: Signer>(
+        input: gravity_proto::gravity::ContractCallTx,
+    ) -> Result<Self, GravityError<S>> {
         let mut transfers: Vec<Erc20Token> = Vec::new();
         let mut fees: Vec<Erc20Token> = Vec::new();
         for token in input.tokens {
@@ -48,9 +50,9 @@ pub struct LogicCallConfirmResponse {
 }
 
 impl LogicCallConfirmResponse {
-    pub fn from_proto(
+    pub fn from_proto<S: Signer>(
         input: gravity_proto::gravity::ContractCallTxConfirmation,
-    ) -> Result<Self, GravityError> {
+    ) -> Result<Self, GravityError<S>> {
         Ok(LogicCallConfirmResponse {
             invalidation_id: input.invalidation_scope,
             invalidation_nonce: input.invalidation_nonce,

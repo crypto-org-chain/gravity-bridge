@@ -3,7 +3,7 @@ use abscissa_core::{clap::Parser, status_err, Application, Command, Runnable};
 use clarity::Uint256;
 use cosmos_gravity::send::{send_request_batch_tx, send_to_eth};
 use deep_space::coin::Coin;
-use ethers::types::Address as EthAddress;
+use ethers::{signers::LocalWallet, types::Address as EthAddress};
 use gravity_proto::gravity::DenomToErc20Request;
 use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
 use std::{process::exit, time::Duration};
@@ -144,7 +144,7 @@ impl Runnable for CosmosToEthCmd {
                 amount.clone(),
                 gravity_denom
             );
-            let res = send_to_eth(
+            let res = send_to_eth::<LocalWallet>(
                 cosmos_key,
                 eth_dest,
                 amount.clone(),
@@ -166,7 +166,7 @@ impl Runnable for CosmosToEthCmd {
         if successful_sends > 0 {
             if !self.flag_no_batch {
                 println!("Requesting a batch to push transaction along immediately");
-                send_request_batch_tx(cosmos_key, gravity_denom,config.cosmos.gas_price.as_tuple(), &contact,config.cosmos.gas_adjustment)
+                send_request_batch_tx::<LocalWallet>(cosmos_key, gravity_denom,config.cosmos.gas_price.as_tuple(), &contact,config.cosmos.gas_adjustment)
                     .await
                     .expect("Failed to request batch");
             } else {

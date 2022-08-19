@@ -1,9 +1,9 @@
 use super::show::ShowCosmosKeyCmd;
 use crate::application::APP;
+use crate::config::Keystore;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
 use k256::pkcs8::ToPrivateKey;
 use rand_core::OsRng;
-use crate::config::Keystore;
 
 /// Add a new Cosmos Key
 #[derive(Command, Debug, Default, Parser)]

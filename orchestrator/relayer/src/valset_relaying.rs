@@ -6,8 +6,10 @@ use std::time::Duration;
 use cosmos_gravity::query::get_latest_valset;
 use cosmos_gravity::query::{get_all_valset_confirms, get_valset};
 use ethereum_gravity::{one_eth_f32, types::EthClient, valset_update::send_eth_valset_update};
+use ethers::signers::Signer;
 use ethers::types::Address as EthAddress;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::types::ValsetConfirmResponse;
 use gravity_utils::{
     ethereum::bytes_to_hex_str, ethereum::downcast_to_f32,
     message_signatures::encode_valset_confirm_hashed, types::Valset,
@@ -16,10 +18,10 @@ use tonic::transport::Channel;
 
 /// Check the last validator set on Ethereum, if it's lower than our latest validator
 /// set then we should package and submit the update as an Ethereum transaction
-pub async fn relay_valsets(
+pub async fn relay_valsets<S: Signer>(
     // the validator set currently in the contract on Ethereum
     current_eth_valset: Valset,
-    eth_client: EthClient,
+    eth_client: EthClient<S>,
     grpc_client: &mut GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
     gravity_id: String,
@@ -34,7 +36,7 @@ pub async fn relay_valsets(
 
     // we should determine if we need to relay one
     // to Ethereum for that we will find the latest confirmed valset and compare it to the ethereum chain
-    let latest_valset = get_latest_valset(grpc_client).await;
+    let latest_valset = get_latest_valset::<S>(grpc_client).await;
     if latest_valset.is_err() {
         error!("Failed to get latest valset! {:?}", latest_valset);
         return;
@@ -56,11 +58,11 @@ pub async fn relay_valsets(
     // this is used to display the state of the last validator set to fail signature checks
     let mut last_error = None;
     while latest_nonce > 0 {
-        match get_valset(grpc_client, latest_nonce).await {
+        match get_valset::<S>(grpc_client, latest_nonce).await {
             Ok(Some(cosmos_valset)) => {
                 assert_eq!(cosmos_valset.nonce, latest_nonce);
 
-                match get_all_valset_confirms(grpc_client, latest_nonce).await {
+                match get_all_valset_confirms::<S>(grpc_client, latest_nonce).await {
                     Ok(confirms) => {
                         debug!(
                             "Considering cosmos_valset {:?} confirms {:?}",
@@ -82,7 +84,9 @@ pub async fn relay_valsets(
                         // order valset sigs prepares signatures for submission, notice we compare
                         // them to the 'current' set in the bridge, this confirms for us that the validator set
                         // we have here can be submitted to the bridge in it's current state
-                        match current_eth_valset.order_sigs(&hash, &confirms) {
+                        match current_eth_valset
+                            .order_sigs::<ValsetConfirmResponse, S>(&hash, &confirms)
+                        {
                             Ok(_) => {
                                 info!("Consideration: looks good");
                                 latest_confirmed = Some(confirms);

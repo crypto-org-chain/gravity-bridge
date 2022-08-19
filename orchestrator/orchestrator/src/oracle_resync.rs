@@ -18,18 +18,18 @@ use crate::get_with_retry::RETRY_TIME;
 
 /// This function retrieves the last event nonce that we have relayed to Cosmos
 /// it then uses the Ethereum indexes to find what block the last event we relayed is in
-pub async fn get_last_checked_block(
+pub async fn get_last_checked_block<S: Signer>(
     grpc_client: GravityQueryClient<Channel>,
     our_cosmos_address: CosmosAddress,
     gravity_contract_address: EthAddress,
-    eth_client: EthClient,
+    eth_client: EthClient<S>,
     blocks_to_search: u64,
 ) -> U64 {
     // TODO(bolten): original version of this used a 120 second timeout when querying
     // the eth chain, should we replicate that in eth_client?
     let mut grpc_client = grpc_client;
     let mut last_event_nonce: U256 =
-        get_last_event_nonce_with_retry(&mut grpc_client, our_cosmos_address)
+        get_last_event_nonce_with_retry::<S>(&mut grpc_client, our_cosmos_address)
             .await
             .into();
 
@@ -109,7 +109,7 @@ pub async fn get_last_checked_block(
         // there is more than one event there) onwards. We use valset nonce 0 as an indicator
         // of what block the contract was deployed on.
         for event in erc20_deployed_events {
-            match Erc20DeployedEvent::from_log(&event) {
+            match Erc20DeployedEvent::from_log::<S>(&event) {
                 Ok(deploy) => {
                     trace!(
                         "{} ERC20 deploy event nonce, {} last event nonce",
@@ -125,7 +125,7 @@ pub async fn get_last_checked_block(
         }
 
         for event in logic_call_events {
-            match LogicCallExecutedEvent::from_log(&event) {
+            match LogicCallExecutedEvent::from_log::<S>(&event) {
                 Ok(call) => {
                     trace!(
                         "{} logic call event nonce, {} last event nonce",
@@ -142,7 +142,7 @@ pub async fn get_last_checked_block(
 
         for event in send_to_cosmos_events {
             let prefix = our_cosmos_address.get_prefix();
-            match SendToCosmosEvent::from_log(&event, prefix.as_str()) {
+            match SendToCosmosEvent::from_log::<S>(&event, prefix.as_str()) {
                 Ok(send) => {
                     trace!(
                         "{} send to Cosmos event nonce, {} last event nonce",
@@ -158,7 +158,7 @@ pub async fn get_last_checked_block(
         }
 
         for event in transaction_batch_events {
-            match TransactionBatchExecutedEvent::from_log(&event) {
+            match TransactionBatchExecutedEvent::from_log::<S>(&event) {
                 Ok(batch) => {
                     trace!(
                         "{} transaction batch event nonce, {} last event nonce",
@@ -183,7 +183,7 @@ pub async fn get_last_checked_block(
         // because this only involves events within the searching block range.
         valset_updated_events.reverse();
         for event in valset_updated_events {
-            match ValsetUpdatedEvent::from_log(&event) {
+            match ValsetUpdatedEvent::from_log::<S>(&event) {
                 Ok(valset) => {
                     // if we've found this event it is the first possible event from the contract
                     // no other events can come before it, therefore either there's been a parsing error

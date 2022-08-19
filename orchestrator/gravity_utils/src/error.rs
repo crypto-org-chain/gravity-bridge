@@ -13,7 +13,6 @@ use ethers::prelude::signer::SignerMiddlewareError;
 use ethers::prelude::ContractError;
 use ethers::prelude::ProviderError as EthersProviderError;
 use ethers::prelude::*;
-use ethers::signers::WalletError as EthersWalletError;
 use ethers::types::SignatureError as EthersSignatureError;
 use num_bigint::ParseBigIntError;
 use rustc_hex::FromHexError as EthersParseAddressError;
@@ -25,21 +24,21 @@ use tonic::Status;
 
 #[derive(Debug)]
 #[allow(clippy::large_enum_variant)]
-pub enum GravityError {
+pub enum GravityError<S: Signer> {
     CosmosGrpcError(CosmosGrpcError),
     CosmosAddressError(CosmosAddressError),
     CosmosPrivateKeyError(CosmosPrivateKeyError),
     EthereumBadDataError(String),
-    EthereumRestError(SignerMiddlewareError<Provider<Http>, LocalWallet>),
+    EthereumRestError(SignerMiddlewareError<Provider<Http>, S>),
     EthersAbiError(EthersAbiError),
     EthersContractAbiError(EthersContractAbiError),
-    EthersContractError(ContractError<SignerMiddleware<Provider<Http>, LocalWallet>>),
+    EthersContractError(ContractError<SignerMiddleware<Provider<Http>, S>>),
     EthersGasOracleError(EthersGasOracleError),
     EthersParseAddressError(EthersParseAddressError),
     EthersParseUintError(EthersParseUintError),
     EthersProviderError(EthersProviderError),
     EthersSignatureError(EthersSignatureError),
-    EthersWalletError(EthersWalletError),
+    EthersWalletError(S::Error),
     EtherscanError(EtherscanError),
     GravityContractError(String),
     InvalidArgumentError(String),
@@ -58,7 +57,7 @@ pub enum GravityError {
     OverflowError(String),
 }
 
-impl fmt::Display for GravityError {
+impl<S: Signer> fmt::Display for GravityError<S> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             GravityError::GravityGrpcError(val) => write!(f, "Gravity gRPC error {}", val),
@@ -117,123 +116,117 @@ impl fmt::Display for GravityError {
     }
 }
 
-impl std::error::Error for GravityError {}
+impl<S: Signer> std::error::Error for GravityError<S> {}
 
-impl From<CosmosGrpcError> for GravityError {
+impl<S: Signer> From<CosmosGrpcError> for GravityError<S> {
     fn from(error: CosmosGrpcError) -> Self {
         GravityError::CosmosGrpcError(error)
     }
 }
 
-impl From<CosmosAddressError> for GravityError {
+impl<S: Signer> From<CosmosAddressError> for GravityError<S> {
     fn from(error: CosmosAddressError) -> Self {
         GravityError::CosmosAddressError(error)
     }
 }
 
-impl From<CosmosPrivateKeyError> for GravityError {
+impl<S: Signer> From<CosmosPrivateKeyError> for GravityError<S> {
     fn from(error: CosmosPrivateKeyError) -> Self {
         GravityError::CosmosPrivateKeyError(error)
     }
 }
 
-impl From<Elapsed> for GravityError {
+impl<S: Signer> From<Elapsed> for GravityError<S> {
     fn from(_error: Elapsed) -> Self {
         GravityError::TimeoutError
     }
 }
 
-impl From<ClarityError> for GravityError {
+impl<S: Signer> From<ClarityError> for GravityError<S> {
     fn from(error: ClarityError) -> Self {
         GravityError::ClarityError(error)
     }
 }
 
-impl From<SignerMiddlewareError<Provider<Http>, LocalWallet>> for GravityError {
-    fn from(error: SignerMiddlewareError<Provider<Http>, LocalWallet>) -> Self {
+impl<S: Signer> From<SignerMiddlewareError<Provider<Http>, S>> for GravityError<S> {
+    fn from(error: SignerMiddlewareError<Provider<Http>, S>) -> Self {
         GravityError::EthereumRestError(error)
     }
 }
 
-impl From<EthersAbiError> for GravityError {
+impl<S: Signer> From<EthersAbiError> for GravityError<S> {
     fn from(error: EthersAbiError) -> Self {
         GravityError::EthersAbiError(error)
     }
 }
 
-impl From<EthersContractAbiError> for GravityError {
+impl<S: Signer> From<EthersContractAbiError> for GravityError<S> {
     fn from(error: EthersContractAbiError) -> Self {
         GravityError::EthersContractAbiError(error)
     }
 }
 
-impl From<ContractError<SignerMiddleware<Provider<Http>, LocalWallet>>> for GravityError {
-    fn from(error: ContractError<SignerMiddleware<Provider<Http>, LocalWallet>>) -> Self {
+impl<S: Signer> From<ContractError<SignerMiddleware<Provider<Http>, S>>> for GravityError<S> {
+    fn from(error: ContractError<SignerMiddleware<Provider<Http>, S>>) -> Self {
         GravityError::EthersContractError(error)
     }
 }
 
-impl From<EthersGasOracleError> for GravityError {
+impl<S: Signer> From<EthersGasOracleError> for GravityError<S> {
     fn from(error: EthersGasOracleError) -> Self {
         GravityError::EthersGasOracleError(error)
     }
 }
 
-impl From<EthersParseAddressError> for GravityError {
+impl<S: Signer> From<EthersParseAddressError> for GravityError<S> {
     fn from(error: EthersParseAddressError) -> Self {
         GravityError::EthersParseAddressError(error)
     }
 }
 
-impl From<EthersParseUintError> for GravityError {
+impl<S: Signer> From<EthersParseUintError> for GravityError<S> {
     fn from(error: EthersParseUintError) -> Self {
         GravityError::EthersParseUintError(error)
     }
 }
 
-impl From<EthersProviderError> for GravityError {
+impl<S: Signer> From<EthersProviderError> for GravityError<S> {
     fn from(error: EthersProviderError) -> Self {
         GravityError::EthersProviderError(error)
     }
 }
 
-impl From<EthersSignatureError> for GravityError {
+impl<S: Signer> From<EthersSignatureError> for GravityError<S> {
     fn from(error: EthersSignatureError) -> Self {
         GravityError::EthersSignatureError(error)
     }
 }
 
-impl From<EthersWalletError> for GravityError {
-    fn from(error: EthersWalletError) -> Self {
-        GravityError::EthersWalletError(error)
-    }
-}
-
-impl From<EtherscanError> for GravityError {
+impl<S: Signer> From<EtherscanError> for GravityError<S> {
     fn from(error: EtherscanError) -> Self {
         GravityError::EtherscanError(error)
     }
 }
 
-impl From<Status> for GravityError {
+impl<S: Signer> From<Status> for GravityError<S> {
     fn from(error: Status) -> Self {
         GravityError::GravityGrpcError(error)
     }
 }
 
-impl From<ParseBigIntError> for GravityError {
+impl<S: Signer> From<ParseBigIntError> for GravityError<S> {
     fn from(error: ParseBigIntError) -> Self {
         GravityError::ParseBigIntError(error)
     }
 }
 
-impl From<ParseIntError> for GravityError {
+impl<S: Signer> From<ParseIntError> for GravityError<S> {
     fn from(error: ParseIntError) -> Self {
         GravityError::ParseIntError(error)
     }
 }
 
-impl From<FromUtf8Error> for GravityError {
+impl<S: Signer> From<FromUtf8Error> for GravityError<S> {
     fn from(error: FromUtf8Error) -> Self {
         GravityError::FromUtf8Error(error)
     }

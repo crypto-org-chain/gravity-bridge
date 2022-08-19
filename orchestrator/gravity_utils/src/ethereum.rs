@@ -51,7 +51,7 @@ pub fn bytes_to_hex_str(bytes: &[u8]) -> String {
         .fold(String::new(), |acc, x| acc + &x)
 }
 
-pub fn hex_str_to_bytes(s: &str) -> Result<Vec<u8>, GravityError> {
+pub fn hex_str_to_bytes<S: Signer>(s: &str) -> Result<Vec<u8>, GravityError<S>> {
     let s = match s.strip_prefix("0x") {
         Some(s) => s,
         None => s,
@@ -59,7 +59,7 @@ pub fn hex_str_to_bytes(s: &str) -> Result<Vec<u8>, GravityError> {
     let bytes = s
         .as_bytes()
         .chunks(2)
-        .map::<Result<u8, GravityError>, _>(|ch| {
+        .map::<Result<u8, GravityError<S>>, _>(|ch| {
             let str = String::from_utf8(ch.to_vec())?;
             let byte = u8::from_str_radix(&str, 16)?;
 
@@ -70,7 +70,7 @@ pub fn hex_str_to_bytes(s: &str) -> Result<Vec<u8>, GravityError> {
     Ok(bytes)
 }
 
-pub fn vec_u8_to_fixed_32(v: Vec<u8>) -> Result<[u8; 32], GravityError> {
+pub fn vec_u8_to_fixed_32<S: Signer>(v: Vec<u8>) -> Result<[u8; 32], GravityError<S>> {
     if v.len() != 32 {
         return Err(GravityError::InvalidArgumentError(format!(
             "Error converting Vec<u8> to [u8; 32], length is not 32: {:?}",
@@ -81,7 +81,7 @@ pub fn vec_u8_to_fixed_32(v: Vec<u8>) -> Result<[u8; 32], GravityError> {
     Ok(u8_slice_to_fixed_32(&v[..])?)
 }
 
-pub fn u8_slice_to_fixed_32(v: &[u8]) -> Result<[u8; 32], GravityError> {
+pub fn u8_slice_to_fixed_32<S: Signer>(v: &[u8]) -> Result<[u8; 32], GravityError<S>> {
     if v.len() != 32 {
         return Err(GravityError::InvalidArgumentError(format!(
             "Error converting &[u8] to [u8; 32], length is not 32: {:?}",
@@ -125,21 +125,24 @@ fn encode_bytes() {
 #[test]
 fn decode_bytes() {
     assert_eq!(
-        hex_str_to_bytes(&"deadbeef".to_owned()).expect("Unable to decode"),
+        hex_str_to_bytes::<LocalWallet>(&"deadbeef".to_owned()).expect("Unable to decode"),
         [222, 173, 190, 239]
     );
 }
 
 #[test]
 fn decode_odd_amount_of_bytes() {
-    assert_eq!(hex_str_to_bytes(&"f".to_owned()).unwrap(), vec![15]);
+    assert_eq!(
+        hex_str_to_bytes::<LocalWallet>(&"f".to_owned()).unwrap(),
+        vec![15]
+    );
 }
 
 #[test]
 fn bytes_raises_decode_error() {
     use crate::error::GravityError;
 
-    let e = hex_str_to_bytes(&"\u{012345}deadbeef".to_owned()).unwrap_err();
+    let e = hex_str_to_bytes::<LocalWallet>(&"\u{012345}deadbeef".to_owned()).unwrap_err();
 
     match e {
         GravityError::FromUtf8Error(_) => {}
@@ -151,7 +154,7 @@ fn bytes_raises_decode_error() {
 fn bytes_raises_parse_error() {
     use crate::error::GravityError;
 
-    let e = hex_str_to_bytes(&"Lorem ipsum".to_owned()).unwrap_err();
+    let e = hex_str_to_bytes::<LocalWallet>(&"Lorem ipsum".to_owned()).unwrap_err();
     match e {
         GravityError::ParseIntError(_) => {}
         _ => panic!(),
@@ -161,7 +164,7 @@ fn bytes_raises_parse_error() {
 #[test]
 fn parse_prefixed_empty() {
     assert_eq!(
-        hex_str_to_bytes(&"0x".to_owned()).unwrap(),
+        hex_str_to_bytes::<LocalWallet>(&"0x".to_owned()).unwrap(),
         Vec::<u8>::new()
     );
 }
@@ -169,7 +172,7 @@ fn parse_prefixed_empty() {
 #[test]
 fn parse_prefixed_non_empty() {
     assert_eq!(
-        hex_str_to_bytes(&"0xdeadbeef".to_owned()).unwrap(),
+        hex_str_to_bytes::<LocalWallet>(&"0xdeadbeef".to_owned()).unwrap(),
         vec![0xde, 0xad, 0xbe, 0xef]
     );
 }
