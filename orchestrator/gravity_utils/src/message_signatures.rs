@@ -41,10 +41,9 @@ fn test_valset_signature() {
     use crate::{ethereum::hex_str_to_bytes, types::ValsetMember};
     use ethers::utils::keccak256;
 
-    let correct_hash: Vec<u8> = hex_str_to_bytes::<LocalWallet>(
-        "0x8cd4cc7f06bd39d4f77d94643a9ae6b3bdc3d3b78263683933cdd5c088452b9d",
-    )
-    .unwrap();
+    let correct_hash: Vec<u8> =
+        hex_str_to_bytes("0x8cd4cc7f06bd39d4f77d94643a9ae6b3bdc3d3b78263683933cdd5c088452b9d")
+            .unwrap();
 
     // a validator set
     let valset = Valset {
@@ -151,10 +150,9 @@ async fn test_batch_signature() {
     use ethers::utils::keccak256;
     use rand::Rng;
 
-    let correct_hash: Vec<u8> = hex_str_to_bytes::<LocalWallet>(
-        "0xa3a7ee0a363b8ad2514e7ee8f110d7449c0d88f3b0913c28c1751e6e0079a9b2",
-    )
-    .unwrap();
+    let correct_hash: Vec<u8> =
+        hex_str_to_bytes("0xa3a7ee0a363b8ad2514e7ee8f110d7449c0d88f3b0913c28c1751e6e0079a9b2")
+            .unwrap();
     let erc20_addr = "0x835973768750b3ED2D5c3EF5AdcD5eDb44d12aD4"
         .parse()
         .unwrap();
@@ -197,7 +195,7 @@ async fn test_batch_signature() {
     let checkpoint =
         keccak256(encode_tx_batch_confirm("foo".to_string(), batch.clone()).as_slice());
     let checkpoint_hash = encode_tx_batch_confirm_hashed("foo".to_string(), batch.clone());
-    let checkpoint_hash = u8_slice_to_fixed_32::<LocalWallet>(&checkpoint_hash).unwrap();
+    let checkpoint_hash = u8_slice_to_fixed_32(&checkpoint_hash).unwrap();
 
     let eth_signature = eth_wallet.sign_message(checkpoint).await.unwrap();
 
@@ -253,7 +251,7 @@ async fn test_specific_batch_signature() {
     let checkpoint =
         keccak256(encode_tx_batch_confirm("foo".to_string(), batch.clone()).as_slice());
     let checkpoint_hash = encode_tx_batch_confirm_hashed("foo".to_string(), batch.clone());
-    let checkpoint_hash = u8_slice_to_fixed_32::<LocalWallet>(&checkpoint_hash).unwrap();
+    let checkpoint_hash = u8_slice_to_fixed_32(&checkpoint_hash).unwrap();
 
     let eth_signature = eth_wallet.sign_message(checkpoint).await.unwrap();
 
@@ -315,10 +313,9 @@ fn test_logic_call_signature() {
     };
     use ethers::utils::keccak256;
 
-    let correct_hash: Vec<u8> = hex_str_to_bytes::<LocalWallet>(
-        "0x1de95c9ace999f8ec70c6dc8d045942da2612950567c4861aca959c0650194da",
-    )
-    .unwrap();
+    let correct_hash: Vec<u8> =
+        hex_str_to_bytes("0x1de95c9ace999f8ec70c6dc8d045942da2612950567c4861aca959c0650194da")
+            .unwrap();
     let token_contract_address = "0xC26eFfa98B8A2632141562Ae7E34953Cfe5B4888"
         .parse()
         .unwrap();
@@ -334,12 +331,12 @@ fn test_logic_call_signature() {
         transfers: token.clone(),
         fees: token,
         logic_contract_address,
-        payload: hex_str_to_bytes::<LocalWallet>(
+        payload: hex_str_to_bytes(
             "0x74657374696e675061796c6f6164000000000000000000000000000000000000",
         )
         .unwrap(),
         timeout: 4766922941000,
-        invalidation_id: hex_str_to_bytes::<LocalWallet>(
+        invalidation_id: hex_str_to_bytes(
             "0x696e76616c69646174696f6e4964000000000000000000000000000000000000",
         )
         .unwrap(),

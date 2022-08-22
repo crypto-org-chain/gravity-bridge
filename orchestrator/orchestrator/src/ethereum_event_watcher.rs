@@ -28,7 +28,7 @@ use std::{result::Result, time};
 use tonic::transport::Channel;
 
 #[allow(clippy::too_many_arguments)]
-pub async fn check_for_events<S: Signer>(
+pub async fn check_for_events<S: Signer + 'static>(
     eth_client: EthClient<S>,
     contact: &Contact,
     grpc_client: &mut GravityQueryClient<Channel>,
@@ -38,7 +38,7 @@ pub async fn check_for_events<S: Signer>(
     blocks_to_search: U64,
     block_delay: U64,
     msg_sender: tokio::sync::mpsc::Sender<Vec<Msg>>,
-) -> Result<U64, GravityError<S>> {
+) -> Result<U64, GravityError> {
     let prefix = contact.get_prefix();
     let our_cosmos_address = cosmos_key.to_address(&prefix).unwrap();
     let latest_block = get_block_number_with_retry(eth_client.clone()).await;
@@ -262,7 +262,7 @@ pub async fn check_for_events<S: Signer>(
 /// Given an uncle every 2.8 minutes, a 6 deep reorg would be 2.8 minutes * (100^4) or one
 /// 6 deep reorg every 53,272 years.
 ///
-pub async fn get_block_delay<S: Signer>(eth_client: EthClient<S>) -> Result<U64, GravityError<S>> {
+pub async fn get_block_delay<S: Signer>(eth_client: EthClient<S>) -> Result<U64, GravityError> {
     // TODO(bolten): get_net_version() exists on the version of ethers we are currently
     // depending on, but it's broken, so we're relying on chain ID
     let chain_id_result = get_chain_id_with_retry(eth_client.clone()).await;

@@ -16,7 +16,7 @@ pub const PENDING_TX_TIMEOUT: Duration = Duration::from_secs(120);
 /// This function contains the orchestrator primary loop, it is broken out of the main loop so that
 /// it can be called in the test runner for easier orchestration of multi-node tests
 #[allow(unused_variables)]
-pub async fn relayer_main_loop<S: Signer>(
+pub async fn relayer_main_loop<S: Signer + 'static>(
     eth_client: EthClient<S>,
     grpc_client: GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,

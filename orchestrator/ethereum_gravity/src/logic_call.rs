@@ -14,7 +14,7 @@ use std::{collections::HashMap, result::Result, time::Duration};
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided logic call
 #[allow(clippy::too_many_arguments)]
-pub async fn send_eth_logic_call<S: Signer>(
+pub async fn send_eth_logic_call<S: Signer + 'static>(
     current_valset: Valset,
     call: LogicCall,
     confirms: &[LogicCallConfirmResponse],
@@ -24,7 +24,7 @@ pub async fn send_eth_logic_call<S: Signer>(
     gas_cost: GasCost,
     eth_client: EthClient<S>,
     logic_call_skips: &mut LogicCallSkips,
-) -> Result<(), GravityError<S>> {
+) -> Result<(), GravityError> {
     let new_call_nonce = call.invalidation_nonce;
     info!(
         "Ordering signatures and submitting LogicCall {}:{} to Ethereum",
@@ -112,14 +112,14 @@ pub async fn send_eth_logic_call<S: Signer>(
 }
 
 /// Returns the cost in Eth of sending this batch
-pub async fn estimate_logic_call_cost<S: Signer>(
+pub async fn estimate_logic_call_cost<S: Signer + 'static>(
     current_valset: Valset,
     call: LogicCall,
     confirms: &[LogicCallConfirmResponse],
     gravity_contract_address: EthAddress,
     gravity_id: String,
     eth_client: EthClient<S>,
-) -> Result<GasCost, GravityError<S>> {
+) -> Result<GasCost, GravityError> {
     let contract_call = build_send_logic_call_contract_call(
         current_valset,
         &call,
@@ -135,19 +135,19 @@ pub async fn estimate_logic_call_cost<S: Signer>(
     })
 }
 
-pub fn build_send_logic_call_contract_call<S: Signer>(
+pub fn build_send_logic_call_contract_call<S: Signer + 'static>(
     current_valset: Valset,
     call: &LogicCall,
     confirms: &[LogicCallConfirmResponse],
     gravity_contract_address: EthAddress,
     gravity_id: String,
     eth_client: EthClient<S>,
-) -> Result<ContractCall<EthSignerMiddleware<S>, ()>, GravityError<S>> {
+) -> Result<ContractCall<EthSignerMiddleware<S>, ()>, GravityError> {
     let (current_addresses, current_powers) = current_valset.filter_empty_addresses();
     let current_powers: Vec<U256> = current_powers.iter().map(|power| (*power).into()).collect();
     let current_valset_nonce = current_valset.nonce;
     let hash = encode_logic_call_confirm_hashed(gravity_id, call.clone());
-    let sig_data = current_valset.order_sigs(&hash, confirms)?;
+    let sig_data = current_valset.order_sigs::<LogicCallConfirmResponse>(&hash, confirms)?;
 
     let transfer_amounts = call
         .transfers

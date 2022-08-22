@@ -16,7 +16,7 @@ use std::time::Duration;
 use tonic::transport::Channel;
 
 #[allow(clippy::too_many_arguments)]
-pub async fn relay_logic_calls<S: Signer>(
+pub async fn relay_logic_calls<S: Signer + 'static>(
     // the validator set currently in the contract on Ethereum
     current_valset: Valset,
     eth_client: EthClient<S>,
@@ -28,7 +28,7 @@ pub async fn relay_logic_calls<S: Signer>(
     eth_gas_multiplier: f32,
     logic_call_skips: &mut LogicCallSkips,
 ) {
-    let latest_calls = match get_latest_logic_calls::<S>(grpc_client).await {
+    let latest_calls = match get_latest_logic_calls(grpc_client).await {
         Ok(calls) => {
             debug!("Latest Logic calls {:?}", calls);
             calls
@@ -58,7 +58,7 @@ pub async fn relay_logic_calls<S: Signer>(
             continue;
         }
 
-        let sigs = get_logic_call_signatures::<S>(
+        let sigs = get_logic_call_signatures(
             grpc_client,
             call.invalidation_id.clone(),
             call.invalidation_nonce,
@@ -69,7 +69,7 @@ pub async fn relay_logic_calls<S: Signer>(
             let hash = encode_logic_call_confirm_hashed(gravity_id.clone(), call.clone());
             // this checks that the signatures for the logic call are actually possible to submit to the chain
             if current_valset
-                .order_sigs::<LogicCallConfirmResponse, S>(&hash, &sigs)
+                .order_sigs::<LogicCallConfirmResponse>(&hash, &sigs)
                 .is_ok()
             {
                 oldest_signed_call = Some(call);
@@ -125,7 +125,7 @@ pub async fn relay_logic_calls<S: Signer>(
 
         if cost.is_err() {
             warn!("LogicCall cost estimate failed");
-            let should_permanently_skip = handle_contract_error(cost.unwrap_err());
+            let should_permanently_skip = handle_contract_error::<S>(cost.unwrap_err());
             if should_permanently_skip {
                 logic_call_skips.skip_permanently(&oldest_signed_call);
             } else {
@@ -174,7 +174,7 @@ pub async fn relay_logic_calls<S: Signer>(
 
         if res.is_err() {
             warn!("LogicCall submission failed");
-            let should_permanently_skip = handle_contract_error(res.unwrap_err());
+            let should_permanently_skip = handle_contract_error::<S>(res.unwrap_err());
             if should_permanently_skip {
                 logic_call_skips.skip_permanently(&oldest_signed_call);
             } else {

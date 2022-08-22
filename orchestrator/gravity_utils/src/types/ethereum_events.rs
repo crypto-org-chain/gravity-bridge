@@ -26,7 +26,7 @@ fn log_to_ethers_event<T: EthLogDecode>(log: &Log) -> Result<T, ethers::abi::Err
 
 // our event model structs use U256 to represent block height, but Logs provide it
 // to us as a U64 (strangely, no direct conversion from U64, so we have to do this type dance)
-fn block_height_from_log<S: Signer>(log: &Log) -> Result<U256, GravityError<S>> {
+fn block_height_from_log(log: &Log) -> Result<U256, GravityError> {
     match log.block_number {
         Some(block_height) => Ok(block_height.as_u64().into()),
         None => Err(GravityError::InvalidEventLogError(format!(
@@ -39,11 +39,11 @@ fn block_height_from_log<S: Signer>(log: &Log) -> Result<U256, GravityError<S>> 
 // some traits to avoid code duplication
 
 pub trait FromLog: Sized {
-    fn from_log<S: Signer>(input: &Log) -> Result<Self, GravityError<S>>;
+    fn from_log(input: &Log) -> Result<Self, GravityError>;
 }
 
 pub trait FromLogWithPrefix: Sized {
-    fn from_log<S: Signer>(input: &Log, prefix: &str) -> Result<Self, GravityError<S>>;
+    fn from_log(input: &Log, prefix: &str) -> Result<Self, GravityError>;
 }
 
 pub trait EventNonce {
@@ -51,7 +51,7 @@ pub trait EventNonce {
 }
 
 pub trait FromLogs {
-    fn from_logs<T: FromLog, S: Signer>(input: &[Log]) -> Result<Vec<T>, GravityError<S>> {
+    fn from_logs<T: FromLog>(input: &[Log]) -> Result<Vec<T>, GravityError> {
         let mut res = Vec::new();
         for item in input {
             res.push(T::from_log(item)?);
@@ -61,10 +61,10 @@ pub trait FromLogs {
 }
 
 pub trait FromLogsWithPrefix {
-    fn from_logs<T: FromLogWithPrefix, S: Signer>(
+    fn from_logs<T: FromLogWithPrefix>(
         input: &[Log],
         prefix: &str,
-    ) -> Result<Vec<T>, GravityError<S>> {
+    ) -> Result<Vec<T>, GravityError> {
         let mut res = Vec::new();
         for item in input {
             res.push(T::from_log(item, prefix)?);
@@ -100,7 +100,7 @@ pub struct ValsetUpdatedEvent {
 }
 
 impl FromLog for ValsetUpdatedEvent {
-    fn from_log<S: Signer>(input: &Log) -> Result<ValsetUpdatedEvent, GravityError<S>> {
+    fn from_log(input: &Log) -> Result<ValsetUpdatedEvent, GravityError> {
         let event: ValsetUpdatedEventFilter = log_to_ethers_event(input)?;
         if event.powers.len() != event.validators.len() {
             return Err(GravityError::InvalidEventLogError(format!(
@@ -180,7 +180,7 @@ pub struct TransactionBatchExecutedEvent {
 }
 
 impl FromLog for TransactionBatchExecutedEvent {
-    fn from_log<S: Signer>(input: &Log) -> Result<TransactionBatchExecutedEvent, GravityError<S>> {
+    fn from_log(input: &Log) -> Result<TransactionBatchExecutedEvent, GravityError> {
         let event: TransactionBatchExecutedEventFilter = log_to_ethers_event(input)?;
 
         Ok(TransactionBatchExecutedEvent {
@@ -219,10 +219,7 @@ pub struct SendToCosmosEvent {
 }
 
 impl FromLogWithPrefix for SendToCosmosEvent {
-    fn from_log<S: Signer>(
-        input: &Log,
-        prefix: &str,
-    ) -> Result<SendToCosmosEvent, GravityError<S>> {
+    fn from_log(input: &Log, prefix: &str) -> Result<SendToCosmosEvent, GravityError> {
         let event: SendToCosmosEventFilter = log_to_ethers_event(input)?;
 
         Ok(SendToCosmosEvent {
@@ -265,7 +262,7 @@ pub struct Erc20DeployedEvent {
 }
 
 impl FromLog for Erc20DeployedEvent {
-    fn from_log<S: Signer>(input: &Log) -> Result<Erc20DeployedEvent, GravityError<S>> {
+    fn from_log(input: &Log) -> Result<Erc20DeployedEvent, GravityError> {
         let event: Erc20DeployedEventFilter = log_to_ethers_event(input)?;
 
         Ok(Erc20DeployedEvent {
@@ -300,7 +297,7 @@ pub struct LogicCallExecutedEvent {
 }
 
 impl FromLog for LogicCallExecutedEvent {
-    fn from_log<S: Signer>(input: &Log) -> Result<LogicCallExecutedEvent, GravityError<S>> {
+    fn from_log(input: &Log) -> Result<LogicCallExecutedEvent, GravityError> {
         let event: LogicCallEventFilter = log_to_ethers_event(input)?;
 
         Ok(LogicCallExecutedEvent {

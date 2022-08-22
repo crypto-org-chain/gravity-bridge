@@ -22,11 +22,11 @@ pub async fn get_block_number_with_retry<S: Signer>(eth_client: EthClient<S>) ->
 }
 
 /// gets the last event nonce, no matter how long it takes.
-pub async fn get_last_event_nonce_with_retry<S: Signer>(
+pub async fn get_last_event_nonce_with_retry(
     client: &mut GravityQueryClient<Channel>,
     our_cosmos_address: CosmosAddress,
 ) -> u64 {
-    let mut res = get_last_event_nonce::<S>(client, our_cosmos_address).await;
+    let mut res = get_last_event_nonce(client, our_cosmos_address).await;
     while res.is_err() {
         error!(
             "Failed to get last event nonce, is the Cosmos GRPC working? {:?}",

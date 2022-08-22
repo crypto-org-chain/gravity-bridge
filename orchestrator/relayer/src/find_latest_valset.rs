@@ -13,11 +13,11 @@ use tonic::transport::Channel;
 /// as the latest update will be in recent blockchain history and the search moves from the present
 /// backwards in time. In the case that the validator set has not been updated for a very long time
 /// this will take longer.
-pub async fn find_latest_valset<S: Signer>(
+pub async fn find_latest_valset<S: Signer + 'static>(
     grpc_client: &mut GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
     eth_client: EthClient<S>,
-) -> Result<Valset, GravityError<S>> {
+) -> Result<Valset, GravityError> {
     // calculate some constant U64 values only once
     const BLOCKS_TO_SEARCH: u64 = 5_000u64;
 
@@ -41,7 +41,7 @@ pub async fn find_latest_valset<S: Signer>(
         for logged_event in filtered_logged_events {
             debug!("Found event {:?}", logged_event);
 
-            match ValsetUpdatedEvent::from_log::<S>(&logged_event) {
+            match ValsetUpdatedEvent::from_log(&logged_event) {
                 Ok(valset_updated_event) => {
                     let downcast_nonce = downcast_to_u64(valset_updated_event.valset_nonce);
                     if downcast_nonce.is_none() {
@@ -81,10 +81,10 @@ pub async fn find_latest_valset<S: Signer>(
 /// The other (and far worse) way a disagreement here could occur is if validators are colluding to steal
 /// funds from the Gravity contract and have submitted a highjacking update. If slashing for off Cosmos chain
 /// Ethereum signatures is implemented you would put that handler here.
-fn check_if_valsets_differ<S: Signer>(
+fn check_if_valsets_differ(
     cosmos_valset: Option<Valset>,
     ethereum_valset: &Valset,
-) -> Result<(), GravityError<S>> {
+) -> Result<(), GravityError> {
     if cosmos_valset.is_none() && ethereum_valset.nonce == 0 {
         // bootstrapping case
         return Ok(());

@@ -1,6 +1,7 @@
 use crate::types::EthClient;
 use ethers::middleware::gas_oracle::Etherscan;
 use ethers::prelude::gas_oracle::GasOracle;
+use ethers::prelude::signer::SignerMiddlewareError;
 use ethers::prelude::*;
 use ethers::types::Address as EthAddress;
 use gravity_abi::gravity::*;
@@ -10,10 +11,10 @@ use gravity_utils::types::{decode_gravity_error, GravityContractError};
 use std::result::Result;
 
 /// Gets the latest validator set nonce
-pub async fn get_valset_nonce<S: Signer>(
+pub async fn get_valset_nonce<S: Signer + 'static>(
     gravity_contract_address: EthAddress,
     eth_client: EthClient<S>,
-) -> Result<u64, GravityError<S>> {
+) -> Result<u64, GravityError> {
     let contract_call = Gravity::new(gravity_contract_address, eth_client.clone())
         .state_last_valset_nonce()
         .from(eth_client.address())
@@ -35,11 +36,11 @@ pub async fn get_valset_nonce<S: Signer>(
 }
 
 /// Gets the latest transaction batch nonce
-pub async fn get_tx_batch_nonce<S: Signer>(
+pub async fn get_tx_batch_nonce<S: Signer + 'static>(
     gravity_contract_address: EthAddress,
     erc20_contract_address: EthAddress,
     eth_client: EthClient<S>,
-) -> Result<u64, GravityError<S>> {
+) -> Result<u64, GravityError> {
     let contract_call = Gravity::new(gravity_contract_address, eth_client.clone())
         .last_batch_nonce(erc20_contract_address)
         .from(eth_client.address())
@@ -61,11 +62,11 @@ pub async fn get_tx_batch_nonce<S: Signer>(
 }
 
 /// Gets the latest transaction batch nonce
-pub async fn get_logic_call_nonce<S: Signer>(
+pub async fn get_logic_call_nonce<S: Signer + 'static>(
     gravity_contract_address: EthAddress,
     invalidation_id: Vec<u8>,
     eth_client: EthClient<S>,
-) -> Result<u64, GravityError<S>> {
+) -> Result<u64, GravityError> {
     let invalidation_id = vec_u8_to_fixed_32(invalidation_id)?;
 
     let contract_call = Gravity::new(gravity_contract_address, eth_client.clone())
@@ -89,10 +90,10 @@ pub async fn get_logic_call_nonce<S: Signer>(
 }
 
 /// Gets the latest transaction batch nonce
-pub async fn get_event_nonce<S: Signer>(
+pub async fn get_event_nonce<S: Signer + 'static>(
     gravity_contract_address: EthAddress,
     eth_client: EthClient<S>,
-) -> Result<u64, GravityError<S>> {
+) -> Result<u64, GravityError> {
     let contract_call = Gravity::new(gravity_contract_address, eth_client.clone())
         .state_last_event_nonce()
         .from(eth_client.address())
@@ -114,10 +115,10 @@ pub async fn get_event_nonce<S: Signer>(
 }
 
 /// Gets the gravityID
-pub async fn get_gravity_id<S: Signer>(
+pub async fn get_gravity_id<S: Signer + 'static>(
     gravity_contract_address: EthAddress,
     eth_client: EthClient<S>,
-) -> Result<String, GravityError<S>> {
+) -> Result<String, GravityError> {
     let contract_call = Gravity::new(gravity_contract_address, eth_client.clone())
         .state_gravity_id()
         .from(eth_client.address())
@@ -141,7 +142,9 @@ pub async fn get_gravity_id<S: Signer>(
 
 /// If ETHERSCAN_API_KEY env var is set, we'll call out to Etherscan for a gas estimate.
 /// Otherwise, just call eth_gasPrice.
-pub async fn get_gas_price<S: Signer>(eth_client: EthClient<S>) -> Result<U256, GravityError<S>> {
+pub async fn get_gas_price<S: Signer + 'static>(
+    eth_client: EthClient<S>,
+) -> Result<U256, GravityError> {
     if std::env::var("ETHERSCAN_API_KEY").is_ok() {
         let chain = get_chain(eth_client.clone()).await?;
         let etherscan_client = Client::new_from_env(chain)?;
@@ -152,7 +155,9 @@ pub async fn get_gas_price<S: Signer>(eth_client: EthClient<S>) -> Result<U256, 
     Ok(eth_client.get_gas_price().await?)
 }
 
-pub async fn get_chain<S: Signer>(eth_client: EthClient<S>) -> Result<Chain, GravityError<S>> {
+pub async fn get_chain<S: Signer + 'static>(
+    eth_client: EthClient<S>,
+) -> Result<Chain, GravityError> {
     let chain_id_result = eth_client.get_chainid().await?;
     let chain_id = downcast_to_u64(chain_id_result);
 
@@ -192,9 +197,9 @@ impl GasCost {
 
 // returns a bool indicating whether or not this error means we should permanently
 // skip this logic call
-pub fn handle_contract_error<S: Signer>(gravity_error: GravityError<S>) -> bool {
+pub fn handle_contract_error<S: Signer + 'static>(gravity_error: GravityError) -> bool {
     let error_string = format!("LogicCall error: {:?}", gravity_error);
-    let gravity_contract_error = extract_gravity_contract_error(gravity_error);
+    let gravity_contract_error = extract_gravity_contract_error::<S>(gravity_error);
 
     if gravity_contract_error.is_some() {
         match gravity_contract_error.unwrap() {
@@ -226,51 +231,84 @@ pub fn handle_contract_error<S: Signer>(gravity_error: GravityError<S>) -> bool 
 
 // ethers is providing an extremely nested set of enums as an error type and decomposing it
 // results in this nightmare
-pub fn extract_gravity_contract_error<S: Signer>(
-    gravity_error: GravityError<S>,
+pub fn extract_gravity_contract_error<S: Signer + 'static>(
+    gravity_error: GravityError,
 ) -> Option<GravityContractError> {
-    match gravity_error {
-        GravityError::EthersContractError(ce) => match ce {
-            ethers::contract::ContractError::MiddlewareError(me) => match me {
-                ethers::middleware::signer::SignerMiddlewareError::MiddlewareError(sme) => {
-                    match sme {
-                        ethers::providers::ProviderError::JsonRpcClientError(jrpce) => {
-                            if jrpce.is::<ethers::providers::HttpClientError>() {
-                                let httpe = *jrpce
-                                    .downcast::<ethers::providers::HttpClientError>()
-                                    .unwrap();
-                                match httpe {
-                                    ethers::providers::HttpClientError::JsonRpcError(jre) => {
-                                        if jre.code == 3 && jre.data.is_some() {
-                                            let data = jre.data.unwrap();
-                                            if data.is_string() {
-                                                let data_bytes =
-                                                    hex_str_to_bytes::<S>(data.as_str().unwrap());
-                                                if data_bytes.is_ok() {
-                                                    decode_gravity_error(data_bytes.unwrap())
-                                                } else {
-                                                    None
-                                                }
-                                            } else {
-                                                None
-                                            }
-                                        } else {
-                                            None
-                                        }
-                                    }
-                                    _ => None,
+    if let GravityError::EthersContractError(ce) = gravity_error {
+        let cce = ce
+            .downcast_ref::<ethers::contract::ContractError<SignerMiddleware<Provider<Http>, S>>>(
+            )?;
+        if let ethers::contract::ContractError::MiddlewareError(sme) = cce {
+            if <dyn std::any::Any>::is::<&ethers::providers::ProviderError>(sme) {
+                // SAFETY: type is checked above
+                let csme = unsafe {
+                    std::mem::transmute::<
+                        &SignerMiddlewareError<Provider<Http>, S>,
+                        &ethers::providers::ProviderError,
+                    >(sme)
+                };
+
+                if let ethers::providers::ProviderError::JsonRpcClientError(jrpce) = csme {
+                    let httpe = jrpce.downcast_ref::<ethers::providers::HttpClientError>()?;
+                    if let ethers::providers::HttpClientError::JsonRpcError(jre) = httpe {
+                        if jre.code == 3 && jre.data.is_some() {
+                            let data = jre.data.as_ref().unwrap();
+                            if data.is_string() {
+                                let data_bytes = hex_str_to_bytes(data.as_str().unwrap());
+                                if data_bytes.is_ok() {
+                                    return decode_gravity_error(data_bytes.unwrap());
                                 }
-                            } else {
-                                None
                             }
                         }
-                        _ => None,
                     }
                 }
-                _ => None,
-            },
-            _ => None,
-        },
-        _ => None,
+            }
+        }
     }
+    None
+
+    // match gravity_error {
+    //     GravityError::EthersContractError(ce) => match ce {
+    //         ethers::contract::ContractError::MiddlewareError(me) => match me {
+    //             ethers::middleware::signer::SignerMiddlewareError::MiddlewareError(sme) => {
+    //                 match sme {
+    //                     ethers::providers::ProviderError::JsonRpcClientError(jrpce) => {
+    //                         if jrpce.is::<ethers::providers::HttpClientError>() {
+    //                             let httpe = *jrpce
+    //                                 .downcast::<ethers::providers::HttpClientError>()
+    //                                 .unwrap();
+    //                             match httpe {
+    //                                 ethers::providers::HttpClientError::JsonRpcError(jre) => {
+    //                                     if jre.code == 3 && jre.data.is_some() {
+    //                                         let data = jre.data.unwrap();
+    //                                         if data.is_string() {
+    //                                             let data_bytes =
+    //                                                 hex_str_to_bytes::<S>(data.as_str().unwrap());
+    //                                             if data_bytes.is_ok() {
+    //                                                 decode_gravity_error(data_bytes.unwrap())
+    //                                             } else {
+    //                                                 None
+    //                                             }
+    //                                         } else {
+    //                                             None
+    //                                         }
+    //                                     } else {
+    //                                         None
+    //                                     }
+    //                                 }
+    //                                 _ => None,
+    //                             }
+    //                         } else {
+    //                             None
+    //                         }
+    //                     }
+    //                     _ => None,
+    //                 }
+    //             }
+    //             _ => None,
+    //         },
+    //         _ => None,
+    //     },
+    //     _ => None,
+    // }
 }

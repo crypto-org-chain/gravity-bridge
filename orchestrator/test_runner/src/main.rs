@@ -66,7 +66,7 @@ lazy_static! {
     // where the full node / miner sends its rewards. Therefore it's always going
     // to have a lot of ETH to pay for things like contract deployments
     static ref MINER_PRIVATE_KEY: SigningKey =
-        SigningKey::from_bytes(hex_str_to_bytes::<LocalWallet>(
+        SigningKey::from_bytes(hex_str_to_bytes(
             "0xb1bab011e03a9862664706fc3bbaa1b16651528e5f0e7fbfcbfdd8be302a13e7").unwrap().as_slice()
         ).unwrap();
     static ref MINER_WALLET: LocalWallet = LocalWallet::from((*MINER_PRIVATE_KEY).clone());

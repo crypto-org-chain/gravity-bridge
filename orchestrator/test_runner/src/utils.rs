@@ -46,7 +46,7 @@ pub async fn check_cosmos_balance(
 /// the real problem here is that you can't do more than one send operation at a time from a
 /// single address without your sequence getting out of whack. By manually setting the nonce
 /// here we can send thousands of transactions in only a few blocks
-pub async fn send_erc20_bulk<S: Signer>(
+pub async fn send_erc20_bulk<S: Signer + 'static>(
     amount: U256,
     erc20: EthAddress,
     destinations: &[EthAddress],

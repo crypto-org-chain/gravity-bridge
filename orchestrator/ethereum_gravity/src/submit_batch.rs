@@ -14,7 +14,7 @@ use std::{result::Result, time::Duration};
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided transaction batch
 #[allow(clippy::too_many_arguments)]
-pub async fn send_eth_transaction_batch<S: Signer>(
+pub async fn send_eth_transaction_batch<S: Signer + 'static>(
     current_valset: Valset,
     batch: TransactionBatch,
     confirms: &[BatchConfirmResponse],
@@ -23,7 +23,7 @@ pub async fn send_eth_transaction_batch<S: Signer>(
     gravity_id: String,
     gas_cost: GasCost,
     eth_client: EthClient<S>,
-) -> Result<(), GravityError<S>> {
+) -> Result<(), GravityError> {
     let new_batch_nonce = batch.nonce;
     info!(
         "Ordering signatures and submitting TransactionBatch {}:{} to Ethereum",
@@ -102,14 +102,14 @@ pub async fn send_eth_transaction_batch<S: Signer>(
 }
 
 /// Returns the cost in Eth of sending this batch
-pub async fn estimate_tx_batch_cost<S: Signer>(
+pub async fn estimate_tx_batch_cost<S: Signer + 'static>(
     current_valset: Valset,
     batch: TransactionBatch,
     confirms: &[BatchConfirmResponse],
     gravity_contract_address: EthAddress,
     gravity_id: String,
     eth_client: EthClient<S>,
-) -> Result<GasCost, GravityError<S>> {
+) -> Result<GasCost, GravityError> {
     let contract_call = build_submit_batch_contract_call(
         current_valset,
         &batch,
@@ -125,20 +125,20 @@ pub async fn estimate_tx_batch_cost<S: Signer>(
     })
 }
 
-pub fn build_submit_batch_contract_call<S: Signer>(
+pub fn build_submit_batch_contract_call<S: Signer + 'static>(
     current_valset: Valset,
     batch: &TransactionBatch,
     confirms: &[BatchConfirmResponse],
     gravity_contract_address: EthAddress,
     gravity_id: String,
     eth_client: EthClient<S>,
-) -> Result<ContractCall<EthSignerMiddleware<S>, ()>, GravityError<S>> {
+) -> Result<ContractCall<EthSignerMiddleware<S>, ()>, GravityError> {
     let (current_addresses, current_powers) = current_valset.filter_empty_addresses();
     let current_powers: Vec<U256> = current_powers.iter().map(|power| (*power).into()).collect();
     let current_valset_nonce = current_valset.nonce;
     let new_batch_nonce = batch.nonce;
     let hash = encode_tx_batch_confirm_hashed(gravity_id, batch.clone());
-    let sig_data = current_valset.order_sigs(&hash, confirms)?;
+    let sig_data = current_valset.order_sigs::<BatchConfirmResponse>(&hash, confirms)?;
     let (amounts, destinations, fees) = batch.get_checkpoint_values();
 
     let contract_call = Gravity::new(gravity_contract_address, eth_client.clone())

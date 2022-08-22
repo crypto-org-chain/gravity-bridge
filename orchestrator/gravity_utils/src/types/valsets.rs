@@ -62,9 +62,9 @@ pub struct ValsetConfirmResponse {
 }
 
 impl ValsetConfirmResponse {
-    pub fn from_proto<S: Signer>(
+    pub fn from_proto(
         input: gravity_proto::gravity::SignerSetTxConfirmation,
-    ) -> Result<Self, GravityError<S>> {
+    ) -> Result<Self, GravityError> {
         Ok(ValsetConfirmResponse {
             eth_signer: input.ethereum_signer.parse()?,
             nonce: input.signer_set_nonce,
@@ -127,11 +127,11 @@ impl Valset {
     /// this will be sorted, in others it will be improperly sorted but must be maintained so that the signatures
     /// are accepted on the Ethereum chain, which requires the submitted addresses to match whatever the previously
     /// submitted ordering was and the signatures must be in parallel arrays to reduce shuffling.
-    fn get_signature_status<T: Confirm + Clone + Debug, S: Signer>(
+    fn get_signature_status<T: Confirm + Clone + Debug>(
         &self,
         signed_message: &[u8],
         signatures: &[T],
-    ) -> Result<SignatureStatus, GravityError<S>> {
+    ) -> Result<SignatureStatus, GravityError> {
         if signatures.is_empty() {
             return Err(GravityError::InsufficientVotingPowerToPass(
                 "No signatures!".to_string(),
@@ -210,11 +210,11 @@ impl Valset {
         })
     }
 
-    pub fn order_sigs<T: Confirm + Clone + Debug, S: Signer>(
+    pub fn order_sigs<T: Confirm + Clone + Debug>(
         &self,
         signed_message: &[u8],
         signatures: &[T],
-    ) -> Result<Vec<GravitySignature>, GravityError<S>> {
+    ) -> Result<Vec<GravitySignature>, GravityError> {
         let status = self.get_signature_status(signed_message, signatures)?;
         // now that we have collected the signatures we can determine if the measure has the votes to pass
         // and error early if it does not, otherwise the user will pay fees for a transaction that will

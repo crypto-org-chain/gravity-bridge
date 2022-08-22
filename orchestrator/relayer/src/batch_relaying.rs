@@ -29,7 +29,7 @@ struct SubmittableBatch {
 /// and if that succeeds and we like the gas cost we complete the relaying process and
 /// actually submit the data to Ethereum
 #[allow(clippy::too_many_arguments)]
-pub async fn relay_batches<S: Signer>(
+pub async fn relay_batches<S: Signer + 'static>(
     // the validator set currently in the contract on Ethereum
     current_valset: Valset,
     eth_client: EthClient<S>,
@@ -42,8 +42,7 @@ pub async fn relay_batches<S: Signer>(
     eth_gas_multiplier: f32,
 ) {
     let possible_batches =
-        get_batches_and_signatures::<S>(current_valset.clone(), grpc_client, gravity_id.clone())
-            .await;
+        get_batches_and_signatures(current_valset.clone(), grpc_client, gravity_id.clone()).await;
 
     debug!("possible batches {:?}", possible_batches);
 
@@ -69,12 +68,12 @@ pub async fn relay_batches<S: Signer>(
 /// set on Ethereum. In both the later and the former case the correct solution is to wait
 /// through timeouts, new signatures, or a later valid batch being submitted old batches will
 /// always be resolved.
-async fn get_batches_and_signatures<S: Signer>(
+async fn get_batches_and_signatures(
     current_valset: Valset,
     grpc_client: &mut GravityQueryClient<Channel>,
     gravity_id: String,
 ) -> HashMap<EthAddress, Vec<SubmittableBatch>> {
-    let latest_batches = if let Ok(lb) = get_latest_transaction_batches::<S>(grpc_client).await {
+    let latest_batches = if let Ok(lb) = get_latest_transaction_batches(grpc_client).await {
         lb
     } else {
         return HashMap::new();
@@ -84,14 +83,13 @@ async fn get_batches_and_signatures<S: Signer>(
     let mut possible_batches = HashMap::new();
     for batch in latest_batches {
         let sigs =
-            get_transaction_batch_signatures::<S>(grpc_client, batch.nonce, batch.token_contract)
-                .await;
+            get_transaction_batch_signatures(grpc_client, batch.nonce, batch.token_contract).await;
         debug!("Got sigs {:?}", sigs);
         if let Ok(sigs) = sigs {
             // this checks that the signatures for the batch are actually possible to submit to the chain
             let hash = encode_tx_batch_confirm_hashed(gravity_id.clone(), batch.clone());
             if current_valset
-                .order_sigs::<BatchConfirmResponse, S>(&hash, &sigs)
+                .order_sigs::<BatchConfirmResponse>(&hash, &sigs)
                 .is_ok()
             {
                 // we've found a valid batch, add it to the list for it's token type
@@ -135,7 +133,7 @@ async fn get_batches_and_signatures<S: Signer>(
 /// different standards for their profit margin, therefore there may be a race not only to
 /// submit individual batches but also batches in different orders
 #[allow(clippy::too_many_arguments)]
-async fn submit_batches<S: Signer>(
+async fn submit_batches<S: Signer + 'static>(
     current_valset: Valset,
     eth_client: EthClient<S>,
     gravity_contract_address: EthAddress,

@@ -6,7 +6,7 @@ use clarity::Uint256;
 use cosmos_gravity::crypto::PrivateKey as CosmosPrivateKey;
 use cosmos_gravity::send::send_to_eth;
 use deep_space::coin::Coin;
-use ethers::{signers::LocalWallet, types::Address as EthAddress};
+use ethers::types::Address as EthAddress;
 use gravity_proto::gravity::DenomToErc20Request;
 use gravity_utils::connection_prep::{check_for_fee_denom, create_rpc_connections};
 use regex::Regex;
@@ -131,7 +131,7 @@ impl Runnable for SendToEth {
                 amount,
                 denom
             );
-            let res = send_to_eth::<LocalWallet>(
+            let res = send_to_eth(
                 cosmos_key,
                 cosmos_granter,
                 eth_dest,

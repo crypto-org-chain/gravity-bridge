@@ -14,7 +14,7 @@ use std::{result::Result, time::Duration};
 /// this function generates an appropriate Ethereum transaction
 /// to submit the provided validator set and signatures.
 #[allow(clippy::too_many_arguments)]
-pub async fn send_eth_valset_update<S: Signer>(
+pub async fn send_eth_valset_update<S: Signer + 'static>(
     new_valset: Valset,
     old_valset: Valset,
     confirms: &[ValsetConfirmResponse],
@@ -23,7 +23,7 @@ pub async fn send_eth_valset_update<S: Signer>(
     gravity_id: String,
     gas_cost: GasCost,
     eth_client: EthClient<S>,
-) -> Result<(), GravityError<S>> {
+) -> Result<(), GravityError> {
     let old_nonce = old_valset.nonce;
     let new_nonce = new_valset.nonce;
 
@@ -85,14 +85,14 @@ pub async fn send_eth_valset_update<S: Signer>(
 }
 
 /// Returns the cost in Eth of sending this valset update
-pub async fn estimate_valset_cost<S: Signer>(
+pub async fn estimate_valset_cost<S: Signer + 'static>(
     new_valset: &Valset,
     old_valset: &Valset,
     confirms: &[ValsetConfirmResponse],
     gravity_contract_address: EthAddress,
     gravity_id: String,
     eth_client: EthClient<S>,
-) -> Result<GasCost, GravityError<S>> {
+) -> Result<GasCost, GravityError> {
     let contract_call = build_valset_update_contract_call(
         new_valset,
         old_valset,
@@ -108,14 +108,14 @@ pub async fn estimate_valset_cost<S: Signer>(
     })
 }
 
-pub fn build_valset_update_contract_call<S: Signer>(
+pub fn build_valset_update_contract_call<S: Signer + 'static>(
     new_valset: &Valset,
     old_valset: &Valset,
     confirms: &[ValsetConfirmResponse],
     gravity_contract_address: EthAddress,
     gravity_id: String,
     eth_client: EthClient<S>,
-) -> Result<ContractCall<EthSignerMiddleware<S>, ()>, GravityError<S>> {
+) -> Result<ContractCall<EthSignerMiddleware<S>, ()>, GravityError> {
     let (old_addresses, old_powers) = old_valset.filter_empty_addresses();
     let (new_addresses, new_powers) = new_valset.filter_empty_addresses();
     let old_powers: Vec<U256> = old_powers.iter().map(|power| (*power).into()).collect();
@@ -126,7 +126,7 @@ pub fn build_valset_update_contract_call<S: Signer>(
     let hash = encode_valset_confirm_hashed(gravity_id, new_valset.clone());
     // we need to use the old valset here because our signatures need to match the current
     // members of the validator set in the contract.
-    let sig_data = old_valset.order_sigs(&hash, confirms)?;
+    let sig_data = old_valset.order_sigs::<ValsetConfirmResponse>(&hash, confirms)?;
 
     let contract = Gravity::new(gravity_contract_address, eth_client.clone());
     Ok(contract

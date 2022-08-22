@@ -26,9 +26,7 @@ pub struct Erc20Token {
 }
 
 impl Erc20Token {
-    pub fn from_proto<S: Signer>(
-        input: gravity_proto::gravity::Erc20Token,
-    ) -> Result<Self, GravityError<S>> {
+    pub fn from_proto(input: gravity_proto::gravity::Erc20Token) -> Result<Self, GravityError> {
         Ok(Erc20Token {
             amount: U256::from_dec_str(input.amount.as_str())?,
             token_contract_address: input.contract.parse()?,
