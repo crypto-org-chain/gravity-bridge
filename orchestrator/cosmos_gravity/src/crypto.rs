@@ -14,6 +14,45 @@ pub const DEFAULT_HD_PATH: &str = "m/44'/60'/0'/0/0";
 #[cfg(not(feature = "ethermint"))]
 pub const DEFAULT_HD_PATH: &str = "m/44'/118'/0'/0/0";
 
+/// A trait that captures different possible signer implementations.
+pub trait CosmosSigner: Copy + Clone {
+    fn to_address(&self, prefix: &str) -> Result<Address, PrivateKeyError>;
+    fn sign_std_msg(
+        &self,
+        messages: &[Msg],
+        args: MessageArgs,
+        memo: impl Into<String>,
+    ) -> Result<Vec<u8>, PrivateKeyError>;
+    fn build_tx(
+        &self,
+        messages: &[Msg],
+        args: MessageArgs,
+        memo: impl Into<String>,
+    ) -> Result<TxParts, PrivateKeyError>;
+}
+
+impl CosmosSigner for PrivateKey {
+    fn to_address(&self, prefix: &str) -> Result<Address, PrivateKeyError> {
+        self.to_address(prefix)
+    }
+    fn sign_std_msg(
+        &self,
+        messages: &[Msg],
+        args: MessageArgs,
+        memo: impl Into<String>,
+    ) -> Result<Vec<u8>, PrivateKeyError> {
+        self.sign_std_msg(messages, args, memo)
+    }
+    fn build_tx(
+        &self,
+        messages: &[Msg],
+        args: MessageArgs,
+        memo: impl Into<String>,
+    ) -> Result<TxParts, PrivateKeyError> {
+        self.build_tx(messages, args, memo)
+    }
+}
+
 /// PrivateKey wraps cosmos private key, switch between cosmos and ethermint behavior according to cargo features.
 #[derive(Debug, Copy, Clone)]
 pub struct PrivateKey(InnerPrivateKey);

@@ -5,7 +5,7 @@ use crate::get_with_retry::get_block_number_with_retry;
 use crate::get_with_retry::get_chain_id_with_retry;
 use crate::metrics;
 use cosmos_gravity::build;
-use cosmos_gravity::crypto::PrivateKey as CosmosPrivateKey;
+use cosmos_gravity::crypto::CosmosSigner;
 use cosmos_gravity::query::get_last_event_nonce;
 use deep_space::{Contact, Msg};
 use ethereum_gravity::types::EthClient;
@@ -28,12 +28,12 @@ use std::{result::Result, time};
 use tonic::transport::Channel;
 
 #[allow(clippy::too_many_arguments)]
-pub async fn check_for_events<S: Signer + 'static>(
+pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
     eth_client: EthClient<S>,
     contact: &Contact,
     grpc_client: &mut GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
-    cosmos_key: CosmosPrivateKey,
+    cosmos_key: CS,
     starting_block: U64,
     blocks_to_search: U64,
     block_delay: U64,

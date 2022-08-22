@@ -9,7 +9,7 @@ use crate::{
     ethereum_event_watcher::check_for_events, metrics::metrics_main_loop,
     oracle_resync::get_last_checked_block,
 };
-use cosmos_gravity::crypto::PrivateKey as CosmosPrivateKey;
+use cosmos_gravity::crypto::CosmosSigner;
 use cosmos_gravity::send::send_main_loop;
 use cosmos_gravity::{
     build,
@@ -48,8 +48,8 @@ pub const ETH_ORACLE_LOOP_SPEED: Duration = Duration::from_secs(13);
 /// of all execution time sleeping this shouldn't be an issue at all.
 #[allow(clippy::many_single_char_names)]
 #[allow(clippy::too_many_arguments)]
-pub async fn orchestrator_main_loop<S: Signer + 'static>(
-    cosmos_key: CosmosPrivateKey,
+pub async fn orchestrator_main_loop<S: Signer + 'static, CS: CosmosSigner>(
+    cosmos_key: CS,
     cosmos_granter: Option<String>,
     contact: Contact,
     eth_client: EthClient<S>,
@@ -124,8 +124,8 @@ const HEIGHT_UPDATE_INTERVAL: u32 = 50;
 /// This function is responsible for making sure that Ethereum events are retrieved from the Ethereum blockchain
 /// and ferried over to Cosmos where they will be used to issue tokens or process batches.
 #[allow(unused_variables)]
-pub async fn eth_oracle_main_loop<S: Signer + 'static>(
-    cosmos_key: CosmosPrivateKey,
+pub async fn eth_oracle_main_loop<S: Signer + 'static, CS: CosmosSigner>(
+    cosmos_key: CS,
     contact: Contact,
     eth_client: EthClient<S>,
     grpc_client: GravityQueryClient<Channel>,
@@ -252,8 +252,8 @@ pub async fn eth_oracle_main_loop<S: Signer + 'static>(
 /// since these are provided directly by a trusted Cosmsos node they can simply be assumed to be
 /// valid and signed off on.
 #[allow(unused_variables)]
-pub async fn eth_signer_main_loop<S: Signer + 'static>(
-    cosmos_key: CosmosPrivateKey,
+pub async fn eth_signer_main_loop<S: Signer + 'static, CS: CosmosSigner>(
+    cosmos_key: CS,
     contact: Contact,
     eth_client: EthClient<S>,
     grpc_client: GravityQueryClient<Channel>,

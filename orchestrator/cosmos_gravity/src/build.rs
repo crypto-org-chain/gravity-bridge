@@ -12,13 +12,13 @@ use gravity_utils::message_signatures::{
 use gravity_utils::types::*;
 use std::collections::BTreeMap;
 
-use crate::crypto::PrivateKey as CosmosPrivateKey;
+use crate::crypto::CosmosSigner;
 
-pub async fn signer_set_tx_confirmation_messages<S: Signer>(
+pub async fn signer_set_tx_confirmation_messages<S: Signer, CS: CosmosSigner>(
     contact: &Contact,
     eth_client: EthClient<S>,
     valsets: Vec<Valset>,
-    cosmos_key: CosmosPrivateKey,
+    cosmos_key: CS,
     gravity_id: String,
 ) -> Vec<Msg> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
@@ -45,11 +45,11 @@ pub async fn signer_set_tx_confirmation_messages<S: Signer>(
     msgs
 }
 
-pub async fn batch_tx_confirmation_messages<S: Signer>(
+pub async fn batch_tx_confirmation_messages<S: Signer, CS: CosmosSigner>(
     contact: &Contact,
     eth_client: EthClient<S>,
     batches: Vec<TransactionBatch>,
-    cosmos_key: CosmosPrivateKey,
+    cosmos_key: CS,
     gravity_id: String,
 ) -> Vec<Msg> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
@@ -77,11 +77,11 @@ pub async fn batch_tx_confirmation_messages<S: Signer>(
     msgs
 }
 
-pub async fn contract_call_tx_confirmation_messages<S: Signer>(
+pub async fn contract_call_tx_confirmation_messages<S: Signer, CS: CosmosSigner>(
     contact: &Contact,
     eth_client: EthClient<S>,
     logic_calls: Vec<LogicCall>,
-    cosmos_key: CosmosPrivateKey,
+    cosmos_key: CS,
     gravity_id: String,
 ) -> Vec<Msg> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
@@ -110,9 +110,9 @@ pub async fn contract_call_tx_confirmation_messages<S: Signer>(
     msgs
 }
 
-pub async fn ethereum_vote_height_messages(
+pub async fn ethereum_vote_height_messages<CS: CosmosSigner>(
     contact: &Contact,
-    cosmos_key: CosmosPrivateKey,
+    cosmos_key: CS,
     ethereum_height: U64,
 ) -> Vec<Msg> {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
@@ -129,9 +129,9 @@ pub async fn ethereum_vote_height_messages(
     msgs
 }
 
-pub fn ethereum_event_messages(
+pub fn ethereum_event_messages<CS: CosmosSigner>(
     contact: &Contact,
-    cosmos_key: CosmosPrivateKey,
+    cosmos_key: CS,
     deposits: Vec<SendToCosmosEvent>,
     batches: Vec<TransactionBatchExecutedEvent>,
     erc20_deploys: Vec<Erc20DeployedEvent>,

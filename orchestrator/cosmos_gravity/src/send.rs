@@ -18,18 +18,18 @@ use std::cmp;
 use std::collections::HashSet;
 use std::{result::Result, time::Duration};
 
-use crate::crypto::PrivateKey as CosmosPrivateKey;
+use crate::crypto::CosmosSigner;
 
 pub const MEMO: &str = "Sent using Gravity Bridge Orchestrator";
 pub const TIMEOUT: Duration = Duration::from_secs(60);
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
-pub async fn update_gravity_delegate_addresses<S: Signer + 'static>(
+pub async fn update_gravity_delegate_addresses<S: Signer + 'static, CS: CosmosSigner>(
     contact: &Contact,
     delegate_eth_address: EthAddress,
     delegate_cosmos_address: Address,
-    cosmos_key: CosmosPrivateKey,
+    cosmos_key: CS,
     cosmos_granter: Option<String>,
     ethereum_wallet: S,
     gas_price: (f64, String),
@@ -84,8 +84,8 @@ pub async fn update_gravity_delegate_addresses<S: Signer + 'static>(
 
 /// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
 /// they will require some time to be included in a batch
-pub async fn send_to_eth(
-    cosmos_key: CosmosPrivateKey,
+pub async fn send_to_eth<CS: CosmosSigner>(
+    cosmos_key: CS,
     cosmos_granter: Option<String>,
     destination: EthAddress,
     amount: Coin,
@@ -123,8 +123,8 @@ pub async fn send_to_eth(
     .await
 }
 
-pub async fn send_request_batch_tx(
-    cosmos_key: CosmosPrivateKey,
+pub async fn send_request_batch_tx<CS: CosmosSigner>(
+    cosmos_key: CS,
     cosmos_granter: Option<String>,
     denom: String,
     gas_price: (f64, String),
@@ -148,9 +148,9 @@ pub async fn send_request_batch_tx(
     .await
 }
 
-pub async fn send_messages(
+pub async fn send_messages<CS: CosmosSigner>(
     contact: &Contact,
-    cosmos_key: CosmosPrivateKey,
+    cosmos_key: CS,
     cosmos_granter: Option<String>,
     gas_price: (f64, String),
     messages: Vec<Msg>,
@@ -197,9 +197,9 @@ pub async fn send_messages(
     Ok(contact.wait_for_tx(response, TIMEOUT).await?)
 }
 
-pub async fn send_main_loop(
+pub async fn send_main_loop<CS: CosmosSigner>(
     contact: &Contact,
-    cosmos_key: CosmosPrivateKey,
+    cosmos_key: CS,
     cosmos_granter: Option<String>,
     gas_price: (f64, String),
     mut rx: tokio::sync::mpsc::Receiver<Vec<Msg>>,
