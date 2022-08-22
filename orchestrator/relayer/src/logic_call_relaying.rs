@@ -68,10 +68,7 @@ pub async fn relay_logic_calls<S: Signer + 'static>(
         if let Ok(sigs) = sigs {
             let hash = encode_logic_call_confirm_hashed(gravity_id.clone(), call.clone());
             // this checks that the signatures for the logic call are actually possible to submit to the chain
-            if current_valset
-                .order_sigs::<LogicCallConfirmResponse>(&hash, &sigs)
-                .is_ok()
-            {
+            if current_valset.order_sigs(&hash, &sigs).is_ok() {
                 oldest_signed_call = Some(call);
                 oldest_signatures = Some(sigs);
             } else {

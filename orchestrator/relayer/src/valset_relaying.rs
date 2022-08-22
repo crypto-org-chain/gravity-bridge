@@ -9,7 +9,6 @@ use ethereum_gravity::{one_eth_f32, types::EthClient, valset_update::send_eth_va
 use ethers::signers::Signer;
 use ethers::types::Address as EthAddress;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use gravity_utils::types::ValsetConfirmResponse;
 use gravity_utils::{
     ethereum::bytes_to_hex_str, ethereum::downcast_to_f32,
     message_signatures::encode_valset_confirm_hashed, types::Valset,
@@ -86,9 +85,7 @@ pub async fn relay_valsets<S: Signer + 'static>(
                         // order valset sigs prepares signatures for submission, notice we compare
                         // them to the 'current' set in the bridge, this confirms for us that the validator set
                         // we have here can be submitted to the bridge in it's current state
-                        match current_eth_valset
-                            .order_sigs::<ValsetConfirmResponse>(&hash, &confirms)
-                        {
+                        match current_eth_valset.order_sigs(&hash, &confirms) {
                             Ok(_) => {
                                 info!("Consideration: looks good");
                                 latest_confirmed = Some(confirms);

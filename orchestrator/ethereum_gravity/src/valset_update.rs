@@ -126,7 +126,7 @@ pub fn build_valset_update_contract_call<S: Signer + 'static>(
     let hash = encode_valset_confirm_hashed(gravity_id, new_valset.clone());
     // we need to use the old valset here because our signatures need to match the current
     // members of the validator set in the contract.
-    let sig_data = old_valset.order_sigs::<ValsetConfirmResponse>(&hash, confirms)?;
+    let sig_data = old_valset.order_sigs(&hash, confirms)?;
 
     let contract = Gravity::new(gravity_contract_address, eth_client.clone());
     Ok(contract
