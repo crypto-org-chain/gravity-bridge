@@ -1,7 +1,6 @@
 use crate::types::EthClient;
 use ethers::middleware::gas_oracle::Etherscan;
 use ethers::prelude::gas_oracle::GasOracle;
-use ethers::prelude::signer::SignerMiddlewareError;
 use ethers::prelude::*;
 use ethers::types::Address as EthAddress;
 use gravity_abi::gravity::*;
@@ -234,30 +233,23 @@ pub fn handle_contract_error<S: Signer + 'static>(gravity_error: GravityError) -
 pub fn extract_gravity_contract_error<S: Signer + 'static>(
     gravity_error: GravityError,
 ) -> Option<GravityContractError> {
+    // TODO: test if this works (it's an attempt to rewrite the below commented out nested-match code)
     if let GravityError::EthersContractError(ce) = gravity_error {
         let cce = ce
             .downcast_ref::<ethers::contract::ContractError<SignerMiddleware<Provider<Http>, S>>>(
             )?;
         if let ethers::contract::ContractError::MiddlewareError(sme) = cce {
-            if <dyn std::any::Any>::is::<&ethers::providers::ProviderError>(sme) {
-                // SAFETY: type is checked above
-                let csme = unsafe {
-                    std::mem::transmute::<
-                        &SignerMiddlewareError<Provider<Http>, S>,
-                        &ethers::providers::ProviderError,
-                    >(sme)
-                };
+            let csme = <dyn std::any::Any>::downcast_ref::<ethers::providers::ProviderError>(sme)?;
 
-                if let ethers::providers::ProviderError::JsonRpcClientError(jrpce) = csme {
-                    let httpe = jrpce.downcast_ref::<ethers::providers::HttpClientError>()?;
-                    if let ethers::providers::HttpClientError::JsonRpcError(jre) = httpe {
-                        if jre.code == 3 && jre.data.is_some() {
-                            let data = jre.data.as_ref().unwrap();
-                            if data.is_string() {
-                                let data_bytes = hex_str_to_bytes(data.as_str().unwrap());
-                                if data_bytes.is_ok() {
-                                    return decode_gravity_error(data_bytes.unwrap());
-                                }
+            if let ethers::providers::ProviderError::JsonRpcClientError(jrpce) = csme {
+                let httpe = jrpce.downcast_ref::<ethers::providers::HttpClientError>()?;
+                if let ethers::providers::HttpClientError::JsonRpcError(jre) = httpe {
+                    if jre.code == 3 && jre.data.is_some() {
+                        let data = jre.data.as_ref().unwrap();
+                        if let Some(data_str) = data.as_str() {
+                            let data_bytes = hex_str_to_bytes(data_str);
+                            if let Ok(db) = data_bytes {
+                                return decode_gravity_error(db);
                             }
                         }
                     }
