@@ -138,7 +138,7 @@ pub fn build_submit_batch_contract_call<S: Signer + 'static>(
     let current_valset_nonce = current_valset.nonce;
     let new_batch_nonce = batch.nonce;
     let hash = encode_tx_batch_confirm_hashed(gravity_id, batch.clone());
-    let sig_data = current_valset.order_sigs::<BatchConfirmResponse>(&hash, confirms)?;
+    let sig_data = current_valset.order_sigs(&hash, confirms)?;
     let (amounts, destinations, fees) = batch.get_checkpoint_values();
 
     let contract_call = Gravity::new(gravity_contract_address, eth_client.clone())

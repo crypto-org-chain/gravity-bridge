@@ -147,7 +147,7 @@ pub fn build_send_logic_call_contract_call<S: Signer + 'static>(
     let current_powers: Vec<U256> = current_powers.iter().map(|power| (*power).into()).collect();
     let current_valset_nonce = current_valset.nonce;
     let hash = encode_logic_call_confirm_hashed(gravity_id, call.clone());
-    let sig_data = current_valset.order_sigs::<LogicCallConfirmResponse>(&hash, confirms)?;
+    let sig_data = current_valset.order_sigs(&hash, confirms)?;
 
     let transfer_amounts = call
         .transfers
