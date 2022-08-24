@@ -1,7 +1,10 @@
 use crate::application::APP;
 use abscissa_core::{clap::Parser, status_err, Application, Command, Runnable};
 use clarity::Uint256;
-use cosmos_gravity::send::{send_request_batch_tx, send_to_eth};
+use cosmos_gravity::{
+    crypto::CosmosSigner,
+    send::{send_request_batch_tx, send_to_eth},
+};
 use deep_space::coin::Coin;
 use ethers::types::Address as EthAddress;
 use gravity_proto::gravity::DenomToErc20Request;
@@ -146,7 +149,7 @@ impl Runnable for CosmosToEthCmd {
                 gravity_denom
             );
             let res = send_to_eth(
-                cosmos_key,
+                cosmos_key.clone(),
                 cosmos_granter.clone(),
                 eth_dest,
                 amount.clone(),

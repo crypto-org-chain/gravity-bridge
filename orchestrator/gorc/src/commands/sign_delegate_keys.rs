@@ -1,5 +1,6 @@
 use crate::{application::APP, prelude::*};
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
+use ethers::signers::Signer;
 use gravity_proto::gravity as proto;
 use std::time::Duration;
 
@@ -13,7 +14,7 @@ impl Runnable for SignDelegateKeysCmd {
     fn run(&self) {
         let config = APP.config();
         let name = self.args.get(0).expect("ethereum-key-name is required");
-        let key = config.load_clarity_key(name.clone());
+        let key = config.load_ethers_wallet(name.clone());
 
         let val = self.args.get(1).expect("validator-address is required");
         let address = val.parse().expect("Could not parse address");
@@ -43,8 +44,11 @@ impl Runnable for SignDelegateKeysCmd {
             let size = prost::Message::encoded_len(&msg);
             let mut buf = bytes::BytesMut::with_capacity(size);
             prost::Message::encode(&msg, &mut buf).expect("Failed to encode DelegateKeysSignMsg!");
+            let rt = tokio::runtime::Runtime::new().expect("Could not create tokio runtime");
 
-            let signature = key.sign_ethereum_msg(&buf);
+            let signature = rt
+                .block_on(async { key.sign_message(&buf).await })
+                .expect("Could not sign message");
 
             println!("{}", signature);
         })

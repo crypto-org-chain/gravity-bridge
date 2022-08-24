@@ -352,11 +352,10 @@ pub async fn check_for_fee_denom(fee_denom: &str, address: CosmosAddress, contac
     }
 }
 
-// TODO(bolten): is using LocalWallet too specific?
 /// Checks the user has some Ethereum in their address to pay for things
-pub async fn check_for_eth(
+pub async fn check_for_eth<S: Signer>(
     address: EthAddress,
-    eth_client: Arc<SignerMiddleware<Provider<Http>, LocalWallet>>,
+    eth_client: Arc<SignerMiddleware<Provider<Http>, S>>,
 ) {
     let balance = eth_client.get_balance(address, None).await.unwrap();
     if balance == 0u8.into() {

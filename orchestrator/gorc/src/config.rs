@@ -1,12 +1,19 @@
-use aws_sdk_secretsmanager::client::Client;
-use cosmos_gravity::crypto::DEFAULT_HD_PATH;
-use ethers::signers::LocalWallet as EthWallet;
+use aws_sdk_kms::Client;
+use bip32::PrivateKey;
+use cosmos_gravity::crypto::{CosmosSigner, EthPubkey, DEFAULT_HD_PATH};
+use ethers::{
+    signers::{LocalWallet as EthWallet, Signer},
+    types::Chain,
+};
+use pkcs8::LineEnding;
 use serde::{Deserialize, Serialize};
 use serde_enum_str::{Deserialize_enum_str, Serialize_enum_str};
 use signatory::FsKeyStore;
 use std::io;
 use std::net::SocketAddr;
 use std::path::Path;
+
+use crate::utils::aws::{AwsSigner, AwsSignerError, WrapperSigner};
 
 #[derive(Clone, Debug, Deserialize_enum_str, Serialize_enum_str)]
 pub enum Keystore {
@@ -21,62 +28,26 @@ impl Default for Keystore {
     }
 }
 
-async fn get_secret(
-    secret_id: String,
-) -> Result<pkcs8::PrivateKeyDocument, aws_sdk_secretsmanager::Error> {
+async fn get_client() -> Client {
     let shared_config = aws_config::load_from_env().await;
-
-    let client = Client::new(&shared_config);
-    let req = client.get_secret_value().secret_id(secret_id);
-    let resp = req.send().await?;
-    let e1 = aws_sdk_secretsmanager::Error::Unhandled(Box::<io::Error>::new(
-        io::ErrorKind::NotFound.into(),
-    ));
-    let secret = resp.secret_string.ok_or(e1)?;
-    let e2 = aws_sdk_secretsmanager::Error::Unhandled(Box::<io::Error>::new(
-        io::ErrorKind::Other.into(),
-    ));
-    pkcs8::PrivateKeyDocument::from_pem(&secret).map_err(|_| e2)
+    Client::new(&shared_config)
 }
 
-async fn set_secret(
-    secret_id: String,
-    secret: &pkcs8::PrivateKeyDocument,
-) -> Result<(), aws_sdk_secretsmanager::Error> {
-    let shared_config = aws_config::load_from_env().await;
-
-    let client = Client::new(&shared_config);
-    let req = client
-        .create_secret()
-        .name(secret_id)
-        .secret_string(secret.to_pem().as_str());
+async fn delete_secret(secret_id: String) -> Result<(), aws_sdk_kms::Error> {
+    let client = get_client().await;
+    let req = client.schedule_key_deletion().key_id(secret_id);
     let _ = req.send().await?;
     Ok(())
 }
 
-async fn delete_secret(secret_id: String) -> Result<(), aws_sdk_secretsmanager::Error> {
-    let shared_config = aws_config::load_from_env().await;
-
-    let client = Client::new(&shared_config);
-    let req = client.delete_secret().secret_id(secret_id);
-    let _ = req.send().await?;
-    Ok(())
-}
-
-async fn describe_secret(
-    secret_id: String,
-) -> Result<signatory::KeyInfo, aws_sdk_secretsmanager::Error> {
-    let shared_config = aws_config::load_from_env().await;
-
-    let client = Client::new(&shared_config);
-    let e = aws_sdk_secretsmanager::Error::Unhandled(Box::<io::Error>::new(
-        io::ErrorKind::Other.into(),
-    ));
-    let req = client.describe_secret().secret_id(secret_id);
+async fn describe_secret(secret_id: String) -> Result<signatory::KeyInfo, aws_sdk_kms::Error> {
+    let client = get_client().await;
+    let e = aws_sdk_kms::Error::Unhandled(Box::<io::Error>::new(io::ErrorKind::Other.into()));
+    let req = client.describe_key().key_id(secret_id);
     let r = req.send().await?;
-    if let Some(name) = r.name {
+    if let Some(Some(key_id)) = r.key_metadata().map(|x| x.key_id()) {
         Ok(signatory::KeyInfo {
-            name: signatory::KeyName::new(name).map_err(|_| e)?,
+            name: signatory::KeyName::new(key_id).map_err(|_| e)?,
             algorithm: None,
             encrypted: false,
         })
@@ -85,22 +56,26 @@ async fn describe_secret(
     }
 }
 
+async fn get_aws_kms_signer(secret_id: String) -> Result<WrapperSigner, AwsSignerError> {
+    let client = get_client().await;
+    Ok(WrapperSigner::Aws(
+        AwsSigner::new(client, secret_id, Chain::Mainnet.into()).await?,
+    ))
+}
+
 impl Keystore {
     /// Load a PKCS#8 key from the keystore.
-    pub fn load(&self, name: &signatory::KeyName) -> signatory::Result<pkcs8::PrivateKeyDocument> {
+    pub fn load(&self, name: &signatory::KeyName) -> signatory::Result<pkcs8::SecretDocument> {
         match self {
             Keystore::File(path) => {
                 let keystore = Path::new(path);
                 let keystore = FsKeyStore::create_or_open(keystore)?;
                 keystore.load(name)
             }
-            Keystore::Aws => {
-                let rt = tokio::runtime::Runtime::new()?;
-
-                let key = rt.block_on(get_secret(name.to_string()));
-
-                key.map_err(|e| signatory::Error::Io(io::Error::new(io::ErrorKind::Other, e)))
-            }
+            Keystore::Aws => Err(signatory::Error::Io(io::Error::new(
+                io::ErrorKind::Other,
+                "Loading secrets is not supported on AWS KMS".to_owned(),
+            ))),
         }
     }
     /// Get information about a key with the given name.
@@ -123,7 +98,7 @@ impl Keystore {
     pub fn store(
         &self,
         name: &signatory::KeyName,
-        der: &pkcs8::PrivateKeyDocument,
+        der: &pkcs8::der::SecretDocument,
     ) -> signatory::Result<()> {
         match self {
             Keystore::File(path) => {
@@ -131,12 +106,11 @@ impl Keystore {
                 let keystore = FsKeyStore::create_or_open(keystore)?;
                 keystore.store(name, der)
             }
-            Keystore::Aws => {
-                let rt = tokio::runtime::Runtime::new()?;
-
-                rt.block_on(set_secret(name.to_string(), der))
-                    .map_err(|e| signatory::Error::Io(io::Error::new(io::ErrorKind::Other, e)))
-            }
+            Keystore::Aws => Err(signatory::Error::Io(io::Error::new(
+                io::ErrorKind::Other,
+                "Storing secrets is not supported for asymmetric key materials on AWS KMS"
+                    .to_owned(),
+            ))),
         }
     }
 
@@ -172,22 +146,36 @@ impl GorcConfig {
     fn load_secret_key(&self, name: String) -> k256::elliptic_curve::SecretKey<k256::Secp256k1> {
         let name = name.parse().expect("Could not parse name");
         let key = self.keystore.load(&name).expect("Could not load key");
-        key.to_pem().parse().expect("Could not parse pem")
+        key.to_pem("secret", LineEnding::LF)
+            .expect("encode")
+            .parse()
+            .expect("Could not parse pem")
     }
 
-    pub fn load_clarity_key(&self, name: String) -> clarity::PrivateKey {
-        let key = self.load_secret_key(name).to_bytes();
-        clarity::PrivateKey::from_slice(&key).expect("Could not convert key")
+    pub fn load_ethers_wallet(&self, name: String) -> impl Signer + Clone + EthPubkey {
+        if matches!(self.keystore, Keystore::Aws) {
+            let rt = tokio::runtime::Runtime::new().expect("cannot get Tokio runtime");
+
+            rt.block_on(get_aws_kms_signer(name))
+                .expect("Could not get AWS KMS signer")
+        } else {
+            WrapperSigner::Local(EthWallet::from(self.load_secret_key(name)))
+        }
     }
 
-    pub fn load_ethers_wallet(&self, name: String) -> EthWallet {
-        EthWallet::from(self.load_secret_key(name))
-    }
+    pub fn load_deep_space_key(&self, name: String) -> impl CosmosSigner {
+        if matches!(self.keystore, Keystore::Aws) {
+            let rt = tokio::runtime::Runtime::new().expect("cannot get Tokio runtime");
 
-    pub fn load_deep_space_key(&self, name: String) -> cosmos_gravity::crypto::PrivateKey {
-        let key = self.load_secret_key(name).to_bytes();
-        let key = deep_space::utils::bytes_to_hex_str(&key);
-        key.parse().expect("Could not parse private key")
+            rt.block_on(get_aws_kms_signer(name))
+                .expect("Could not get AWS KMS signer")
+        } else {
+            let key = self.load_secret_key(name).to_bytes();
+            let key = deep_space::utils::bytes_to_hex_str(&key);
+            let pk: cosmos_gravity::crypto::PrivateKey =
+                key.parse().expect("Could not parse private key");
+            WrapperSigner::LocalCosmos(pk)
+        }
     }
 }
 

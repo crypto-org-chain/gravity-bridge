@@ -20,6 +20,7 @@ pub async fn send_one_eth<S: Signer>(dest: EthAddress, eth_client: EthClient<S>)
         value: Some(one_eth()),
         data: Some(Vec::new().into()),
         nonce: None,
+        chain_id: None,
     };
 
     let pending_tx = eth_client.send_transaction(tx, None).await.unwrap();
@@ -77,6 +78,7 @@ pub async fn send_erc20_bulk<S: Signer + 'static>(
             value: Some(0u32.into()),
             data: Some(data),
             nonce: Some(nonce),
+            chain_id: None,
         };
 
         let tx = eth_client.send_transaction(tx, None);
@@ -124,6 +126,7 @@ pub async fn send_eth_bulk<S: Signer>(
             value: Some(amount),
             data: Some(Vec::new().into()),
             nonce: Some(nonce),
+            chain_id: None,
         };
 
         let tx = eth_client.send_transaction(tx, None);

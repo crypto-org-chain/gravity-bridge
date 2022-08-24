@@ -405,6 +405,7 @@ async fn test_batch(
         value: Some(1_000_000_000_000_000_000u128.into()),
         data: Some(Vec::new().into()),
         nonce: None,
+        chain_id: None,
     };
 
     let pending_tx = eth_client.send_transaction(tx, None).await.unwrap();

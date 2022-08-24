@@ -29,6 +29,7 @@ pub enum GravityError {
     CosmosGrpcError(CosmosGrpcError),
     CosmosAddressError(CosmosAddressError),
     CosmosPrivateKeyError(CosmosPrivateKeyError),
+    CosmosSignerError(Box<dyn Error>),
     EthereumBadDataError(String),
     EthereumRestError(Box<dyn Error>),
     EthersAbiError(EthersAbiError),
@@ -66,6 +67,9 @@ impl fmt::Display for GravityError {
             GravityError::CosmosAddressError(val) => write!(f, "Cosmos Address error {}", val),
             GravityError::CosmosPrivateKeyError(val) => {
                 write!(f, "Cosmos private key error:  {}", val)
+            }
+            GravityError::CosmosSignerError(val) => {
+                write!(f, "Cosmos signer key error:  {}", val)
             }
             GravityError::EthereumBadDataError(val) => {
                 write!(f, "Received unexpected data from Ethereum: {}", val)

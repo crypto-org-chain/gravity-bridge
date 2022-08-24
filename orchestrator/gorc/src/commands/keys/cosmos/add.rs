@@ -2,7 +2,7 @@ use super::show::ShowCosmosKeyCmd;
 use crate::application::APP;
 use crate::config::Keystore;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
-use k256::pkcs8::ToPrivateKey;
+use k256::pkcs8::EncodePrivateKey;
 use rand_core::OsRng;
 
 /// Add a new Cosmos Key

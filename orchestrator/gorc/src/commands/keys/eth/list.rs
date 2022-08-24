@@ -5,10 +5,7 @@ use std::path;
 
 /// List all Eth Keys
 #[derive(Command, Debug, Default, Parser)]
-pub struct ListEthKeyCmd {
-    #[clap(short, long)]
-    pub show_private_key: bool,
-}
+pub struct ListEthKeyCmd {}
 
 // Entry point for `gorc keys eth list`
 impl Runnable for ListEthKeyCmd {
@@ -26,7 +23,6 @@ impl Runnable for ListEthKeyCmd {
                             let name = name.to_str().unwrap();
                             let show_cmd = ShowEthKeyCmd {
                                 args: vec![name.to_string()],
-                                show_private_key: self.show_private_key,
                                 show_name: true,
                             };
                             show_cmd.run();

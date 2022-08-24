@@ -1,7 +1,7 @@
 use super::show::ShowCosmosKeyCmd;
 use crate::application::APP;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
-use k256::pkcs8::ToPrivateKey;
+use k256::pkcs8::EncodePrivateKey;
 
 /// Recover a Cosmos Key
 #[derive(Command, Debug, Default, Parser)]

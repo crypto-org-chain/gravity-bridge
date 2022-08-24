@@ -1,5 +1,6 @@
 use crate::application::APP;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
+use cosmos_gravity::crypto::CosmosSigner;
 
 /// Show a Cosmos Key
 #[derive(Command, Debug, Default, Parser)]

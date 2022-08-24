@@ -1,7 +1,7 @@
 use super::show::ShowEthKeyCmd;
 use crate::application::APP;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
-use k256::pkcs8::ToPrivateKey;
+use k256::pkcs8::EncodePrivateKey;
 
 /// Recover an Eth Key
 #[derive(Command, Debug, Default, Parser)]
@@ -10,9 +10,6 @@ pub struct RecoverEthKeyCmd {
 
     #[clap(short, long)]
     pub overwrite: bool,
-
-    #[clap(short, long)]
-    show_private_key: bool,
 }
 
 // Entry point for `gorc keys eth recover [name] (bip39-mnemonic)`
@@ -58,7 +55,6 @@ impl Runnable for RecoverEthKeyCmd {
 
         let show_cmd = ShowEthKeyCmd {
             args: vec![name.to_string()],
-            show_private_key: self.show_private_key,
             show_name: false,
         };
         show_cmd.run();

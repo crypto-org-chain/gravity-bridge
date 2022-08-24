@@ -2,7 +2,7 @@ use super::show::ShowEthKeyCmd;
 use crate::application::APP;
 use crate::config::Keystore;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
-use k256::pkcs8::ToPrivateKey;
+use k256::pkcs8::EncodePrivateKey;
 use rand_core::OsRng;
 
 /// Add a new Eth Key
@@ -12,9 +12,6 @@ pub struct AddEthKeyCmd {
 
     #[clap(short, long)]
     pub overwrite: bool,
-
-    #[clap(short, long)]
-    show_private_key: bool,
 }
 
 // Entry point for `gorc keys eth add [name]`
@@ -59,7 +56,6 @@ impl Runnable for AddEthKeyCmd {
 
         let show_cmd = ShowEthKeyCmd {
             args: vec![name.to_string()],
-            show_private_key: self.show_private_key,
             show_name: false,
         };
         show_cmd.run();

@@ -172,7 +172,9 @@ pub async fn send_messages<CS: CosmosSigner>(
 
     let mut args = contact.get_message_args(cosmos_address, fee).await?;
 
-    let tx_parts = cosmos_key.build_tx(&messages, args.clone(), MEMO)?;
+    let tx_parts = cosmos_key
+        .build_tx(&messages, args.clone(), MEMO.into())
+        .await?;
     let gas = contact.simulate_tx(tx_parts).await?;
 
     // multiply the estimated gas by the configured gas adjustment
@@ -188,7 +190,9 @@ pub async fn send_messages<CS: CosmosSigner>(
     };
     args.fee.amount = vec![fee_amount];
 
-    let msg_bytes = cosmos_key.sign_std_msg(&messages, args, MEMO)?;
+    let msg_bytes = cosmos_key
+        .sign_std_msg(&messages, args, MEMO.into())
+        .await?;
     let response = contact
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
@@ -210,7 +214,7 @@ pub async fn send_main_loop<CS: CosmosSigner>(
         for msg_chunk in messages.chunks(msg_batch_size) {
             match send_messages(
                 contact,
-                cosmos_key,
+                cosmos_key.clone(),
                 cosmos_granter.to_owned(),
                 gas_price.to_owned(),
                 msg_chunk.to_vec(),

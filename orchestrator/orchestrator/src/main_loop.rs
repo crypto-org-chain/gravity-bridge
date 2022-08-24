@@ -69,7 +69,7 @@ pub async fn orchestrator_main_loop<S: Signer + 'static, CS: CosmosSigner>(
 
     let a = send_main_loop(
         &contact,
-        cosmos_key,
+        cosmos_key.clone(),
         cosmos_granter,
         gas_price,
         rx,
@@ -78,7 +78,7 @@ pub async fn orchestrator_main_loop<S: Signer + 'static, CS: CosmosSigner>(
     );
 
     let b = eth_oracle_main_loop(
-        cosmos_key,
+        cosmos_key.clone(),
         contact.clone(),
         eth_client.clone(),
         grpc_client.clone(),
@@ -177,7 +177,7 @@ pub async fn eth_oracle_main_loop<S: Signer + 'static, CS: CosmosSigner>(
                         if loop_count % HEIGHT_UPDATE_INTERVAL == 0 {
                             let messages = build::ethereum_vote_height_messages(
                                 &contact,
-                                cosmos_key,
+                                cosmos_key.clone(),
                                 latest_eth_block - block_delay,
                             )
                             .await;
@@ -220,7 +220,7 @@ pub async fn eth_oracle_main_loop<S: Signer + 'static, CS: CosmosSigner>(
                     &contact,
                     &mut grpc_client,
                     gravity_contract_address,
-                    cosmos_key,
+                    cosmos_key.clone(),
                     last_checked_block,
                     blocks_to_search.into(),
                     block_delay,
@@ -326,7 +326,7 @@ pub async fn eth_signer_main_loop<S: Signer + 'static, CS: CosmosSigner>(
                                 &contact,
                                 eth_client.clone(),
                                 valsets,
-                                cosmos_key,
+                                cosmos_key.clone(),
                                 gravity_id.clone(),
                             )
                             .await;
@@ -362,7 +362,7 @@ pub async fn eth_signer_main_loop<S: Signer + 'static, CS: CosmosSigner>(
                             &contact,
                             eth_client.clone(),
                             transaction_batches,
-                            cosmos_key,
+                            cosmos_key.clone(),
                             gravity_id.clone(),
                         )
                         .await;
@@ -395,7 +395,7 @@ pub async fn eth_signer_main_loop<S: Signer + 'static, CS: CosmosSigner>(
                             &contact,
                             eth_client.clone(),
                             logic_calls,
-                            cosmos_key,
+                            cosmos_key.clone(),
                             gravity_id.clone(),
                         )
                         .await;

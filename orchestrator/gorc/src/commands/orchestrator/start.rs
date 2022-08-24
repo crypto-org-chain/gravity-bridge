@@ -1,5 +1,6 @@
 use crate::{application::APP, prelude::*};
 use abscissa_core::{clap::Parser, Command, Runnable};
+use cosmos_gravity::crypto::CosmosSigner;
 use ethers::{prelude::*, types::Address as EthAddress};
 use gravity_utils::types::config::RelayerMode;
 use gravity_utils::{

@@ -1,5 +1,8 @@
 use deep_space::private_key::TxParts;
+use ethers::{prelude::k256::ecdsa::VerifyingKey, signers::LocalWallet};
+use gravity_utils::error::GravityError;
 use std::str::FromStr;
+use tonic::async_trait;
 
 #[cfg(not(feature = "ethermint"))]
 use deep_space::public_key::COSMOS_PUBKEY_URL;
@@ -14,42 +17,58 @@ pub const DEFAULT_HD_PATH: &str = "m/44'/60'/0'/0/0";
 #[cfg(not(feature = "ethermint"))]
 pub const DEFAULT_HD_PATH: &str = "m/44'/118'/0'/0/0";
 
-/// A trait that captures different possible signer implementations.
-pub trait CosmosSigner: Copy + Clone {
-    fn to_address(&self, prefix: &str) -> Result<Address, PrivateKeyError>;
-    fn sign_std_msg(
-        &self,
-        messages: &[Msg],
-        args: MessageArgs,
-        memo: impl Into<String>,
-    ) -> Result<Vec<u8>, PrivateKeyError>;
-    fn build_tx(
-        &self,
-        messages: &[Msg],
-        args: MessageArgs,
-        memo: impl Into<String>,
-    ) -> Result<TxParts, PrivateKeyError>;
+/// A trait to return a public key
+pub trait EthPubkey {
+    fn to_public_key(&self) -> VerifyingKey;
 }
 
+impl EthPubkey for LocalWallet {
+    fn to_public_key(&self) -> VerifyingKey {
+        self.signer().verifying_key()
+    }
+}
+
+/// A trait that captures different possible signer implementations.
+#[async_trait]
+pub trait CosmosSigner: Clone {
+    fn to_address(&self, prefix: &str) -> Result<Address, GravityError>;
+    async fn sign_std_msg(
+        &self,
+        messages: &[Msg],
+        args: MessageArgs,
+        memo: String,
+    ) -> Result<Vec<u8>, GravityError>;
+    async fn build_tx(
+        &self,
+        messages: &[Msg],
+        args: MessageArgs,
+        memo: String,
+    ) -> Result<TxParts, GravityError>;
+}
+
+#[async_trait]
 impl CosmosSigner for PrivateKey {
-    fn to_address(&self, prefix: &str) -> Result<Address, PrivateKeyError> {
+    fn to_address(&self, prefix: &str) -> Result<Address, GravityError> {
         self.to_address(prefix)
+            .map_err(GravityError::CosmosPrivateKeyError)
     }
-    fn sign_std_msg(
+    async fn sign_std_msg(
         &self,
         messages: &[Msg],
         args: MessageArgs,
-        memo: impl Into<String>,
-    ) -> Result<Vec<u8>, PrivateKeyError> {
-        self.sign_std_msg(messages, args, memo)
+        memo: String,
+    ) -> Result<Vec<u8>, GravityError> {
+        self.do_sign_std_msg(messages, args, memo)
+            .map_err(GravityError::CosmosPrivateKeyError)
     }
-    fn build_tx(
+    async fn build_tx(
         &self,
         messages: &[Msg],
         args: MessageArgs,
-        memo: impl Into<String>,
-    ) -> Result<TxParts, PrivateKeyError> {
-        self.build_tx(messages, args, memo)
+        memo: String,
+    ) -> Result<TxParts, GravityError> {
+        self.do_build_tx(messages, args, memo)
+            .map_err(GravityError::CosmosPrivateKeyError)
     }
 }
 
@@ -102,7 +121,7 @@ impl PrivateKey {
         result
     }
 
-    pub fn sign_std_msg(
+    pub fn do_sign_std_msg(
         &self,
         messages: &[Msg],
         args: MessageArgs,
@@ -121,7 +140,7 @@ impl PrivateKey {
         result
     }
 
-    pub fn build_tx(
+    pub fn do_build_tx(
         &self,
         messages: &[Msg],
         args: MessageArgs,

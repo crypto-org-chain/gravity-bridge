@@ -1,7 +1,8 @@
 use super::show::ShowEthKeyCmd;
 use crate::application::APP;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
-use k256::{pkcs8::ToPrivateKey, SecretKey};
+use bip32::PrivateKey;
+use k256::{pkcs8::EncodePrivateKey, SecretKey};
 
 ///Import an Eth Key
 #[derive(Command, Debug, Default, Parser)]
@@ -10,9 +11,6 @@ pub struct ImportEthKeyCmd {
 
     #[clap(short, long)]
     pub overwrite: bool,
-
-    #[clap(short, long)]
-    show_private_key: bool,
 }
 
 // Entry point for `gorc keys eth import [name] (private-key)`
@@ -42,7 +40,7 @@ impl Runnable for ImportEthKeyCmd {
             .parse::<clarity::PrivateKey>()
             .expect("Could not parse private-key");
 
-        let key = SecretKey::from_bytes(key.to_bytes()).expect("Could not convert private-key");
+        let key = SecretKey::from_bytes(&key.to_bytes()).expect("Could not convert private-key");
 
         let key = key
             .to_pkcs8_der()
@@ -52,7 +50,6 @@ impl Runnable for ImportEthKeyCmd {
 
         let show_cmd = ShowEthKeyCmd {
             args: vec![name.to_string()],
-            show_private_key: self.show_private_key,
             show_name: false,
         };
         show_cmd.run();
