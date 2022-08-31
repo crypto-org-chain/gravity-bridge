@@ -643,6 +643,17 @@ func (k Keeper) IterateEthereumHeightVotes(ctx sdk.Context, cb func(val sdk.ValA
 	}
 }
 
+// DeleteEthereumSignatures deletes the ethereum signatures for a specific outgoing tx
+func (k Keeper) DeleteEthereumSignatures(ctx sdk.Context, otx types.OutgoingTx) {
+	prefixStoreSig := prefix.NewStore(ctx.KVStore(k.storeKey), append([]byte{types.EthereumSignatureKey}, otx.GetStoreIndex()...))
+	iterSig := prefixStoreSig.Iterator(nil, nil)
+	defer iterSig.Close()
+
+	for ; iterSig.Valid(); iterSig.Next() {
+		prefixStoreSig.Delete(iterSig.Key())
+	}
+}
+
 /////////////////
 // MIGRATE     //
 /////////////////
@@ -666,13 +677,7 @@ func (k Keeper) MigrateGravityContract(ctx sdk.Context, newBridgeAddress string,
 			panic(err)
 		}
 		// Delete any partial Eth Signatures handging around
-		prefixStoreSig := prefix.NewStore(ctx.KVStore(k.storeKey), append([]byte{types.EthereumSignatureKey}, otx.GetStoreIndex()...))
-		iterSig := prefixStoreSig.Iterator(nil, nil)
-		defer iterSig.Close()
-
-		for ; iterSig.Valid(); iterSig.Next() {
-			prefixStoreSig.Delete(iterSig.Key())
-		}
+		k.DeleteEthereumSignatures(ctx, otx)
 
 		prefixStoreOtx.Delete(iterOtx.Key())
 	}
