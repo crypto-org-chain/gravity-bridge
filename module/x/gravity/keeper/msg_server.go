@@ -256,6 +256,7 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchTx) (*types.MsgRequestBatchTxResponse, error) {
 	// TODO: limit this to only orchestrators and validators?
 	ctx := sdk.UnwrapSDKContext(c)
+	params := k.GetParams(ctx)
 
 	// Check if the denom is a gravity coin, if not, check if there is a deployed ERC20 representing it.
 	// If not, error out. Normalizes the format of the input denom if it's a gravity denom.
@@ -264,7 +265,7 @@ func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchT
 		return nil, err
 	}
 
-	batchID := k.BuildBatchTx(ctx, tokenContract, BatchTxSize)
+	batchID := k.BuildBatchTx(ctx, tokenContract, int(params.BatchMaxElement))
 	if batchID == nil {
 		return nil, fmt.Errorf("no suitable batch to create")
 	}

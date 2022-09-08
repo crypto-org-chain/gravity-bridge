@@ -12,9 +12,6 @@ import (
 	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types"
 )
 
-// TODO: should we make this a parameter or a a call arg?
-const BatchTxSize = 100
-
 // BuildBatchTx starts the following process chain:
 // - find bridged denominator for given voucher type
 // - determine if a an unexecuted batch is already waiting for this token type, if so confirm the new batch would
