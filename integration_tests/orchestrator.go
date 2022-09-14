@@ -9,7 +9,7 @@ import (
 type orchestrator struct {
 	index    int
 	mnemonic string
-	keyInfo  keyring.Info
+	keyInfo  keyring.Record
 	keyring  *keyring.Keyring
 }
 

@@ -29,6 +29,7 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ory/dockertest/v3"
@@ -141,15 +142,19 @@ func (s *IntegrationTestSuite) initNodes(nodeCount int) {
 	// initialize a genesis file for the first validator
 	val0ConfigDir := s.chain.validators[0].configDir()
 	for _, val := range s.chain.validators {
+		valAddress, err := val.keyInfo.GetAddress()
+		s.Require().NoError(err)
 		s.Require().NoError(
-			addGenesisAccount(val0ConfigDir, "", initBalanceStr, val.keyInfo.GetAddress()),
+			addGenesisAccount(val0ConfigDir, "", initBalanceStr, valAddress),
 		)
 	}
 
 	// add orchestrator accounts to genesis file
 	for _, orch := range s.chain.orchestrators {
+		orchAddress, err := orch.keyInfo.GetAddress()
+		s.Require().NoError(err)
 		s.Require().NoError(
-			addGenesisAccount(val0ConfigDir, "", initBalanceStr, orch.keyInfo.GetAddress()),
+			addGenesisAccount(val0ConfigDir, "", initBalanceStr, orchAddress),
 		)
 	}
 
@@ -170,15 +175,19 @@ func (s *IntegrationTestSuite) initNodesWithMnemonics(mnemonics ...string) {
 	//initialize a genesis file for the first validator
 	val0ConfigDir := s.chain.validators[0].configDir()
 	for _, val := range s.chain.validators {
+		valAddress, err := val.keyInfo.GetAddress()
+		s.Require().NoError(err)
 		s.Require().NoError(
-			addGenesisAccount(val0ConfigDir, "", initBalanceStr, val.keyInfo.GetAddress()),
+			addGenesisAccount(val0ConfigDir, "", initBalanceStr, valAddress),
 		)
 	}
 
 	// add orchestrator accounts to genesis file
 	for _, orch := range s.chain.orchestrators {
+		orchAddress, err := orch.keyInfo.GetAddress()
+		s.Require().NoError(err)
 		s.Require().NoError(
-			addGenesisAccount(val0ConfigDir, "", initBalanceStr, orch.keyInfo.GetAddress()),
+			addGenesisAccount(val0ConfigDir, "", initBalanceStr, orchAddress),
 		)
 	}
 
@@ -279,7 +288,7 @@ func (s *IntegrationTestSuite) initGenesis() {
 	s.Require().NoError(err)
 	appGenState[banktypes.ModuleName] = bz
 
-	var govGenState govtypes.GenesisState
+	var govGenState govtypesv1beta1.GenesisState
 	s.Require().NoError(cdc.UnmarshalJSON(appGenState[govtypes.ModuleName], &govGenState))
 
 	// set short voting period to allow gov proposals in tests
