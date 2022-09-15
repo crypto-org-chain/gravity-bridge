@@ -137,7 +137,7 @@ func (v *validator) createConsensusKey() error {
 }
 
 func (v *validator) createKeyFromMnemonic(name, mnemonic string, passphrase string) error {
-	kb, err := keyring.New(keyringAppName, keyring.BackendTest, v.configDir(), nil, nil)
+	kb, err := keyring.New(keyringAppName, keyring.BackendTest, v.configDir(), nil, v.chain.codec)
 	if err != nil {
 		return err
 	}
@@ -359,7 +359,7 @@ func (v *validator) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 }
 
 func (v *validator) keyring() (keyring.Keyring, error) {
-	return keyring.New(keyringAppName, keyring.BackendTest, v.configDir(), nil, nil)
+	return keyring.New(keyringAppName, keyring.BackendTest, v.configDir(), nil, v.chain.codec)
 }
 
 func (v *validator) clientContext(nodeURI string) (*client.Context, error) {

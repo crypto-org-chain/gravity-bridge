@@ -6,6 +6,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/simapp"
 	"log"
 	"math/big"
 	"os"
@@ -83,8 +84,9 @@ func TestIntegrationTestSuite(t *testing.T) {
 func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
 
+	cdc := simapp.MakeTestEncodingConfig().Codec
 	var err error
-	s.chain, err = newChain()
+	s.chain, err = newChain(cdc)
 	s.Require().NoError(err)
 
 	s.T().Logf("starting e2e infrastructure; chain-id: %s; datadir: %s", s.chain.id, s.chain.dataDir)
