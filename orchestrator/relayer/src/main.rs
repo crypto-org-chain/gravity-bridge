@@ -120,6 +120,7 @@ async fn main() {
         1f32,
         &mut fee_manager,
         1.1f32,
+        5_000u64,
     )
     .await
 }

@@ -23,6 +23,7 @@ pub async fn relayer_main_loop<S: Signer + 'static>(
     eth_gas_price_multiplier: f32,
     fee_manager: &mut FeeManager,
     eth_gas_multiplier: f32,
+    blocks_to_search: u64,
 ) {
     let mut grpc_client = grpc_client;
 
@@ -41,6 +42,7 @@ pub async fn relayer_main_loop<S: Signer + 'static>(
                     &mut grpc_client,
                     gravity_contract_address,
                     eth_client.clone(),
+                    blocks_to_search,
                 )
                 .await;
                 if current_eth_valset.is_err() {

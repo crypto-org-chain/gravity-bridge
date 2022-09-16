@@ -17,9 +17,8 @@ pub async fn find_latest_valset<S: Signer + 'static>(
     grpc_client: &mut GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
     eth_client: EthClient<S>,
+    blocks_to_search: u64,
 ) -> Result<Valset, GravityError> {
-    // calculate some constant U64 values only once
-    const BLOCKS_TO_SEARCH: u64 = 5_000u64;
 
     let mut filter = Filter::new()
         .address(ValueOrArray::Value(gravity_contract_address))
@@ -29,7 +28,7 @@ pub async fn find_latest_valset<S: Signer + 'static>(
     while end_filter_block > 0u64.into() {
         debug!("About to submit a Valset or Batch, looking back into the history to find the last Valset Update, on block {}", end_filter_block);
 
-        let start_filter_block = end_filter_block.saturating_sub(BLOCKS_TO_SEARCH.into());
+        let start_filter_block = end_filter_block.saturating_sub(blocks_to_search.into());
         filter = filter.select(start_filter_block..end_filter_block);
 
         let mut filtered_logged_events = eth_client.get_logs(&filter).await?;

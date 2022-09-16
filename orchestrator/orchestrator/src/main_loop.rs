@@ -108,6 +108,7 @@ pub async fn orchestrator_main_loop<S: Signer + 'static, CS: CosmosSigner>(
             eth_gas_price_multiplier,
             &mut fee_manager,
             eth_gas_multiplier,
+            blocks_to_search,
         );
         futures::future::join5(a, b, c, d, e).await;
     } else {
