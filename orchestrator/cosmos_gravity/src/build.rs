@@ -137,7 +137,7 @@ pub fn ethereum_event_messages<CS: CosmosSigner>(
     erc20_deploys: Vec<Erc20DeployedEvent>,
     logic_calls: Vec<LogicCallExecutedEvent>,
     valsets: Vec<ValsetUpdatedEvent>,
-) -> Vec<Msg> {
+) -> (Vec<Msg>, u64) {
     let cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
 
     // This sorts oracle messages by event nonce before submitting them. It's not a pretty implementation because
@@ -229,9 +229,12 @@ pub fn ethereum_event_messages<CS: CosmosSigner>(
     }
 
     let mut msgs = Vec::new();
+    let mut lastNonce: U256 = U256::zero();
     for (i, _) in unordered_msgs.clone().iter() {
-        msgs.push(unordered_msgs.remove_entry(i).unwrap().1);
+        let msg = unordered_msgs.remove_entry(i).unwrap().1;
+        lastNonce = *i;
+        msgs.push(msg);
     }
 
-    msgs
+    (msgs, lastNonce.as_u64())
 }

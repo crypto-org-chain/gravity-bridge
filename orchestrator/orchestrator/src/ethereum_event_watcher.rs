@@ -181,7 +181,7 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
         || !transaction_batch_events.is_empty()
         || !valset_updated_events.is_empty()
     {
-        let messages = build::ethereum_event_messages(
+        let (messages, last_message_nonce) = build::ethereum_event_messages(
             contact,
             cosmos_key,
             send_to_cosmos_events.to_owned(),
@@ -223,20 +223,26 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
             .await
             .expect("Could not send messages");
 
+
+        let mut error_count: u32 = 0;
         let timeout = time::Duration::from_secs(30);
         contact.wait_for_next_block(timeout).await?;
+        let mut new_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
 
-        // TODO(bolten): we are only waiting one block, is it possible if we are sending multiple
-        // events via the sender, they could be received over the block boundary and thus our new
-        // event nonce does not reflect full processing of the above events?
-        let new_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
-        if new_event_nonce == last_event_nonce {
-            return Err(GravityError::InvalidBridgeStateError(
-                format!("Claims did not process, trying to update but still on {}, trying again in a moment", last_event_nonce),
-            ));
-        } else {
-            info!("Claims processed, new nonce: {}", new_event_nonce);
+        while new_event_nonce != last_message_nonce {
+            if error_count == 10 {
+                return Err(GravityError::InvalidBridgeStateError(
+                    format!("Claims did not process, trying to update but still on {}, trying again in a moment", new_event_nonce),
+                ));
+            }
+            info!("Claims did not process, trying to update to {} but still on {}, trying again in a moment"
+                , last_message_nonce,  new_event_nonce);
+
+            error_count += 1;
+            contact.wait_for_next_block(timeout).await?;
+            new_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
         }
+        info!("Claims processed, new nonce: {}", new_event_nonce);
     }
 
     Ok(ending_block)
