@@ -19,7 +19,6 @@ pub async fn find_latest_valset<S: Signer + 'static>(
     eth_client: EthClient<S>,
     blocks_to_search: u64,
 ) -> Result<Valset, GravityError> {
-
     let mut filter = Filter::new()
         .address(ValueOrArray::Value(gravity_contract_address))
         .event(&ValsetUpdatedEventFilter::abi_signature());

@@ -1,17 +1,20 @@
+use crate::{application::APP, prelude::*};
 use aws_sdk_kms::Client;
 use bip32::PrivateKey;
 use cosmos_gravity::crypto::{CosmosSigner, EthPubkey, DEFAULT_HD_PATH};
+use ethers::providers::Middleware;
 use ethers::{
     signers::{LocalWallet as EthWallet, Signer},
     types::Chain,
 };
+use gravity_utils::{connection_prep::create_rpc_connections, ethereum::downcast_to_u64};
 use pkcs8::LineEnding;
 use serde::{Deserialize, Serialize};
 use serde_enum_str::{Deserialize_enum_str, Serialize_enum_str};
 use signatory::FsKeyStore;
-use std::io;
 use std::net::SocketAddr;
 use std::path::Path;
+use std::{io, time::Duration};
 
 use crate::utils::aws::{AwsSigner, AwsSignerError, WrapperSigner};
 
@@ -58,8 +61,23 @@ async fn describe_secret(secret_id: String) -> Result<signatory::KeyInfo, aws_sd
 
 async fn get_aws_kms_signer(secret_id: String) -> Result<WrapperSigner, AwsSignerError> {
     let client = get_client().await;
+    let config = APP.config();
+    let connections = create_rpc_connections(
+        "".to_string(),
+        None,
+        Some(config.ethereum.rpc.clone()),
+        Duration::from_secs(3),
+    )
+    .await;
+    let provider = connections.eth_provider.clone().unwrap();
+    let chain_id = provider
+        .get_chainid()
+        .await
+        .unwrap_or_else(|_| Chain::Mainnet.into());
+    let chain_id = downcast_to_u64(chain_id).expect("Chain ID overflowed when downcasting to u64");
+
     Ok(WrapperSigner::Aws(
-        AwsSigner::new(client, secret_id, Chain::Mainnet.into()).await?,
+        AwsSigner::new(client, secret_id, chain_id).await?,
     ))
 }
 

@@ -44,10 +44,9 @@ impl Runnable for SignDelegateKeysCmd {
             let size = prost::Message::encoded_len(&msg);
             let mut buf = bytes::BytesMut::with_capacity(size);
             prost::Message::encode(&msg, &mut buf).expect("Failed to encode DelegateKeysSignMsg!");
-            let rt = tokio::runtime::Runtime::new().expect("Could not create tokio runtime");
-
-            let signature = rt
-                .block_on(async { key.sign_message(&buf).await })
+            let signature = key
+                .sign_message(&buf)
+                .await
                 .expect("Could not sign message");
 
             println!("{}", signature);
