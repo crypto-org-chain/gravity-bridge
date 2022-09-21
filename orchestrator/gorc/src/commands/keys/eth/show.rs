@@ -1,7 +1,7 @@
 use crate::application::APP;
+use crate::utils::aws::verifying_key_to_address;
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
 use cosmos_gravity::crypto::EthPubkey;
-use ethers::utils::hex::ToHex;
 
 /// Show an Eth Key
 #[derive(Command, Debug, Default, Parser)]
@@ -21,12 +21,12 @@ impl Runnable for ShowEthKeyCmd {
         let key = config.load_ethers_wallet(name.clone());
 
         let pub_key = key.to_public_key();
+        let address = verifying_key_to_address(&pub_key);
 
         if self.show_name {
             print!("{}\t", name);
         }
-        let pub_key = pub_key.to_bytes();
-        let hex_pubkey: String = pub_key.encode_hex();
-        println!("{}", hex_pubkey);
+
+        println!("{:?}", address);
     }
 }

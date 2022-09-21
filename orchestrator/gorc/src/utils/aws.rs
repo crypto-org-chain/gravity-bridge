@@ -260,7 +260,7 @@ fn apply_eip155(sig: &mut EthSig, chain_id: u64) {
 }
 
 /// Convert a verifying key to an ethereum address
-fn verifying_key_to_address(key: &VerifyingKey) -> Address {
+pub fn verifying_key_to_address(key: &VerifyingKey) -> Address {
     // false for uncompressed
     let uncompressed_pub_key = key.to_encoded_point(false);
     let public_key = uncompressed_pub_key.to_bytes();
@@ -304,7 +304,7 @@ fn decode_signature(resp: SignOutput) -> Result<KSig, AwsSignerError> {
 /// use aws_config::meta::region::RegionProviderChain;
 /// use aws_sdk_kms::{Client as KmsClient};
 ///
-/// user ethers_signers::Signer;
+/// use ethers_signers::Signer;
 /// let region_provider = RegionProviderChain::default_provider().or_else("us-east-1");
 /// let config = aws_config::from_env().region(region_provider).load().await;
 /// let kms_client = KmsClient::new(config);
