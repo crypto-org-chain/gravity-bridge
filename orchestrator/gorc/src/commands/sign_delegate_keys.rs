@@ -49,7 +49,7 @@ impl Runnable for SignDelegateKeysCmd {
                 .await
                 .expect("Could not sign message");
 
-            println!("{}", signature);
+            println!("0x{}", signature);
         })
         .unwrap_or_else(|e| {
             status_err!("executor exited with error: {}", e);
