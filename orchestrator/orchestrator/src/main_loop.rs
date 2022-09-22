@@ -171,23 +171,6 @@ pub async fn eth_oracle_main_loop<S: Signer + 'static, CS: CosmosSigner>(
                             latest_eth_block,
                             block_height,
                         );
-
-                        // send latest Ethereum height to the Cosmos chain periodically
-                        // subtract the block delay based on the environment, in order to have
-                        // more confidence we are attesting to a height that has not been re-orged
-                        if loop_count % HEIGHT_UPDATE_INTERVAL == 0 {
-                            let messages = build::ethereum_vote_height_messages(
-                                &contact,
-                                cosmos_key.clone(),
-                                latest_eth_block - block_delay,
-                            )
-                            .await;
-
-                            msg_sender
-                                .send(messages)
-                                .await
-                                .expect("Could not send Ethereum height votes");
-                        }
                     }
                     (Ok(_latest_eth_block), Ok(ChainStatus::Syncing)) => {
                         warn!("Cosmos node syncing, Eth oracle paused");
@@ -229,7 +212,24 @@ pub async fn eth_oracle_main_loop<S: Signer + 'static, CS: CosmosSigner>(
                 )
                 .await
                 {
-                    Ok(new_block) => last_checked_block = new_block,
+                    Ok(new_block) => {
+                        last_checked_block = new_block;
+
+                        // send Ethereum height to the Cosmos chain periodically
+                        if loop_count % HEIGHT_UPDATE_INTERVAL == 0 {
+                            let messages = build::ethereum_vote_height_messages(
+                                &contact,
+                                cosmos_key.clone(),
+                                last_checked_block,
+                            )
+                            .await;
+
+                            msg_sender
+                                .send(messages)
+                                .await
+                                .expect("Could not send Ethereum height votes");
+                        }
+                },
                     Err(e) => {
                         metrics::ETHEREUM_EVENT_CHECK_FAILURES.inc();
                         error!("Failed to get events for block range, Check your Eth node and Cosmos gRPC {:?}", e);
