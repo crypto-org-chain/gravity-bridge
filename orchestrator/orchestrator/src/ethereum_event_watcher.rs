@@ -253,7 +253,7 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
 ///
 /// As a quick summary of 'why 96?' we summarize epoch and slot timing of Ethereum proof of
 /// stake consensus, each block is a slot, and each epoch is 32 slots. You are not guaranteed
-/// to have a block produced every slot though and an epoch is no garuntee of finalization.
+/// to have a block produced every slot though and an epoch is no guarantee of finalization.
 /// epochs are not instantly final and become final only once the following epoch is 'justified'
 /// during normal protocol operation 3 epochs will always result in finalization.
 ///
