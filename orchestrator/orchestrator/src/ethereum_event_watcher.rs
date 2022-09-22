@@ -278,7 +278,7 @@ pub async fn get_block_delay<S: Signer>(eth_client: EthClient<S>) -> Result<U64,
     match chain_id.unwrap() {
         // Mainline Ethereum, Ethereum classic, or the Ropsten, Kotti, Mordor testnets
         // all Ethereum proof of stake Chains
-        1 | 3 | 6 | 7 => 96u8.into(),
+        1 | 3 | 6 | 7 => Ok(96u8.into()),
         // Dev, our own Gravity Ethereum testnet, Hardhat
         // all non-pow chains
         2018 | 15 | 31337 => Ok(0u8.into()),
@@ -286,6 +286,6 @@ pub async fn get_block_delay<S: Signer>(eth_client: EthClient<S>) -> Result<U64,
         // Clique (POA) Consensus
         4 | 5 => Ok(10u8.into()),
         // assume the safe option (POS) where we don't know
-        _ => 96u8.into(),
+        _ => Ok(96u8.into()),
     }
 }
