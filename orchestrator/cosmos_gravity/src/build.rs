@@ -229,12 +229,12 @@ pub fn ethereum_event_messages<CS: CosmosSigner>(
     }
 
     let mut msgs = Vec::new();
-    let mut lastNonce: U256 = U256::zero();
+    let mut last_nonce: U256 = U256::zero();
     for (i, _) in unordered_msgs.clone().iter() {
         let msg = unordered_msgs.remove_entry(i).unwrap().1;
-        lastNonce = *i;
+        last_nonce = *i;
         msgs.push(msg);
     }
 
-    (msgs, lastNonce.as_u64())
+    (msgs, last_nonce.as_u64())
 }
