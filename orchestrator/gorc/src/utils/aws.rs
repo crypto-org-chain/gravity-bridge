@@ -505,9 +505,9 @@ impl Signer for AwsSigner {
         let message_hash = hash_message(message);
         trace!("{:?}", message_hash);
         trace!("{:?}", message);
-
-        self.sign_digest_with_eip155(message_hash, self.chain_id)
-            .await
+        let sig = self.sign_digest(message_hash.into()).await?;
+        let sig = rsig_from_digest_bytes_trial_recovery(&sig, message_hash.into(), &self.pubkey)?;
+        Ok(rsig_to_ethsig(&sig))
     }
 
     #[instrument(err)]

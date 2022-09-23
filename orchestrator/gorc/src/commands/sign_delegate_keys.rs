@@ -1,6 +1,6 @@
 use crate::{application::APP, prelude::*};
 use abscissa_core::{clap::Parser, Application, Command, Runnable};
-use ethers::signers::Signer;
+use ethers::{prelude::Signer, utils::keccak256};
 use gravity_proto::gravity as proto;
 use std::time::Duration;
 
@@ -44,8 +44,9 @@ impl Runnable for SignDelegateKeysCmd {
             let size = prost::Message::encoded_len(&msg);
             let mut buf = bytes::BytesMut::with_capacity(size);
             prost::Message::encode(&msg, &mut buf).expect("Failed to encode DelegateKeysSignMsg!");
+            let data = keccak256(buf);
             let signature = key
-                .sign_message(&buf)
+                .sign_message(&data)
                 .await
                 .expect("Could not sign message");
 
