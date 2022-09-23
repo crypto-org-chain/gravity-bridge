@@ -61,3 +61,4 @@ once_cell = "1.2"
 
 [features]
 ethermint = ["cosmos_gravity/ethermint", "orchestrator/ethermint", "relayer/ethermint"]
+eip155 = []

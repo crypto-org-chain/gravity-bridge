@@ -490,6 +490,20 @@ impl AwsSigner {
         apply_eip155(&mut sig, chain_id);
         Ok(sig)
     }
+
+    /// Sign a digest with this signer's key
+    #[instrument(err, skip(digest), fields(digest = %hex::encode(&digest)))]
+    async fn sign_digest_without_eip155(
+        &self,
+        digest: H256,
+    ) -> Result<EthSig, AwsSignerError> {
+        let sig = self.sign_digest(digest.into()).await?;
+
+        let sig = rsig_from_digest_bytes_trial_recovery(&sig, digest.into(), &self.pubkey)?;
+
+        let sig = rsig_to_ethsig(&sig);
+        Ok(sig)
+    }
 }
 
 #[async_trait::async_trait]
@@ -506,7 +520,12 @@ impl Signer for AwsSigner {
         trace!("{:?}", message_hash);
         trace!("{:?}", message);
 
-        self.sign_digest_with_eip155(message_hash, self.chain_id)
+        #[cfg(feature = "eip155")]
+        return self.sign_digest_with_eip155(message_hash, self.chain_id)
+            .await;
+
+        #[cfg(not(feature = "eip155"))]
+        self.sign_digest_without_eip155(message_hash)
             .await
     }
 
@@ -520,7 +539,15 @@ impl Signer for AwsSigner {
         tx_with_chain.set_chain_id(chain_id);
 
         let sighash = tx.sighash();
-        self.sign_digest_with_eip155(sighash, chain_id).await
+
+        #[cfg(feature = "eip155")]
+        return self.sign_digest_with_eip155(sighash, chain_id)
+            .await;
+
+        #[cfg(not(feature = "eip155"))]
+        self.sign_digest_without_eip155(sighash)
+            .await
+
     }
 
     async fn sign_typed_data<T: Eip712 + Send + Sync>(
