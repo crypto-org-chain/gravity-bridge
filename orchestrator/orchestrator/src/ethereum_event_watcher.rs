@@ -232,11 +232,13 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
         while new_event_nonce != last_message_nonce {
             if error_count == 10 {
                 return Err(GravityError::InvalidBridgeStateError(
-                    format!("Claims did not process, trying to update but still on {}, trying again in a moment", new_event_nonce),
+                    format!("Claims did not process, trying to update but still on event nonce {},\
+                     retrying from block {} to block {} in a moment"
+                            , new_event_nonce , starting_block , ending_block),
                 ));
             }
-            info!("Claims did not process, trying to update to {} but still on {}, trying again in a moment"
-                , last_message_nonce,  new_event_nonce);
+            info!("Waiting for claims to process, current on event nonce {}, trying to update to {}"
+                , new_event_nonce, last_message_nonce);
 
             error_count += 1;
             contact.wait_for_next_block(timeout).await?;
