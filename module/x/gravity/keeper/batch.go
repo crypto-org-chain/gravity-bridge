@@ -71,7 +71,7 @@ func (k Keeper) batchTxExecuted(ctx sdk.Context, tokenContract common.Address, n
 		k.Logger(ctx).Error("Failed to clean batches",
 			"token contract", tokenContract.Hex(),
 			"nonce", nonce)
-		return nil
+		return sdkerrors.Wrapf(types.ErrBatchExecutedError, "cannot find batch, potentially double spend may happen")
 	}
 	batchTx, _ := otx.(*types.BatchTx)
 	k.IterateOutgoingTxsByType(ctx, types.BatchTxPrefixByte, func(key []byte, otx types.OutgoingTx) bool {

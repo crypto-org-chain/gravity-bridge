@@ -92,8 +92,23 @@ func (k Keeper) TryEventVoteRecord(ctx sdk.Context, eventVoteRecord *types.Ether
 						"TryEventVoteRecord: attempting to apply events to state out of order")
 					return
 				}
+
 				k.setLastObservedEventNonce(ctx, event.GetEventNonce())
-				k.SetLastObservedEthereumBlockHeight(ctx, event.GetEthereumHeight())
+
+				// check that the ethereum block height recorded is lower than the attestation height
+				ethWithCosmosHeight := k.GetLastObservedEthereumBlockHeight(ctx)
+				if ethWithCosmosHeight.EthereumHeight > event.GetEthereumHeight() {
+					// Log the error.
+					// While technically this should not happen with the new oracle msg ordering,
+					// it could happen that the UpdateHeight msg is ordered before the AttestationVote (if using
+					// a load balancer for example) and thus having a higher height recorded in the chain.
+					// This should not have critical impact unless the difference between the height recorded
+					// exceed TargetEthTxTimeout
+					k.Logger(ctx).Error(
+						"TryEventVoteRecord: attempting to process events that may have been expired")
+				} else {
+					k.SetLastObservedEthereumBlockHeight(ctx, event.GetEthereumHeight())
+				}
 
 				eventVoteRecord.Accepted = true
 				k.setEthereumEventVoteRecord(ctx, event.GetEventNonce(), event.Hash(), eventVoteRecord)
