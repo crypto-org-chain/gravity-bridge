@@ -170,7 +170,14 @@ func eventVoteRecordPruneAndTally(ctx sdk.Context, k keeper.Keeper) {
 			// it will be skipped. The same will happen for every nonce after that.
 			if nonce == lastNonce+1 {
 				k.TryEventVoteRecord(ctx, att)
+				// update the lastNonce in case TryEventVoteRecord succeed to allow the next attestation
+				// to be processed
+				lastNonce = uint64(k.GetLastObservedEventNonce(ctx))
 			}
+		}
+
+		if nonce > lastNonce+1 {
+			break
 		}
 	}
 }
