@@ -213,8 +213,7 @@ func (k Keeper) getValidatorsByEthereumAddress(ctx sdk.Context, ethAddr common.A
 
 	for ; iter.Valid(); iter.Next() {
 		if common.BytesToAddress(iter.Value()) == ethAddr {
-			valBs := bytes.TrimPrefix(iter.Key(), []byte{types.ValidatorEthereumAddressKey})
-			val := sdk.ValAddress(valBs)
+			val := sdk.ValAddress(iter.Key())
 			vals = append(vals, val)
 		}
 	}
@@ -248,8 +247,7 @@ func (k Keeper) getEthereumAddressesByOrchestrator(ctx sdk.Context, orch sdk.Acc
 
 	for ; iter.Valid(); iter.Next() {
 		if sdk.AccAddress(iter.Value()).String() == orch.String() {
-			ethBs := bytes.TrimPrefix(iter.Key(), []byte{types.EthereumOrchestratorAddressKey})
-			ethAddr := common.BytesToAddress(ethBs)
+			ethAddr := common.BytesToAddress(iter.Key())
 			ethAddrs = append(ethAddrs, ethAddr)
 		}
 	}
