@@ -322,8 +322,8 @@ async function runLogicCallTest(opts: {
 
   await gravity.submitLogicCall(
     valset,
-
     sigs,
+    signers[0].address,
     logicCallArgs
   );
 

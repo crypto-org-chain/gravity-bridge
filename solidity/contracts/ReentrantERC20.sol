@@ -39,7 +39,7 @@ contract ReentrantERC20 {
 			valset = ValsetArgs(addresses, uint256s, zero, zero, blankAddress);
 		}
 
-		Gravity(state_gravityAddress).submitLogicCall(valset, sigs, args);
+		Gravity(state_gravityAddress).submitLogicCall(valset, sigs, address(0), args);
 		return true;
 	}
 }

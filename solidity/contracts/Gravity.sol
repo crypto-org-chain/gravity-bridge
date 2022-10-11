@@ -531,6 +531,7 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 		ValsetArgs calldata _currentValset,
 		// These are arrays of the parts of the validators signatures
 		ValSignature[] calldata _sigs,
+		address _paymentAddress,
 		LogicCallArgs memory _args
 	) external nonReentrant whenNotPaused checkWhiteList {
 		// CHECKS scoped to reduce stack depth
@@ -612,9 +613,9 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 		// Make call to logic contract
 		bytes memory returnData = Address.functionCall(_args.logicContractAddress, _args.payload);
 
-		// Send fees to msg.sender
+		// Send fees to the payment address
 		for (uint256 i = 0; i < _args.feeAmounts.length; i++) {
-			IERC20(_args.feeTokenContracts[i]).safeTransfer(msg.sender, _args.feeAmounts[i]);
+			IERC20(_args.feeTokenContracts[i]).safeTransfer(_paymentAddress, _args.feeAmounts[i]);
 		}
 
 		// LOGS scoped to reduce stack depth

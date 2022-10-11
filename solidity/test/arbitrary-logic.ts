@@ -220,8 +220,8 @@ async function runTest(opts: {
 
   let logicCallSubmitResult = await gravity.submitLogicCall(
     valset,
-
     sigs,
+    signers[0].address,
     logicCallArgs
   );
 
@@ -406,9 +406,8 @@ describe("logicCall Go test hash", function () {
 
     var res = await gravity.populateTransaction.submitLogicCall(
       valset,
-
       sigs,
-
+      signers[0].address,
       logicCallArgs
     )
 
