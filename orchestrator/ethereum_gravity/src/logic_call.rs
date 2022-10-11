@@ -20,6 +20,7 @@ pub async fn send_eth_logic_call<S: Signer + 'static>(
     confirms: &[LogicCallConfirmResponse],
     timeout: Duration,
     gravity_contract_address: EthAddress,
+    payment_address: EthAddress,
     gravity_id: String,
     gas_cost: GasCost,
     eth_client: EthClient<S>,
@@ -66,6 +67,7 @@ pub async fn send_eth_logic_call<S: Signer + 'static>(
         &call,
         confirms,
         gravity_contract_address,
+        payment_address,
         gravity_id,
         eth_client.clone(),
     )?;
@@ -117,6 +119,7 @@ pub async fn estimate_logic_call_cost<S: Signer + 'static>(
     call: LogicCall,
     confirms: &[LogicCallConfirmResponse],
     gravity_contract_address: EthAddress,
+    payment_address: EthAddress,
     gravity_id: String,
     eth_client: EthClient<S>,
 ) -> Result<GasCost, GravityError> {
@@ -125,6 +128,7 @@ pub async fn estimate_logic_call_cost<S: Signer + 'static>(
         &call,
         confirms,
         gravity_contract_address,
+        payment_address,
         gravity_id,
         eth_client.clone(),
     )?;
@@ -140,6 +144,7 @@ pub fn build_send_logic_call_contract_call<S: Signer + 'static>(
     call: &LogicCall,
     confirms: &[LogicCallConfirmResponse],
     gravity_contract_address: EthAddress,
+    payment_address: EthAddress,
     gravity_id: String,
     eth_client: EthClient<S>,
 ) -> Result<ContractCall<EthSignerMiddleware<S>, ()>, GravityError> {
@@ -180,6 +185,7 @@ pub fn build_send_logic_call_contract_call<S: Signer + 'static>(
                 .iter()
                 .map(|sig_data| sig_data.to_val_sig())
                 .collect(),
+            payment_address,
             LogicCallArgs {
                 transfer_amounts,
                 transfer_token_contracts,

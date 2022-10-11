@@ -8,6 +8,7 @@ use env_logger::Env;
 use ethers::prelude::*;
 use ethers::signers::LocalWallet as EthWallet;
 use ethers::types::Address as EthAddress;
+use cosmos_gravity::crypto::EthPubkey;
 use gravity_utils::types::config::RelayerMode;
 use gravity_utils::{
     connection_prep::{check_for_eth, create_rpc_connections, wait_for_cosmos_node_ready},
@@ -82,10 +83,11 @@ async fn main() {
         .flag_contract_address
         .parse()
         .expect("Invalid contract address!");
-    let payment_address: EthAddress = args
+    let mut payment_address: EthAddress = args
         .flag_payment_address_address
         .parse()
-        .expect("Invalid contract address!");
+        .expect("Invalid payment address!");
+
     let mode = args.flag_mode;
     info!("Relayer using mode: {:?}", mode);
 
@@ -111,6 +113,12 @@ async fn main() {
     info!("Ethereum Address: {}", format_eth_address(public_eth_key));
 
     let contact = connections.contact.clone().unwrap();
+
+    // if payment address is zero, then use the ethereum key address used for signing tx
+    if payment_address == EthAddress::zero() {
+        info!("relayer payment address is zero, use signing ethereum address instead");
+        payment_address = eth_client.address()
+    }
 
     // check if the cosmos node is syncing, if so wait for it
     // we can't move any steps above this because they may fail on an incorrect

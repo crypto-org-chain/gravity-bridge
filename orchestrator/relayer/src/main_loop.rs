@@ -83,6 +83,7 @@ pub async fn relayer_main_loop<S: Signer + 'static>(
                     eth_client.clone(),
                     &mut grpc_client,
                     gravity_contract_address,
+                    payment_address,
                     gravity_id.clone(),
                     PENDING_TX_TIMEOUT,
                     eth_gas_price_multiplier,

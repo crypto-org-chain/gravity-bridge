@@ -53,7 +53,7 @@ impl Runnable for StartCommand {
             .parse()
             .expect("Could not parse gravity contract address");
 
-        let payment_address: EthAddress = config
+        let mut payment_address: EthAddress = config
             .gravity
             .payment_address
             .parse()
@@ -87,6 +87,12 @@ impl Runnable for StartCommand {
             let eth_client =
                 SignerMiddleware::new(provider, ethereum_wallet.clone().with_chain_id(chain_id));
             let eth_client = Arc::new(eth_client);
+
+            // if payment address is zero, then use the ethereum key address used for signing tx
+            if payment_address == EthAddress::zero() {
+                info!("relayer payment address is zero, use signing ethereum address instead");
+                payment_address = eth_client.address()
+            }
 
             info!("Starting Relayer + Oracle + Ethereum Signer");
             info!("Ethereum Address: {}", format_eth_address(ethereum_address));
