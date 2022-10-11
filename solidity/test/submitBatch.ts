@@ -174,17 +174,20 @@ async function runTest(opts: {
     rewardToken: ZeroAddress
   }
 
+  let payments = {
+    amounts: txAmounts,
+    destinations: txDestinations,
+    fees: txFees,
+    feePaymentAddress: signers[0].address,
+  }
+
   let batchSubmitTx = await gravity.submitBatch(
     valset,
-
     sigs,
-
-    txAmounts,
-    txDestinations,
-    txFees,
+    payments,
     batchNonce,
     testERC20.address,
-    batchTimeout
+    batchTimeout,
   );
 }
 
@@ -346,14 +349,17 @@ describe("submitBatch Go test hash", function () {
       rewardToken: ZeroAddress
     }
 
+    let payments = {
+      amounts: txAmounts,
+      destinations: txDestinations,
+      fees: txFees,
+      feePaymentAddress: signers[0].address,
+    }
+
     await gravity.submitBatch(
       valset,
-
       sigs,
-
-      txAmounts,
-      txDestinations,
-      txFees,
+      payments,
       batchNonce,
       testERC20.address,
       batchTimeout

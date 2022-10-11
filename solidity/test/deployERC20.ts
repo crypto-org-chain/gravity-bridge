@@ -144,14 +144,17 @@ async function runTest(opts: {}) {
     rewardToken: ZeroAddress
   }
 
+  let payments = {
+    amounts: txAmounts,
+    destinations: txDestinations,
+    fees: txFees,
+    feePaymentAddress: signers[0].address,
+  }
+
   await gravity.submitBatch(
     valset,
-
     sigs,
-
-    txAmounts,
-    txDestinations,
-    txFees,
+    payments,
     batchNonce,
     eventArgs._tokenContract,
     batchTimeout

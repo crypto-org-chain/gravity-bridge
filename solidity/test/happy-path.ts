@@ -169,14 +169,17 @@ describe("Gravity happy path valset update + batch submit", function () {
 
     let sigs = await signHash(valset1.validators, digest);
 
+    let payments = {
+      amounts: txAmounts,
+      destinations: txDestinations,
+      fees: txFees,
+      feePaymentAddress: signers[0].address,
+    }
+
     let batchSubmitTx = await gravity.submitBatch(
       valset1_str,
-
       sigs,
-
-      txAmounts,
-      txDestinations,
-      txFees,
+      payments,
       batchNonce,
       testERC20.address,
       batchTimeout

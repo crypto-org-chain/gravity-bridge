@@ -58,6 +58,17 @@ struct ValsetArgs {
 	address rewardToken;
 }
 
+// This is being used purely to avoid stack too deep errors
+struct PaymentArgs {
+	// Arrays containing the batch data
+	uint256[] amounts;
+	address[] destinations;
+	// Fee covering the cost of relaying the batch for each txs
+	uint256[] fees;
+	// Payment address specified by the relayer
+	address feePaymentAddress;
+}
+
 struct ValSignature {
 	uint8 v;
 	bytes32 r;
@@ -390,10 +401,8 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 		ValsetArgs calldata _currentValset,
 		// These are arrays of the parts of the validators signatures
 		ValSignature[] calldata _sigs,
-		// The batch of transactions
-		uint256[] calldata _amounts,
-		address[] calldata _destinations,
-		uint256[] calldata _fees,
+		// The payment information contained in the batch
+		PaymentArgs calldata _payments,
 		uint256 _batchNonce,
 		address _tokenContract,
 		// a block height beyond which this batch is not valid
@@ -434,7 +443,8 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 			}
 
 			// Check that the transaction batch is well-formed
-			if (_amounts.length != _destinations.length || _amounts.length != _fees.length) {
+			if (_payments.amounts.length != _payments.destinations.length ||
+				_payments.amounts.length != _payments.fees.length) {
 				revert MalformedBatch();
 			}
 
@@ -448,9 +458,9 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 						state_gravityId,
 						// bytes32 encoding of "transactionBatch"
 						0x7472616e73616374696f6e426174636800000000000000000000000000000000,
-						_amounts,
-						_destinations,
-						_fees,
+						_payments.amounts,
+						_payments.destinations,
+						_payments.fees,
 						_batchNonce,
 						_tokenContract,
 						_batchTimeout
@@ -467,13 +477,13 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 			{
 				// Send transaction amounts to destinations
 				uint256 totalFee;
-				for (uint256 i = 0; i < _amounts.length; i++) {
-					transferNoRevert(_tokenContract, _destinations[i], _amounts[i]);
-					totalFee = totalFee + _fees[i];
+				for (uint256 i = 0; i < _payments.amounts.length; i++) {
+					transferNoRevert(_tokenContract, _payments.destinations[i], _payments.amounts[i]);
+					totalFee = totalFee + _payments.fees[i];
 				}
 
-				// Send transaction fees to msg.sender
-				transferNoRevert(_tokenContract, msg.sender, totalFee);
+				// Send transaction fees to relayer's specified address
+				transferNoRevert(_tokenContract, _payments.feePaymentAddress, totalFee);
 			}
 		}
 		// LOGS scoped to reduce stack depth
