@@ -20,6 +20,7 @@ pub async fn send_eth_transaction_batch<S: Signer + 'static>(
     confirms: &[BatchConfirmResponse],
     timeout: Duration,
     gravity_contract_address: EthAddress,
+    payment_address: EthAddress,
     gravity_id: String,
     gas_cost: GasCost,
     eth_client: EthClient<S>,
@@ -58,6 +59,7 @@ pub async fn send_eth_transaction_batch<S: Signer + 'static>(
         &batch,
         confirms,
         gravity_contract_address,
+        payment_address,
         gravity_id,
         eth_client.clone(),
     )?;
@@ -107,6 +109,7 @@ pub async fn estimate_tx_batch_cost<S: Signer + 'static>(
     batch: TransactionBatch,
     confirms: &[BatchConfirmResponse],
     gravity_contract_address: EthAddress,
+    payment_address: EthAddress,
     gravity_id: String,
     eth_client: EthClient<S>,
 ) -> Result<GasCost, GravityError> {
@@ -115,6 +118,7 @@ pub async fn estimate_tx_batch_cost<S: Signer + 'static>(
         &batch,
         confirms,
         gravity_contract_address,
+        payment_address,
         gravity_id,
         eth_client.clone(),
     )?;
@@ -130,6 +134,7 @@ pub fn build_submit_batch_contract_call<S: Signer + 'static>(
     batch: &TransactionBatch,
     confirms: &[BatchConfirmResponse],
     gravity_contract_address: EthAddress,
+    payment_address: EthAddress,
     gravity_id: String,
     eth_client: EthClient<S>,
 ) -> Result<ContractCall<EthSignerMiddleware<S>, ()>, GravityError> {
@@ -154,9 +159,12 @@ pub fn build_submit_batch_contract_call<S: Signer + 'static>(
                 .iter()
                 .map(|sig_data| sig_data.to_val_sig())
                 .collect(),
-            amounts,
-            destinations,
-            fees,
+            PaymentArgs {
+                amounts,
+                destinations,
+                fees,
+                fee_payment_address: payment_address,
+            },
             new_batch_nonce.into(),
             batch.token_contract,
             batch.batch_timeout.into(),

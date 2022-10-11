@@ -53,6 +53,12 @@ impl Runnable for StartCommand {
             .parse()
             .expect("Could not parse gravity contract address");
 
+        let payment_address: EthAddress = config
+            .gravity
+            .payment_address
+            .parse()
+            .expect("Could not parse relayer payment address");
+
         let fees_denom = config.gravity.fees_denom.clone();
 
         let timeout = min(
@@ -118,6 +124,7 @@ impl Runnable for StartCommand {
                 eth_client,
                 grpc,
                 contract_address,
+                payment_address,
                 gas_price,
                 &config.metrics.listen_addr,
                 config.ethereum.gas_price_multiplier,

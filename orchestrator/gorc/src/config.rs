@@ -213,6 +213,7 @@ impl Default for GorcConfig {
 #[serde(default, deny_unknown_fields)]
 pub struct GravitySection {
     pub contract: String,
+    pub payment_address: String,
     pub fees_denom: String,
 }
 
@@ -220,6 +221,7 @@ impl Default for GravitySection {
     fn default() -> Self {
         Self {
             contract: "0x0000000000000000000000000000000000000000".to_owned(),
+            payment_address: "0x0000000000000000000000000000000000000000".to_owned(),
             fees_denom: "stake".to_owned(),
         }
     }

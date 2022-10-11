@@ -35,12 +35,13 @@ struct Args {
     flag_address_prefix: String,
     flag_ethereum_rpc: String,
     flag_contract_address: String,
+    flag_payment_address: String,
     flag_mode: RelayerMode,
 }
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-    "Usage: {} --ethereum-key=<key> --cosmos-grpc=<url> --address-prefix=<prefix> --ethereum-rpc=<url> --contract-address=<addr> --mode=<mode>
+    "Usage: {} --ethereum-key=<key> --cosmos-grpc=<url> --address-prefix=<prefix> --ethereum-rpc=<url> --contract-address=<addr> --payment-address=<addr> --mode=<mode>
         Options:
             -h --help                    Show this screen.
             --ethereum-key=<ekey>        An Ethereum private key containing non-trivial funds
@@ -48,6 +49,7 @@ lazy_static! {
             --address-prefix=<prefix>    The prefix for addresses on this Cosmos chain
             --ethereum-grpc=<eurl>       The Ethereum RPC url, Geth light clients work and sync fast
             --contract-address=<addr>    The Ethereum contract address for Gravity
+            --payment-address=<addr>     The address to collect the batch fee
             --mode=<mode>                The relayer mode, valid values are : AlwaysRelay, Api, File
         About:
             The Gravity relayer component, responsible for relaying data from the Cosmos blockchain
@@ -78,6 +80,10 @@ async fn main() {
         .expect("Invalid Ethereum private key!");
     let gravity_contract_address: EthAddress = args
         .flag_contract_address
+        .parse()
+        .expect("Invalid contract address!");
+    let payment_address: EthAddress = args
+        .flag_payment_address_address
         .parse()
         .expect("Invalid contract address!");
     let mode = args.flag_mode;
@@ -117,6 +123,7 @@ async fn main() {
         eth_client,
         connections.grpc.unwrap(),
         gravity_contract_address,
+        payment_address,
         1f32,
         &mut fee_manager,
         1.1f32,

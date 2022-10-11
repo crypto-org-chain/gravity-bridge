@@ -42,6 +42,12 @@ impl Runnable for StartCommand {
             .parse()
             .expect("Could not parse gravity contract address");
 
+        let payment_address: EthAddress = config
+            .gravity
+            .payment_address
+            .parse()
+            .expect("Could not parse gravity contract address");
+
         let timeout = RELAYER_LOOP_SPEED;
 
         abscissa_tokio::run_with_actix(&APP, async {
@@ -80,6 +86,7 @@ impl Runnable for StartCommand {
                 eth_client,
                 grpc,
                 contract_address,
+                payment_address,
                 config.ethereum.gas_price_multiplier,
                 &mut fee_manager,
                 config.ethereum.gas_multiplier,
