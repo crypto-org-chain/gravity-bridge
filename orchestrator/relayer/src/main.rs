@@ -84,7 +84,7 @@ async fn main() {
         .parse()
         .expect("Invalid contract address!");
     let mut payment_address: EthAddress = args
-        .flag_payment_address_address
+        .flag_payment_address
         .parse()
         .expect("Invalid payment address!");
 
