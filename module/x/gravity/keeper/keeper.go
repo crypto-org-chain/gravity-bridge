@@ -664,22 +664,20 @@ func (k Keeper) DeleteEthereumSignatures(ctx sdk.Context, otx types.OutgoingTx) 
 // This just does keeper state cleanup if a new gravity contract has been deployed
 func (k Keeper) MigrateGravityContract(ctx sdk.Context, newBridgeAddress string, bridgeDeploymentHeight uint64) {
 	// Delete Any Outgoing TXs.
-
 	prefixStoreOtx := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.OutgoingTxKey})
 	iterOtx := prefixStoreOtx.ReverseIterator(nil, nil)
 	defer iterOtx.Close()
 	for ; iterOtx.Valid(); iterOtx.Next() {
-
-		var any cdctypes.Any
-		k.cdc.MustUnmarshal(iterOtx.Value(), &any)
-		var otx types.OutgoingTx
-		if err := k.cdc.UnpackAny(&any, &otx); err != nil {
-			panic(err)
-		}
-		// Delete any partial Eth Signatures handging around
-		k.DeleteEthereumSignatures(ctx, otx)
-
 		prefixStoreOtx.Delete(iterOtx.Key())
+	}
+
+	// Delete all ethereum signature for all Outgoing TXs.
+	prefixStoreSig := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.EthereumSignatureKey})
+	iterSig := prefixStoreSig.Iterator(nil, nil)
+	defer iterSig.Close()
+
+	for ; iterSig.Valid(); iterSig.Next() {
+		prefixStoreSig.Delete(iterSig.Key())
 	}
 
 	// Reset the last observed signer set nonce
