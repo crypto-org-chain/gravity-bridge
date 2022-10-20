@@ -27,16 +27,22 @@ task(
         let powers: number[] = [1073741823, 1073741823, 1073741823, 1073741823];
         let powerThreshold: number = 6666;
 
+        const [admin, addr1] = await hre.ethers.getSigners();
+
         const Gravity = await hre.ethers.getContractFactory("Gravity");
         const gravity = (await Gravity.deploy(
             hre.ethers.utils.formatBytes32String("gravitytest"),
             powerThreshold,
             constants.VALIDATORS,
-            powers
+            powers,
+            admin.getAddress()
         ));
 
         await gravity.deployed();
         console.log(`gravity contract deployed at - ${gravity.address}`)
+
+        console.log(`set anyone can relay`)
+        await gravity.connect(admin).setAnyoneCanRelay(true);
 
         const TestERC20 = await hre.ethers.getContractFactory("TestERC20GB");
         const testERC20 = (await TestERC20.deploy());
