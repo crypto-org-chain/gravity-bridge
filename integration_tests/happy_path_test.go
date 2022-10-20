@@ -252,7 +252,7 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		for _, val := range s.chain.validators {
 			kr, err := val.keyring()
 			s.Require().NoError(err)
-			valAddress, err := orch.keyInfo.GetAddress()
+			valAddress, err := val.keyInfo.GetAddress()
 			s.Require().NoError(err)
 			clientCtx, err := s.chain.clientContext("tcp://localhost:26657", &kr, "val", valAddress)
 			s.Require().NoError(err)
