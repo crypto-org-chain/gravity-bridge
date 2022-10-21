@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/simapp"
 	"io"
 	"io/fs"
 	"os"
@@ -37,9 +38,12 @@ func withPristineE2EEnvironment(t *testing.T, cb func(
 )) {
 	t.Helper()
 
+	cdc := simapp.MakeTestEncodingConfig().Codec
+
 	chain := Chain{
 		DataDir: "testdata",
 		ID:      "testchain",
+		codec:   cdc,
 	}
 
 	err := chain.CreateAndInitializeValidators(4)
@@ -51,13 +55,15 @@ func withPristineE2EEnvironment(t *testing.T, cb func(
 	// add validator accounts to genesis file
 	configDir := chain.Validators[0].ConfigDir()
 	for _, n := range chain.Validators {
-		err = addGenesisAccount(configDir, "", n.KeyInfo.GetAddress(), "100000000000stake,100000000000footoken")
+		valaddr, err := n.KeyInfo.GetAddress()
+		err = addGenesisAccount(configDir, "", valaddr, "100000000000stake,100000000000footoken")
 		require.NoError(t, err, "error creating validator accounts")
 	}
 
 	// add orchestrator accounts to genesis file
 	for _, n := range chain.Orchestrators {
-		err = addGenesisAccount(configDir, "", n.KeyInfo.GetAddress(), "100000000000stake,100000000000footoken")
+		orchaddr, err := n.KeyInfo.GetAddress()
+		err = addGenesisAccount(configDir, "", orchaddr, "100000000000stake,100000000000footoken")
 		require.NoError(t, err, "error creating orchestrator accounts")
 	}
 

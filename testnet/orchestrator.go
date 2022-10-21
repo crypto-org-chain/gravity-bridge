@@ -11,10 +11,9 @@ type Orchestrator struct {
 
 	// Key management
 	Mnemonic string
-	KeyInfo  keyring.Info
+	KeyInfo  keyring.Record
 }
 
-
 func (o *Orchestrator) instanceName() string {
-	return fmt.Sprintf("orchestrator%d",  o.Index)
+	return fmt.Sprintf("orchestrator%d", o.Index)
 }
