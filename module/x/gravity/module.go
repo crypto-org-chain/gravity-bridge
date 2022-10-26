@@ -14,11 +14,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/client/cli"
 	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/keeper"
+	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/simulation"
 	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types"
 )
 
@@ -78,16 +78,20 @@ func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry
 // AppModule object for module implementation
 type AppModule struct {
 	AppModuleBasic
-	keeper     keeper.Keeper
-	bankKeeper bankkeeper.Keeper
+	keeper        keeper.Keeper
+	accountKeeper types.AccountKeeper
+	bankKeeper    types.BankKeeper
+	stakingKeeper types.StakingKeeper
 }
 
 // NewAppModule creates a new AppModule Object
-func NewAppModule(k keeper.Keeper, bankKeeper bankkeeper.Keeper) AppModule {
+func NewAppModule(k keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper, sk types.StakingKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         k,
-		bankKeeper:     bankKeeper,
+		accountKeeper:  ak,
+		bankKeeper:     bk,
+		stakingKeeper:  sk,
 	}
 }
 
@@ -188,9 +192,11 @@ func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
 
 // WeightedOperations returns the all the gov module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
-	// TODO: implement gravity simulation stuffs
-	// return simulation.WeightedOperations(
-	// simState.AppParams, simState.Cdc, am.accountKeeper, am.bankKeeper, am.keeper, am.stakingKeeper,
-	// )
-	return nil
+	return simulation.WeightedOperations(
+		simState.AppParams,
+		simState.Cdc,
+		am.keeper,
+		am.accountKeeper,
+		am.bankKeeper,
+	)
 }

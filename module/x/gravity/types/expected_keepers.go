@@ -4,6 +4,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -37,6 +38,8 @@ type BankKeeper interface {
 	BurnCoins(ctx sdk.Context, name string, amt sdk.Coins) error
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	GetDenomMetaData(ctx sdk.Context, denom string) (bank.Metadata, bool)
+	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+	SpendableCoin(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
 type SlashingKeeper interface {
@@ -47,6 +50,7 @@ type SlashingKeeper interface {
 // functionality.
 type AccountKeeper interface {
 	GetSequence(ctx sdk.Context, addr sdk.AccAddress) (uint64, error)
+	GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI
 }
 
 type DistributionKeeper interface {
