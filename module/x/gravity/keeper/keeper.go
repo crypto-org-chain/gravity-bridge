@@ -691,21 +691,19 @@ func (k Keeper) MigrateGravityContract(ctx sdk.Context, newBridgeAddress string,
 	store := ctx.KVStore(k.storeKey)
 	store.Set([]byte{types.LatestSignerSetTxNonceKey}, sdk.Uint64ToBigEndian(0))
 
-	// Reset all ethereum event nonces to zero
+	// Reset ethereum event nonce to zero
 	k.setLastObservedEventNonce(ctx, 0)
-	k.iterateEthereumEventVoteRecords(ctx, func(_ []byte, voteRecord *types.EthereumEventVoteRecord) bool {
-		for _, vote := range voteRecord.Votes {
-			val, err := sdk.ValAddressFromBech32(vote)
-
+	// Reset all validators ethereum event nonce to zero
+	delegateKeys := k.getDelegateKeys(ctx)
+	for _, delegateKey := range delegateKeys {
+		if len(delegateKey.ValidatorAddress) != 0 {
+			validator, err := sdk.ValAddressFromBech32(delegateKey.ValidatorAddress)
 			if err != nil {
 				panic(err)
 			}
-
-			k.setLastEventNonceByValidator(ctx, val, 0)
+			k.setLastEventNonceByValidator(ctx, validator, 0)
 		}
-
-		return false
-	})
+	}
 
 	// Delete all Ethereum Events
 	prefixStoreEthereumEvent := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.EthereumEventVoteRecordKey})
@@ -719,7 +717,7 @@ func (k Keeper) MigrateGravityContract(ctx sdk.Context, newBridgeAddress string,
 		prefixStoreEthereumEvent.Delete(key)
 	}
 
-	// Set the Last oberved Ethereum Blockheight to zero
+	// Set the Last observed Ethereum Blockheight to zero
 	height := types.LatestEthereumBlockHeight{
 		EthereumHeight: (bridgeDeploymentHeight - 1),
 		CosmosHeight:   uint64(ctx.BlockHeight()),
