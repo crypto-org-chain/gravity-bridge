@@ -696,13 +696,11 @@ func (k Keeper) MigrateGravityContract(ctx sdk.Context, newBridgeAddress string,
 	// Reset all validators ethereum event nonce to zero
 	delegateKeys := k.getDelegateKeys(ctx)
 	for _, delegateKey := range delegateKeys {
-		if len(delegateKey.ValidatorAddress) != 0 {
-			validator, err := sdk.ValAddressFromBech32(delegateKey.ValidatorAddress)
-			if err != nil {
-				panic(err)
-			}
-			k.setLastEventNonceByValidator(ctx, validator, 0)
+		validator, err := sdk.ValAddressFromBech32(delegateKey.ValidatorAddress)
+		if err != nil {
+			panic(err)
 		}
+		k.setLastEventNonceByValidator(ctx, validator, 0)
 	}
 
 	// Delete all Ethereum Events
