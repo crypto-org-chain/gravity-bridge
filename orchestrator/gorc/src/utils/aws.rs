@@ -8,6 +8,7 @@ use aws_sdk_kms::{
     Client as KmsClient,
 };
 use cosmos_gravity::crypto::{CosmosSigner, EthPubkey, PrivateKey};
+#[allow(unused_imports)]
 use deep_space::{
     private_key::{SignType, TxParts},
     utils::encode_any,

@@ -132,6 +132,7 @@ impl Runnable for StartCommand {
                 contract_address,
                 payment_address,
                 gas_price,
+                config.cosmos.gas_limit,
                 &config.metrics.listen_addr,
                 config.ethereum.gas_price_multiplier,
                 config.ethereum.gas_multiplier,

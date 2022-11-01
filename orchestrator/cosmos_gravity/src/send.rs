@@ -33,6 +33,7 @@ pub async fn update_gravity_delegate_addresses<S: Signer + 'static, CS: CosmosSi
     cosmos_granter: Option<String>,
     ethereum_wallet: S,
     gas_price: (f64, String),
+    gas_limit: u64,
     gas_adjustment: f64,
 ) -> Result<TxResponse, GravityError> {
     let our_valoper_address = cosmos_key
@@ -76,6 +77,7 @@ pub async fn update_gravity_delegate_addresses<S: Signer + 'static, CS: CosmosSi
         cosmos_key,
         cosmos_granter,
         gas_price,
+        gas_limit,
         vec![msg],
         gas_adjustment,
     )
@@ -91,6 +93,7 @@ pub async fn send_to_eth<CS: CosmosSigner>(
     amount: Coin,
     bridge_fee: Coin,
     gas_price: (f64, String),
+    gas_limit: u64,
     contact: &Contact,
     gas_adjustment: f64,
 ) -> Result<TxResponse, GravityError> {
@@ -117,6 +120,7 @@ pub async fn send_to_eth<CS: CosmosSigner>(
         cosmos_key,
         cosmos_granter,
         gas_price,
+        gas_limit,
         vec![msg],
         gas_adjustment,
     )
@@ -128,6 +132,7 @@ pub async fn send_request_batch_tx<CS: CosmosSigner>(
     cosmos_granter: Option<String>,
     denom: String,
     gas_price: (f64, String),
+    gas_limit: u64,
     contact: &Contact,
     gas_adjustment: f64,
 ) -> Result<TxResponse, GravityError> {
@@ -142,6 +147,7 @@ pub async fn send_request_batch_tx<CS: CosmosSigner>(
         cosmos_key,
         cosmos_granter,
         gas_price,
+        gas_limit,
         vec![msg],
         gas_adjustment,
     )
@@ -153,6 +159,7 @@ pub async fn send_messages<CS: CosmosSigner>(
     cosmos_key: CS,
     cosmos_granter: Option<String>,
     gas_price: (f64, String),
+    gas_limit: u64,
     messages: Vec<Msg>,
     gas_adjustment: f64,
 ) -> Result<TxResponse, GravityError> {
@@ -178,8 +185,8 @@ pub async fn send_messages<CS: CosmosSigner>(
     let gas = contact.simulate_tx(tx_parts).await?;
 
     // multiply the estimated gas by the configured gas adjustment
-    let gas_limit: f64 = (gas.gas_used as f64) * gas_adjustment;
-    args.fee.gas_limit = cmp::max(gas_limit as u64, 500000 * messages.len() as u64);
+    let estimated_gas_limit: f64 = (gas.gas_used as f64) * gas_adjustment;
+    args.fee.gas_limit = cmp::max(estimated_gas_limit as u64, gas_limit * messages.len() as u64);
 
     // compute the fee as fee=ceil(gas_limit * gas_price)
     let fee_amount = (args.fee.gas_limit as u128).checked_mul(gas_price.0 as u128)
@@ -206,6 +213,7 @@ pub async fn send_main_loop<CS: CosmosSigner>(
     cosmos_key: CS,
     cosmos_granter: Option<String>,
     gas_price: (f64, String),
+    gas_limit: u64,
     mut rx: tokio::sync::mpsc::Receiver<Vec<Msg>>,
     gas_adjustment: f64,
     msg_batch_size: usize,
@@ -217,6 +225,7 @@ pub async fn send_main_loop<CS: CosmosSigner>(
                 cosmos_key.clone(),
                 cosmos_granter.to_owned(),
                 gas_price.to_owned(),
+                gas_limit,
                 msg_chunk.to_vec(),
                 gas_adjustment,
             )

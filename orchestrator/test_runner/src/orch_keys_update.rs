@@ -84,6 +84,7 @@ pub async fn orch_keys_update(
             None,
             ethereum_wallet,
             (0f64, "".to_string()),
+            500_000,
             2.0,
         )
         .await

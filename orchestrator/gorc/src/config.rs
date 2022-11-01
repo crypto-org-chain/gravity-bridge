@@ -258,6 +258,7 @@ pub struct CosmosSection {
     pub gas_adjustment: f64,
     pub msg_batch_size: u32,
     pub gas_price: GasPrice,
+    pub gas_limit: u64,
     pub granter: Option<String>,
 }
 
@@ -268,6 +269,7 @@ impl Default for CosmosSection {
             grpc: "http://localhost:9090".to_owned(),
             prefix: "cosmos".to_owned(),
             gas_price: GasPrice::default(),
+            gas_limit: 300000,
             gas_adjustment: 1.0f64,
             msg_batch_size: 5,
             granter: None,

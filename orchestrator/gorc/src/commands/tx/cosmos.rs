@@ -138,6 +138,7 @@ impl Runnable for SendToEth {
                 amount.clone(),
                 bridge_fee.clone(),
                 config.cosmos.gas_price.as_tuple(),
+                config.cosmos.gas_limit,
                 &contact,
                 1.0
             )
