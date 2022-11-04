@@ -100,12 +100,8 @@ func (s *IntegrationTestSuite) TestValsetStressUpdate() {
 			return true
 		}, 5*time.Minute, 10*time.Second, "Validator set is not yet updated")
 
-		if currentNonce != startingNonce {
-			s.T().Logf("Validator set successfully updated! nonce: %d", currentNonce)
-		} else {
-			s.T().Logf("Failed to update validator set")
-		}
-
+		s.Truef(currentNonce != startingNonce, "Failed to update validator set")
+		s.T().Logf("Validator set successfully updated! nonce: %s", currentNonce)
 	})
 }
 
