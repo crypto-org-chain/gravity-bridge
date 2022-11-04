@@ -15,27 +15,36 @@ import (
 /// Write test_valset_update test to get latest nonce value
 func (s *IntegrationTestSuite) TestValsetStressUpdate() {
 	s.Run("Bring up chain, and test the valset update", func() {
-		orch := s.chain.orchestrators[1]
+		startingNonce, err := s.getLastValsetNonce(gravityContract)
+		s.Require().NoError(err, "error getting starting nonce")
+
+		// roundrobin the selected orchestrator to delegate
+		rand := startingNonce.Int64() % 4
+		orch := s.chain.orchestrators[rand]
 		keyring := orch.keyring
 
-		orchAddress, err := s.chain.orchestrators[1].keyInfo.GetAddress()
+		orchAddress, err := s.chain.orchestrators[rand].keyInfo.GetAddress()
 		s.Require().NoError(err)
 		clientCtx, err := s.chain.clientContext("tcp://localhost:26657", keyring, "orch", orchAddress)
 		s.Require().NoError(err)
 
-		startingNonce, err := s.getLastValsetNonce(gravityContract)
-		s.Require().NoError(err, "error getting starting nonce")
+		SignerSetStartingNonce := uint64(0)
+		queryClient := gravity.NewQueryClient(clientCtx)
+		res, err := queryClient.LatestSignerSetTx(context.Background(), &gravity.LatestSignerSetTxRequest{})
+		if err == nil {
+			SignerSetStartingNonce = res.SignerSet.Nonce
+		}
 
-		bondTokens := sdk.TokensFromConsensusPower(50000, sdk.DefaultPowerReduction)
+		// Delegate more than >5% of the total staking power.
+		bondTokens := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
 		bondCoin := sdk.NewCoin("testgb", bondTokens)
 
-		valAddress, err := s.chain.validators[3].keyInfo.GetAddress()
+		valAddress, err := s.chain.validators[rand].keyInfo.GetAddress()
 		s.Require().NoError(err)
 		val := sdk.ValAddress(valAddress)
 
-		// Delegate about 5% of the total staking power.
 		s.Require().Eventuallyf(func() bool {
-			s.T().Logf("Sending in valset request (starting_eth_valset_nonce %d)", startingNonce)
+			s.T().Logf("Sending in valset request (starting_eth_valset_nonce %s)", startingNonce)
 
 			s.T().Logf("Delegating %v to %v in order to generate a validator set update", bondCoin, orchAddress)
 
@@ -58,8 +67,6 @@ func (s *IntegrationTestSuite) TestValsetStressUpdate() {
 		// Verify that delegation went through.
 		s.T().Logf("verifying delegation")
 		s.Require().Eventuallyf(func() bool {
-
-			s.Require().NoError(err, "error querying delegator bonded validators")
 			queryClient := types.NewQueryClient(clientCtx)
 			res, err := queryClient.Delegation(context.Background(), &types.QueryDelegationRequest{DelegatorAddr: orchAddress.String(), ValidatorAddr: val.String()})
 			if err != nil {
@@ -73,8 +80,6 @@ func (s *IntegrationTestSuite) TestValsetStressUpdate() {
 		// Query signer set, to make sure valset was updated.
 		s.T().Logf("verifying signerset")
 		s.Require().Eventuallyf(func() bool {
-
-			s.Require().NoError(err, "error querying signerset")
 			queryClient := gravity.NewQueryClient(clientCtx)
 			res, err := queryClient.LatestSignerSetTx(context.Background(), &gravity.LatestSignerSetTxRequest{})
 			if err != nil {
@@ -82,7 +87,10 @@ func (s *IntegrationTestSuite) TestValsetStressUpdate() {
 				return false
 			}
 			s.T().Logf("Here's the last signerset response: %s", res.SignerSet)
-			return true
+			if res.SignerSet.Nonce != SignerSetStartingNonce {
+				return true
+			}
+			return false
 		}, 20*time.Second, 1*time.Second, "Signerset can't be retrieved")
 
 		// Grab current nonce.
@@ -91,16 +99,13 @@ func (s *IntegrationTestSuite) TestValsetStressUpdate() {
 
 		// Run a loop until you get a nonce higher than the initial nonce
 		s.Require().Eventuallyf(func() bool {
-			for currentNonce == startingNonce {
-				currentNonce, err = s.getLastValsetNonce(gravityContract)
-				if currentNonce != startingNonce {
-					return true
-				}
+			currentNonce, err = s.getLastValsetNonce(gravityContract)
+			if currentNonce != startingNonce {
+				return true
 			}
-			return true
+			return false
 		}, 5*time.Minute, 10*time.Second, "Validator set is not yet updated")
 
-		s.Truef(currentNonce != startingNonce, "Failed to update validator set")
 		s.T().Logf("Validator set successfully updated! nonce: %s", currentNonce)
 	})
 }
