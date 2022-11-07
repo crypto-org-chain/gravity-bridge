@@ -126,11 +126,11 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.Require().NoError(s.dockerPool.Purge(s.ethResource))
 
 	for _, vc := range s.valResources {
-		s.Require().NoError(s.dockerPool.RemoveContainerByName(vc.Container.Name))
+		s.Require().NoError(s.dockerPool.Purge(vc))
 	}
 
 	for _, oc := range s.orchResources {
-		s.Require().NoError(s.dockerPool.RemoveContainerByName(oc.Container.Name))
+		s.Require().NoError(s.dockerPool.Purge(oc))
 	}
 
 	s.Require().NoError(s.dockerPool.RemoveNetwork(s.dockerNetwork))
