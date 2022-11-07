@@ -131,7 +131,7 @@ func (s *IntegrationTestSuite) TestTransactionStress() {
 				balance, err := s.getEthTokenBalanceOf(common.HexToAddress(validator.ethereumKey.address), testERC20contract)
 				s.Require().NoError(err, "error getting destination balance")
 
-				if balance.LT(sdk.NewInt(10000 - (cosmosSentAmt * transactionsPerValidator) + (ethSentAmt * transactionsPerValidator))) {
+				if !balance.Equal(sdk.NewInt(10000 - (cosmosSentAmt * transactionsPerValidator) + (ethSentAmt * transactionsPerValidator))) {
 					s.T().Logf("funds not received yet, dest balance: %s", balance.String())
 					return false
 				}
