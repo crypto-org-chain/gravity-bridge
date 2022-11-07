@@ -679,7 +679,7 @@ msg_batch_size = 5
 		s.Require().NoError(err)
 
 		s.orchResources[i] = resource
-		s.T().Logf("started orchestrator container: %s", resource.Container.ID)
+		s.T().Logf("started orchestrator container: id %s, name %s", resource.Container.ID, resource.Container.Name)
 	}
 
 	// TODO(mvid) Determine if there is a way to check the health or status of
