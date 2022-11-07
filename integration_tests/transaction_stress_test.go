@@ -103,7 +103,7 @@ func (s *IntegrationTestSuite) TestTransactionStress() {
 				valAddr,
 				validator.ethereumKey.address,
 				sdk.Coin{Denom: gravityDenom, Amount: sdk.NewInt(ethSentAmt)},
-				sdk.Coin{Denom: gravityDenom, Amount: sdk.NewInt(1)},
+				sdk.Coin{Denom: gravityDenom, Amount: sdk.NewInt(0)},
 			)
 
 			clientCtx, err := s.chain.clientContext("tcp://localhost:26657", &keyring, "val", valAddr)
