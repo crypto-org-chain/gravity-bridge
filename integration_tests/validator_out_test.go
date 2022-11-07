@@ -84,48 +84,21 @@ func (s *IntegrationTestSuite) TestValidatorOut() {
 		)
 		// Send NewMsgSendToEthereum Message
 		response, err := s.chain.sendMsgs(*clientCtx, sendToEthereumMsg)
-		if err != nil {
-			s.T().Logf("error: %s", err)
-		}
-		if response.Code != 0 {
-			if response.Code != 32 {
-				s.T().Log(response)
-			}
-		}
-
-		// Create transaction batch trigger by validator 2
-		val2Address, err := s.chain.validators[2].keyInfo.GetAddress()
 		s.Require().NoError(err)
-		batchTx := types.NewMsgRequestBatchTx(gravityDenom, val2Address)
-		keyRing2, err := s.chain.validators[2].keyring()
-		s.Require().NoError(err)
-		s.Require().Eventuallyf(func() bool {
-			clientCtx, err := s.chain.clientContext("tcp://localhost:26657", &keyRing2, "val", val2Address)
-			s.Require().NoError(err)
-			response, err := s.chain.sendMsgs(*clientCtx, batchTx)
-			s.T().Logf("batch response: %s", response)
-			if err != nil {
-				s.T().Logf("error: %s", err)
-				return false
-			}
+		s.Require().Equal(uint32(0), response.Code)
 
-			if response.Code != 0 {
-				if response.Code != 32 {
-					s.T().Log(response)
-				}
-				return false
-			}
-			return true
-		}, 5*time.Minute, 1*time.Second, "can't create TX batch successfully")
-
-		// Confirm batchtx signatures by validator 2
+		// Confirm batchtx
 		queryClient := types.NewQueryClient(clientCtx)
 		s.Require().Eventuallyf(func() bool {
 			res, err := queryClient.BatchTxConfirmations(context.Background(), &types.BatchTxConfirmationsRequest{BatchNonce: 1, TokenContract: testERC20contract.String()})
-			s.Require().NoError(err)
-			s.Require().NotEmpty(res.GetSignatures())
-			return true
-		}, 5*time.Minute, 1*time.Minute, "Can't find Batchtx signing info")
+			if err != nil {
+				s.T().Logf("error: %s", err)
+			}
+			if len(res.GetSignatures()) != 0 {
+				return true
+			}
+			return false
+		}, 5*time.Minute, 10*time.Second, "Can't find Batchtx signing info")
 
 		// Check jail status of validators
 		s.Require().Eventuallyf(func() bool {
