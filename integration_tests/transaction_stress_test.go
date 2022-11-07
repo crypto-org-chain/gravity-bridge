@@ -113,10 +113,11 @@ func (s *IntegrationTestSuite) TestTransactionStress() {
 				response, err := s.chain.sendMsgs(*clientCtx, sendToEthereumMsg)
 				if err != nil {
 					s.T().Logf("error: %s", err)
-				}
-				if response.Code != 0 {
-					if response.Code != 32 {
-						s.T().Log(response)
+				} else {
+					if response.Code != 0 {
+						if response.Code != 32 {
+							s.T().Log(response)
+						}
 					}
 				}
 			}
@@ -135,7 +136,7 @@ func (s *IntegrationTestSuite) TestTransactionStress() {
 					return false
 				}
 
-				s.T().Logf("Funds recieved for validator %d, current balance: %v", i+1, balance.String())
+				s.T().Logf("Funds received for validator %d, current balance: %v", i+1, balance.String())
 				return true
 			}, time.Second*180, time.Second*10, "balance never found")
 		}
