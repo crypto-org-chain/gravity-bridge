@@ -21,7 +21,7 @@ func (s *IntegrationTestSuite) TestTransactionStress() {
 	s.Run("Transaction stress test", func() {
 		fmt.Println("StressTestTransaction starting")
 
-		// Approve spend & verify funds
+		// Approve spend & verify funds on ethereum
 		for _, validator := range s.chain.validators {
 			err := s.SendEthTransaction(&validator.ethereumKey, testERC20contract, PackApproveERC20(gravityContract))
 			s.Require().NoError(err, "error approving spend")
@@ -32,7 +32,7 @@ func (s *IntegrationTestSuite) TestTransactionStress() {
 		}
 
 		sendAmt := sdk.NewInt(cosmosSentAmt)
-		// Send many tx's through to cosmos
+		// Send many tx's Ethereum -> Cosmos on ethereum
 		for i, validator := range s.chain.validators {
 			s.T().Logf("sending %d tx's to cosmos for validator %d ..", transactionsPerValidator, i+1)
 			valAddr, err := validator.keyInfo.GetAddress()
@@ -46,17 +46,17 @@ func (s *IntegrationTestSuite) TestTransactionStress() {
 
 		var gravityDenom string
 		for i, validator := range s.chain.validators {
+			kb, err := validator.keyring()
+			s.Require().NoError(err)
+			valAddr, err := validator.keyInfo.GetAddress()
+			s.Require().NoError(err)
+			clientCtx, err := s.chain.clientContext("tcp://localhost:26657", &kb, "val", valAddr)
+			s.Require().NoError(err)
+			bankQueryClient := banktypes.NewQueryClient(clientCtx)
+
+			// Checking balance correctly received
 			s.Require().Eventuallyf(func() bool {
 				s.T().Logf("Checking validator %d", i+1)
-
-				kb, err := validator.keyring()
-				s.Require().NoError(err)
-				valAddr, err := validator.keyInfo.GetAddress()
-				s.Require().NoError(err)
-				clientCtx, err := s.chain.clientContext("tcp://localhost:26657", &kb, "val", valAddr)
-				s.Require().NoError(err)
-
-				bankQueryClient := banktypes.NewQueryClient(clientCtx)
 				res, err := bankQueryClient.AllBalances(context.Background(),
 					&banktypes.QueryAllBalancesRequest{
 						Address: valAddr.String(),
@@ -111,15 +111,8 @@ func (s *IntegrationTestSuite) TestTransactionStress() {
 
 			for j := 0; j < int(transactionsPerValidator); j++ {
 				response, err := s.chain.sendMsgs(*clientCtx, sendToEthereumMsg)
-				if err != nil {
-					s.T().Logf("error: %s", err)
-				} else {
-					if response.Code != 0 {
-						if response.Code != 32 {
-							s.T().Log(response)
-						}
-					}
-				}
+				s.Require().NoError(err)
+				s.Require().Equal(uint32(0), response.Code)
 			}
 			s.T().Logf("%d Tx sent.", transactionsPerValidator)
 		}

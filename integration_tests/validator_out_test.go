@@ -13,13 +13,18 @@ import (
 
 // Validator out tests a validator that is not running the mandatory Ethereum node. This validator will be slashed and the bridge will remain functioning.
 
-// Start the chain with validators
+// Start the chain with validator
+// 1. bring down an orchestrator
+// 2. generate a batch
+// 3. verify that the orchestrator has been jailed for missing signature
 func (s *IntegrationTestSuite) TestValidatorOut() {
-	s.Run("Bring up chain, and test the valset update", func() {
+	s.Run("Shut down an orchestrator and verify the slashing is working", func() {
+		// Shut down orchestrator 3
 		s.T().Logf("Stop orchestrator 3")
 		err := s.dockerPool.Purge(s.orchResources[3])
 		s.Require().NoError(err, "error removing orchestrator 3")
 
+		// Approve and check gravity contract
 		s.T().Logf("approving Gravity to spend ERC 20")
 		err = s.approveERC20()
 		s.Require().NoError(err, "error approving spending balance for the gravity contract")
@@ -32,7 +37,7 @@ func (s *IntegrationTestSuite) TestValidatorOut() {
 		s.Require().NoError(err, "error getting first validator balance")
 		s.Require().Equal(sdk.NewUint(10000).BigInt(), balance.BigInt(), "balance was %s, expected 10000", balance.String())
 
-		// Send from validator 0 on eth to itself on cosmos
+		// Generate a transaction Eth -> Cosmos from validator 0 to itself
 		s.T().Logf("sending to cosmos")
 		valAddress, err := val.keyInfo.GetAddress()
 		s.Require().NoError(err)
@@ -75,6 +80,7 @@ func (s *IntegrationTestSuite) TestValidatorOut() {
 			return false
 		}, 105*time.Second, 10*time.Second, "balance never found on cosmos")
 
+		// Generate a transaction Cosmos -> Eth from validator 0 to itself
 		s.T().Logf("sending to ethereum")
 		sendToEthereumMsg := types.NewMsgSendToEthereum(
 			valAddress,
@@ -82,12 +88,11 @@ func (s *IntegrationTestSuite) TestValidatorOut() {
 			sdk.Coin{Denom: gravityDenom, Amount: sdk.NewInt(100)},
 			sdk.Coin{Denom: gravityDenom, Amount: sdk.NewInt(1)},
 		)
-		// Send NewMsgSendToEthereum Message
 		response, err := s.chain.sendMsgs(*clientCtx, sendToEthereumMsg)
 		s.Require().NoError(err)
 		s.Require().Equal(uint32(0), response.Code)
 
-		// Confirm batchtx
+		// Confirm batch has been generated and signed
 		queryClient := types.NewQueryClient(clientCtx)
 		s.Require().Eventuallyf(func() bool {
 			res, err := queryClient.BatchTxConfirmations(context.Background(), &types.BatchTxConfirmationsRequest{BatchNonce: 1, TokenContract: testERC20contract.String()})
@@ -102,47 +107,25 @@ func (s *IntegrationTestSuite) TestValidatorOut() {
 
 		// Check jail status of validators
 		s.Require().Eventuallyf(func() bool {
-			orch3Key := s.chain.validators[3]
-			keyring3, err := orch3Key.keyring()
-			s.Require().NoError(err)
-			val3Address, err := s.chain.validators[3].keyInfo.GetAddress()
-			s.Require().NoError(err)
-			clientCtx, err := s.chain.clientContext("tcp://localhost:26657", &keyring3, "val", val3Address)
-			s.Require().NoError(err)
-			newQ := stakingtypes.NewQueryClient(clientCtx)
-			valThree, err := newQ.Validator(context.Background(), &stakingtypes.QueryValidatorRequest{ValidatorAddr: sdk.ValAddress(val3Address).String()})
-			if err != nil {
-				s.T().Logf("error: %s", err)
-				return false
+			for i, validator := range s.chain.validators {
+				keyring, err := validator.keyring()
+				s.Require().NoError(err)
+				valAddress, err := validator.keyInfo.GetAddress()
+				s.Require().NoError(err)
+				clientCtx, err := s.chain.clientContext("tcp://localhost:26657", &keyring, "val", valAddress)
+				s.Require().NoError(err)
+				newQ := stakingtypes.NewQueryClient(clientCtx)
+				valInfo, err := newQ.Validator(context.Background(), &stakingtypes.QueryValidatorRequest{ValidatorAddr: sdk.ValAddress(valAddress).String()})
+				if err != nil {
+					s.T().Logf("error: %s", err)
+					return false
+				}
+				if i == 3 {
+					s.Require().True(valInfo.GetValidator().IsJailed())
+				} else {
+					s.Require().False(valInfo.GetValidator().IsJailed())
+				}
 			}
-			s.Require().True(valThree.GetValidator().IsJailed())
-
-			val2Address, err := s.chain.validators[2].keyInfo.GetAddress()
-			s.Require().NoError(err)
-			valTwo, err := newQ.Validator(context.Background(), &stakingtypes.QueryValidatorRequest{ValidatorAddr: sdk.ValAddress(val2Address).String()})
-			if err != nil {
-				s.T().Logf("error: %s", err)
-				return false
-			}
-			s.Require().False(valTwo.GetValidator().IsJailed())
-
-			val1Address, err := s.chain.validators[1].keyInfo.GetAddress()
-			s.Require().NoError(err)
-			valOne, err := newQ.Validator(context.Background(), &stakingtypes.QueryValidatorRequest{ValidatorAddr: sdk.ValAddress(val1Address).String()})
-			if err != nil {
-				s.T().Logf("error: %s", err)
-				return false
-			}
-			s.Require().False(valOne.GetValidator().IsJailed())
-
-			val0Address, err := s.chain.validators[0].keyInfo.GetAddress()
-			s.Require().NoError(err)
-			valZero, err := newQ.Validator(context.Background(), &stakingtypes.QueryValidatorRequest{ValidatorAddr: sdk.ValAddress(val0Address).String()})
-			if err != nil {
-				s.T().Logf("error: %s", err)
-				return false
-			}
-			s.Require().False(valZero.GetValidator().IsJailed())
 			return true
 		}, 5*time.Minute, 1*time.Minute, "can't find slashing info")
 	})
