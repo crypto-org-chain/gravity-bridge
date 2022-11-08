@@ -138,6 +138,15 @@ pub async fn eth_oracle_main_loop<S: Signer + 'static, CS: CosmosSigner>(
     blocks_to_search: u64,
     msg_sender: tokio::sync::mpsc::Sender<Vec<Msg>>,
 ) {
+
+    info!("Check gravity id");
+    let gravity_id = get_gravity_id(
+        gravity_contract_address, eth_client.clone(), grpc_client.clone()).await;
+    if gravity_id.is_err() {
+        error!("Error when fetching the GravityID");
+        return;
+    }
+
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
     let block_delay = match get_block_delay(eth_client.clone()).await {
         Ok(block_delay) => block_delay,
@@ -268,9 +277,10 @@ pub async fn eth_signer_main_loop<S: Signer + 'static, CS: CosmosSigner>(
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
     let mut grpc_client = grpc_client;
 
-    let gravity_id = get_gravity_id(contract_address, eth_client.clone()).await;
+    let gravity_id = get_gravity_id(
+        contract_address, eth_client.clone(), grpc_client.clone()).await;
     if gravity_id.is_err() {
-        error!("Failed to get GravityID, check your Eth node");
+        error!("Error when fetching the GravityID");
         return;
     }
     let gravity_id = gravity_id.unwrap();

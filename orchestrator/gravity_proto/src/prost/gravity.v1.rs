@@ -603,6 +603,14 @@ pub struct Params {
     pub slash_fraction_conflicting_ethereum_signature: ::prost::alloc::vec::Vec<u8>,
     #[prost(uint64, tag = "17")]
     pub unbond_slashing_signer_set_txs_window: u64,
+    #[prost(bool, tag = "18")]
+    pub bridge_active: bool,
+    #[prost(uint64, tag = "19")]
+    pub batch_creation_period: u64,
+    #[prost(uint64, tag = "20")]
+    pub batch_max_element: u64,
+    #[prost(uint64, tag = "21")]
+    pub observe_ethereum_height_period: u64,
 }
 /// GenesisState struct
 /// TODO: this need to be audited and potentially simplified using the new
@@ -928,6 +936,13 @@ pub struct UnbatchedSendToEthereumsResponse {
     #[prost(message, optional, tag = "2")]
     pub pagination:
         ::core::option::Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageResponse>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LastObservedEthereumHeightRequest {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LastObservedEthereumHeightResponse {
+    #[prost(message, optional, tag = "1")]
+    pub last_observed_ethereum_height: ::core::option::Option<LatestEthereumBlockHeight>,
 }
 #[doc = r" Generated client implementations."]
 pub mod query_client {
@@ -1350,6 +1365,23 @@ pub mod query_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/DelegateKeys");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn last_observed_ethereum_height(
+            &mut self,
+            request: impl tonic::IntoRequest<super::LastObservedEthereumHeightRequest>,
+        ) -> Result<tonic::Response<super::LastObservedEthereumHeightResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/gravity.v1.Query/LastObservedEthereumHeight",
+            );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }

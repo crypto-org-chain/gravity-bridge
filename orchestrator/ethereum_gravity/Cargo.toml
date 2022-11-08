@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 gravity_abi = { path = "../gravity_abi" }
 gravity_utils = { path = "../gravity_utils" }
+gravity_proto = { path = "../gravity_proto" }
 
 deep_space = { git = "https://github.com/crypto-org-chain/deep_space/", branch = "update/deps" }
 ethers = { git = "https://github.com/gakonst/ethers-rs.git", branch = "master", features = ["abigen"] }
@@ -17,3 +18,4 @@ web30 = "0.15.4"
 log = "0.4"
 sha3 = "0.9"
 tokio = "1.13.0"
+tonic = "0.4"

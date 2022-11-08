@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 gravity_abi = { path = "../gravity_abi" }
-gravity_proto = { path = "../gravity_proto/" }
+gravity_proto = { path = "../gravity_proto" }
 cosmos-sdk-proto = "0.6.3"
 deep_space = { git = "https://github.com/crypto-org-chain/deep_space/", branch = "update/deps" }
 ethers = { git = "https://github.com/gakonst/ethers-rs.git", branch = "master", features = ["abigen"] }

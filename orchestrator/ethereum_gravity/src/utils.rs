@@ -4,9 +4,11 @@ use ethers::prelude::gas_oracle::GasOracle;
 use ethers::prelude::*;
 use ethers::types::Address as EthAddress;
 use gravity_abi::gravity::*;
+use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::error::GravityError;
 use gravity_utils::ethereum::{downcast_to_u64, hex_str_to_bytes, vec_u8_to_fixed_32};
 use gravity_utils::types::{decode_gravity_error, GravityContractError};
+use tonic::transport::Channel;
 use std::result::Result;
 
 /// Gets the latest validator set nonce
@@ -117,6 +119,7 @@ pub async fn get_event_nonce<S: Signer + 'static>(
 pub async fn get_gravity_id<S: Signer + 'static>(
     gravity_contract_address: EthAddress,
     eth_client: EthClient<S>,
+    mut cosmos_client: GravityQueryClient<Channel>
 ) -> Result<String, GravityError> {
     let contract_call = Gravity::new(gravity_contract_address, eth_client.clone())
         .state_gravity_id()
@@ -131,12 +134,31 @@ pub async fn get_gravity_id<S: Signer + 'static>(
     let id_as_string = String::from_utf8(gravity_id.to_vec());
 
     match id_as_string {
-        Ok(id) => Ok(id),
+        Ok(id) => {
+            // Check that the gravity id match with the one in chain params
+            let response = cosmos_client
+                .params(gravity_proto::gravity::ParamsRequest {})
+                .await?;
+            let gravity_params = response.into_inner().params.unwrap();
+            if gravity_params.gravity_id !=  id {
+                error!("Contract gravity id does not match with the chain gravity id");
+                return Err(GravityError::GravityContractError(format!(
+                    "Gravity contract id {} does not match with chain gravity id {}",
+                    id,
+                    gravity_params.gravity_id,
+                )))
+            }
+
+            Ok(id)
+        },
         Err(err) => Err(GravityError::GravityContractError(format!(
             "Received invalid utf8 when getting gravity id {:?}: {}",
             &gravity_id, err
         ))),
     }
+
+
+
 }
 
 /// If ETHERSCAN_API_KEY env var is set, we'll call out to Etherscan for a gas estimate.

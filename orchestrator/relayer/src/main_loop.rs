@@ -28,9 +28,10 @@ pub async fn relayer_main_loop<S: Signer + 'static>(
 ) {
     let mut grpc_client = grpc_client;
 
-    let gravity_id = get_gravity_id(gravity_contract_address, eth_client.clone()).await;
+    let gravity_id = get_gravity_id(
+        gravity_contract_address, eth_client.clone(), grpc_client.clone()).await;
     if gravity_id.is_err() {
-        error!("Failed to get GravityID, check your Eth node");
+        error!("Error when fetching the GravityID");
         return;
     }
     let gravity_id = gravity_id.unwrap();
