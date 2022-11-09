@@ -143,7 +143,7 @@ pub async fn eth_oracle_main_loop<S: Signer + 'static, CS: CosmosSigner>(
     let gravity_id = get_gravity_id(
         gravity_contract_address, eth_client.clone(), grpc_client.clone()).await;
     if gravity_id.is_err() {
-        error!("Error when fetching the GravityID");
+        error!("Error when fetching the GravityID {}", gravity_id.err().unwrap());
         return;
     }
 
@@ -280,7 +280,7 @@ pub async fn eth_signer_main_loop<S: Signer + 'static, CS: CosmosSigner>(
     let gravity_id = get_gravity_id(
         contract_address, eth_client.clone(), grpc_client.clone()).await;
     if gravity_id.is_err() {
-        error!("Error when fetching the GravityID");
+        error!("Error when fetching the GravityID {}", gravity_id.err().unwrap());
         return;
     }
     let gravity_id = gravity_id.unwrap();

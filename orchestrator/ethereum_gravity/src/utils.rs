@@ -10,6 +10,7 @@ use gravity_utils::ethereum::{downcast_to_u64, hex_str_to_bytes, vec_u8_to_fixed
 use gravity_utils::types::{decode_gravity_error, GravityContractError};
 use tonic::transport::Channel;
 use std::result::Result;
+use ethers::abi::AbiEncode;
 
 /// Gets the latest validator set nonce
 pub async fn get_valset_nonce<S: Signer + 'static>(
@@ -139,17 +140,22 @@ pub async fn get_gravity_id<S: Signer + 'static>(
             let response = cosmos_client
                 .params(gravity_proto::gravity::ParamsRequest {})
                 .await?;
-            let gravity_params = response.into_inner().params.unwrap();
-            if gravity_params.gravity_id !=  id {
+            let params = response.into_inner().params.unwrap();
+            let gravity_id = params.gravity_id.as_str();
+
+            // Remove trailing zero
+            let contract_id_value = id.trim_matches(char::from(0));
+            if gravity_id != contract_id_value {
                 error!("Contract gravity id does not match with the chain gravity id");
                 return Err(GravityError::GravityContractError(format!(
                     "Gravity contract id {} does not match with chain gravity id {}",
-                    id,
-                    gravity_params.gravity_id,
+                    gravity_id,
+                    contract_id_value,
                 )))
             }
 
-            Ok(id)
+            info!("Gravity contract id {} match with chain gravity id {}", gravity_id, contract_id_value);
+            Ok(params.gravity_id)
         },
         Err(err) => Err(GravityError::GravityContractError(format!(
             "Received invalid utf8 when getting gravity id {:?}: {}",

@@ -40,7 +40,7 @@ openssl-probe = "0.1.4"
 abscissa_tokio = { version = "0.6.0-rc.0", features = ["actix"] }
 web30 = "0.15"
 tokio = "1"
-tonic = "0.4"
+tonic = { version = "0.4.0", features = ["tls", "tls-roots"] }
 toml = "0.5"
 env_logger = "0.8"
 log = "0.4"
