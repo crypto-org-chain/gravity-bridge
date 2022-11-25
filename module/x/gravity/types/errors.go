@@ -15,4 +15,5 @@ var (
 	ErrInvalidEthereumProposalBridgeFee = sdkerrors.Register(ModuleName, 10, "invalid community pool Ethereum spend proposal bridge fee")
 	ErrEthereumProposalDenomMismatch    = sdkerrors.Register(ModuleName, 11, "community pool Ethereum spend proposal amount and bridge fee denom mismatch")
 	ErrBatchExecutedError               = sdkerrors.Register(ModuleName, 12, "failed to clean batches")
+	ErrNotAuthorized                    = sdkerrors.Register(ModuleName, 13, "not authorized")
 )
