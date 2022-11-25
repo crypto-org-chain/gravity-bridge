@@ -347,6 +347,20 @@ async fn test_batch(
     .await
     .unwrap();
     info!("Sent tokens to Ethereum with {:?}", res);
+    
+    info!("Requesting transaction batch with unauthorized user");
+    let rsp = send_request_batch_tx(
+        dest_cosmos_private_key,
+        None,
+        token_name.clone(),
+        (10f64, "footoken".to_string()),
+        500_000,
+        contact,
+        1.0,
+    )
+        .await
+        .unwrap();
+    assert_eq!(rsp.code, 13);
 
     info!("Requesting transaction batch");
     send_request_batch_tx(
