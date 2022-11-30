@@ -31,6 +31,10 @@ service Query {
     // option (google.api.http).get =
     // "/gravity/v1/batch_txs/{token_contract}/{nonce}";
   }
+  rpc LastBatchTx(LastBatchTxRequest) returns (LastBatchTxResponse) {
+    // option (google.api.http).get =
+    // "/gravity/v1/batch_txs/{token_contract}";
+  }
   rpc ContractCallTx(ContractCallTxRequest) returns (ContractCallTxResponse) {
     // option (google.api.http).get =
     // "/gravity/v1/contract_call_txs/{invalidation_id}/{invalidation_nonce}";
@@ -43,6 +47,7 @@ service Query {
   rpc BatchTxs(BatchTxsRequest) returns (BatchTxsResponse) {
     // option (google.api.http).get = "/gravity/v1/batch/batch_txs";
   }
+
   rpc ContractCallTxs(ContractCallTxsRequest)
       returns (ContractCallTxsResponse) {
     // option (google.api.http).get = "/gravity/v1/batch/contract_call_txs";
@@ -171,6 +176,14 @@ message BatchTxRequest {
   uint64 batch_nonce = 2;
 }
 message BatchTxResponse { BatchTx batch = 1; }
+
+//  rpc LastBatchTx
+message LastBatchTxRequest {
+  string token_contract = 1;
+}
+message LastBatchTxResponse {
+  BatchTx batch = 1;
+}
 
 //  rpc ContractCallTx
 message ContractCallTxRequest {

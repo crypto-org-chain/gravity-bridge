@@ -135,6 +135,14 @@ func (k Keeper) BatchTxs(c context.Context, req *types.BatchTxsRequest) (*types.
 	return &types.BatchTxsResponse{Batches: batches, Pagination: pageRes}, nil
 }
 
+func (k Keeper) LastBatchTx(c context.Context, req *types.LastBatchTxRequest) (*types.LastBatchTxResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	contract := common.HexToAddress(req.TokenContract)
+
+	batch := k.getLastOutgoingBatchByTokenType(ctx, contract)
+	return &types.LastBatchTxResponse{Batch: batch}, nil
+}
+
 func (k Keeper) ContractCallTxs(c context.Context, req *types.ContractCallTxsRequest) (*types.ContractCallTxsResponse, error) {
 	var calls []*types.ContractCallTx
 	pageRes, err := k.PaginateOutgoingTxsByType(sdk.UnwrapSDKContext(c), req.Pagination, types.ContractCallTxPrefixByte, func(_ []byte, otx types.OutgoingTx) (hit bool) {
