@@ -54,7 +54,7 @@ impl Runnable for StartCommand {
             .expect("Could not parse gravity contract address");
 
         let mut payment_address: EthAddress = config
-            .gravity
+            .relayer
             .payment_address
             .parse()
             .expect("Could not parse relayer payment address");

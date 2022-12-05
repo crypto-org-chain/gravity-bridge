@@ -677,6 +677,17 @@ pub struct BatchTxResponse {
     #[prost(message, optional, tag = "1")]
     pub batch: ::core::option::Option<BatchTx>,
 }
+///  rpc LastBatchTx
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LastBatchTxRequest {
+    #[prost(string, tag = "1")]
+    pub token_contract: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LastBatchTxResponse {
+    #[prost(message, optional, tag = "1")]
+    pub batch: ::core::option::Option<BatchTx>,
+}
 ///  rpc ContractCallTx
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ContractCallTxRequest {
@@ -1034,6 +1045,20 @@ pub mod query_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/BatchTx");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn last_batch_tx(
+            &mut self,
+            request: impl tonic::IntoRequest<super::LastBatchTxRequest>,
+        ) -> Result<tonic::Response<super::LastBatchTxResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/gravity.v1.Query/LastBatchTx");
             self.inner.unary(request.into_request(), path, codec).await
         }
         pub async fn contract_call_tx(
