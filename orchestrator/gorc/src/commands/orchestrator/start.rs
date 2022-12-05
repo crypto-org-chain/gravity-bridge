@@ -51,13 +51,13 @@ impl Runnable for StartCommand {
             .gravity
             .contract
             .parse()
-            .expect("Could not parse gravity contract address");
+            .expect("Could not parse gravity contract address in config");
 
         let mut payment_address: EthAddress = config
             .relayer
             .payment_address
             .parse()
-            .expect("Could not parse relayer payment address");
+            .expect("Could not parse relayer payment address in config");
 
         let fees_denom = config.gravity.fees_denom.clone();
 
@@ -118,7 +118,13 @@ impl Runnable for StartCommand {
 
             let gas_price = config.cosmos.gas_price.as_tuple();
 
-            let mode_str = self.mode.as_deref().unwrap_or("Api");
+            let mode_config: String = config
+                .relayer
+                .mode
+                .parse()
+                .expect("Could not parse mode in config");
+
+            let mode_str = self.mode.as_deref().unwrap_or(&*mode_config);
             let mode = RelayerMode::from_str(mode_str)
                 .expect("Incorrect mode, possible value are: AlwaysRelay, Api or File");
             info!("Relayer using mode {:?}", mode);

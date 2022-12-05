@@ -24,13 +24,18 @@ pub struct StartCommand {
 impl Runnable for StartCommand {
     fn run(&self) {
         openssl_probe::init_ssl_cert_env_vars();
+        let config = APP.config();
 
-        let mode_str = self.mode.as_deref().unwrap_or("Api");
+        let mode_config: String = config
+            .relayer
+            .mode
+            .parse()
+            .expect("Could not parse mode in relayer config");
+        let mode_str = self.mode.as_deref().unwrap_or(&*mode_config);
         let mode = RelayerMode::from_str(mode_str)
             .expect("Incorrect mode, possible value are: AlwaysRelay, Api or File");
         info!("Relayer using mode {:?}", mode);
 
-        let config = APP.config();
         let cosmos_prefix = config.cosmos.prefix.clone();
 
         let ethereum_wallet = config.load_ethers_wallet(self.ethereum_key.clone());
