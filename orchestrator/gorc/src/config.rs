@@ -15,7 +15,6 @@ use signatory::FsKeyStore;
 use std::net::SocketAddr;
 use std::path::Path;
 use std::{io, time::Duration};
-use gravity_utils::types::config::RelayerMode;
 
 use crate::utils::aws::{AwsSigner, AwsSignerError, WrapperSigner};
 

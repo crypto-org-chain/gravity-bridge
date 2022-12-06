@@ -1,4 +1,5 @@
 use deep_space::address::Address;
+use deep_space::error::CosmosGrpcError;
 use ethers::types::Address as EthAddress;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_proto::gravity::*;
@@ -94,6 +95,21 @@ pub async fn get_latest_transaction_batches(
         .batch_txs(BatchTxsRequest { pagination: None })
         .await?;
     Ok(extract_valid_batches(request.into_inner().batches))
+}
+
+/// gets the last batch for a specific token address
+pub async fn get_latest_batch(
+    client: &mut GravityQueryClient<Channel>,
+    contract: EthAddress,
+) -> Result<TransactionBatch, GravityError> {
+    let request = client
+        .last_batch_tx(LastBatchTxRequest { token_contract: contract.to_string() })
+        .await?;
+
+    return match request.into_inner().batch {
+        Some(b) => TransactionBatch::from_proto(b),
+        None => Err(GravityError::CosmosGrpcError(CosmosGrpcError::BadResponse(String::from("no batch found")))),
+    }
 }
 
 // If we can't serialize a batch from a proto, but it was committed to the chain,

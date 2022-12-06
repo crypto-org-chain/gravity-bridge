@@ -25,7 +25,8 @@ pub async fn relayer_main_loop<S: Signer + 'static>(
     fee_manager: &mut FeeManager,
     eth_gas_multiplier: f32,
     blocks_to_search: u64,
-) {
+    supported_contracts: Vec<EthAddress>,
+ ) {
     let mut grpc_client = grpc_client;
 
     let gravity_id = get_gravity_id(
@@ -76,6 +77,7 @@ pub async fn relayer_main_loop<S: Signer + 'static>(
                     eth_gas_price_multiplier,
                     fee_manager,
                     eth_gas_multiplier,
+                    supported_contracts.clone(),
                 )
                 .await;
 

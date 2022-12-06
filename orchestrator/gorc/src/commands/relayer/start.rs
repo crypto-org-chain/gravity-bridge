@@ -53,6 +53,15 @@ impl Runnable for StartCommand {
             .parse()
             .expect("Could not parse gravity contract address");
 
+        let mut supported_contract: Vec<EthAddress> = Vec::new();
+        for contract in &config.relayer.ethereum_contracts {
+            if let Ok(c) = H160::from_str(&*contract) {
+                supported_contract.push(c);
+            } else {
+                error!("error parsing contract in config {}", contract)
+            }
+        }
+
         let timeout = RELAYER_LOOP_SPEED;
 
         abscissa_tokio::run_with_actix(&APP, async {
@@ -102,6 +111,7 @@ impl Runnable for StartCommand {
                 &mut fee_manager,
                 config.ethereum.gas_multiplier,
                 config.ethereum.blocks_to_search,
+                supported_contract,
             )
             .await;
         })

@@ -94,6 +94,15 @@ impl Runnable for StartCommand {
                 payment_address = eth_client.address()
             }
 
+            let mut supported_contract: Vec<EthAddress> = Vec::new();
+            for contract in &config.relayer.ethereum_contracts {
+                if let Ok(c) = H160::from_str(&*contract) {
+                    supported_contract.push(c);
+                } else {
+                    error!("error parsing contract in config {}", contract)
+                }
+            }
+
             info!("Starting Relayer + Oracle + Ethereum Signer");
             info!("Ethereum Address: {}", format_eth_address(ethereum_address));
             info!("Cosmos Address {}", cosmos_address);
@@ -147,6 +156,7 @@ impl Runnable for StartCommand {
                 self.orchestrator_only,
                 config.cosmos.msg_batch_size,
                 mode,
+                supported_contract,
             )
             .await;
         })

@@ -1,5 +1,5 @@
 use crate::fee_manager::FeeManager;
-use cosmos_gravity::query::get_latest_transaction_batches;
+use cosmos_gravity::query::{get_latest_batch, get_latest_transaction_batches};
 use cosmos_gravity::query::get_transaction_batch_signatures;
 use ethereum_gravity::{
     one_eth_f32, submit_batch::send_eth_transaction_batch, types::EthClient,
@@ -41,9 +41,10 @@ pub async fn relay_batches<S: Signer + 'static>(
     eth_gas_price_multiplier: f32,
     fee_manager: &mut FeeManager,
     eth_gas_multiplier: f32,
+    supported_contracts: Vec<EthAddress>,
 ) {
     let possible_batches =
-        get_batches_and_signatures(current_valset.clone(), grpc_client, gravity_id.clone()).await;
+        get_batches_and_signatures(current_valset.clone(), grpc_client, gravity_id.clone(), supported_contracts).await;
 
     debug!("possible batches {:?}", possible_batches);
 
@@ -74,14 +75,28 @@ async fn get_batches_and_signatures(
     current_valset: Valset,
     grpc_client: &mut GravityQueryClient<Channel>,
     gravity_id: String,
+    supported_contracts: Vec<EthAddress>,
 ) -> HashMap<EthAddress, Vec<SubmittableBatch>> {
-    let latest_batches = if let Ok(lb) = get_latest_transaction_batches(grpc_client).await {
-        lb
+    let mut latest_batches: Vec<TransactionBatch> = Vec::new();
+    if supported_contracts.len() == 0 {
+        // fallback to previous behavior where we process all batches
+        latest_batches = if let Ok(lb) = get_latest_transaction_batches(grpc_client).await {
+            lb
+        } else {
+            return HashMap::new();
+        };
     } else {
-        return HashMap::new();
-    };
+        // apply a whitelist to only supported contracts
+        for contract in supported_contracts {
+            if let Ok(tb) = get_latest_batch(grpc_client, contract).await {
+                latest_batches.push(tb);
+            }
+        }
+        if latest_batches.len() == 0 {
+            return HashMap::new();
+        }
+    }
     debug!("Latest batches {:?}", latest_batches);
-
     let mut possible_batches = HashMap::new();
     for batch in latest_batches {
         let sigs =

@@ -136,6 +136,7 @@ async fn main() {
         &mut fee_manager,
         1.1f32,
         5_000u64,
+        Vec::new(),
     )
     .await
 }

@@ -66,6 +66,7 @@ pub async fn orchestrator_main_loop<S: Signer + 'static, CS: CosmosSigner>(
     relayer_opt_out: bool,
     cosmos_msg_batch_size: u32,
     mode: RelayerMode,
+    supported_contracts: Vec<EthAddress>,
 ) {
     let (tx, rx) = tokio::sync::mpsc::channel(1);
 
@@ -113,6 +114,7 @@ pub async fn orchestrator_main_loop<S: Signer + 'static, CS: CosmosSigner>(
             &mut fee_manager,
             eth_gas_multiplier,
             blocks_to_search,
+            supported_contracts,
         );
         futures::future::join5(a, b, c, d, e).await;
     } else {
