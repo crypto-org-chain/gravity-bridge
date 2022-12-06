@@ -78,7 +78,7 @@ async fn get_batches_and_signatures(
     supported_contracts: Vec<EthAddress>,
 ) -> HashMap<EthAddress, Vec<SubmittableBatch>> {
     let mut latest_batches: Vec<TransactionBatch> = Vec::new();
-    if supported_contracts.len() == 0 {
+    if supported_contracts.is_empty() {
         // fallback to previous behavior where we process all batches
         latest_batches = if let Ok(lb) = get_latest_transaction_batches(grpc_client).await {
             lb
@@ -92,7 +92,7 @@ async fn get_batches_and_signatures(
                 latest_batches.push(tb);
             }
         }
-        if latest_batches.len() == 0 {
+        if latest_batches.is_empty() {
             return HashMap::new();
         }
     }

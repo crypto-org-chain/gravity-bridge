@@ -61,6 +61,11 @@ impl Runnable for StartCommand {
                 error!("error parsing contract in config {}", contract)
             }
         }
+        if supported_contract.is_empty() {
+            info!("no contract found in config, relayer will relay all contracts");
+        } {
+            info!("supported contract by the relayer {:?}", supported_contract);
+        }
 
         let timeout = RELAYER_LOOP_SPEED;
 

@@ -102,6 +102,11 @@ impl Runnable for StartCommand {
                     error!("error parsing contract in config {}", contract)
                 }
             }
+            if supported_contract.is_empty() {
+                info!("no contract found in config, relayer will relay all contracts");
+            } {
+                info!("supported contract by the relayer {:?}", supported_contract);
+            }
 
             info!("Starting Relayer + Oracle + Ethereum Signer");
             info!("Ethereum Address: {}", format_eth_address(ethereum_address));
