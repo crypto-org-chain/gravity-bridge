@@ -215,7 +215,7 @@ async fn submit_batches<S: Signer + 'static>(
                 .await;
 
                 if cost.is_err() {
-                    error!("Batch cost estimate failed with {:?}", cost);
+                    warn!("Batch cost estimate failed with {:?}", cost);
                     continue;
                 }
 
