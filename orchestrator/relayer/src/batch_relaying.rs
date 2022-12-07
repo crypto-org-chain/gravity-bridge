@@ -88,8 +88,14 @@ async fn get_batches_and_signatures(
     } else {
         // apply a whitelist to only supported contracts
         for contract in supported_contracts {
-            if let Ok(tb) = get_latest_batch(grpc_client, contract).await {
-                latest_batches.push(tb);
+            match get_latest_batch(grpc_client, contract).await {
+                Ok(tb) => {
+                    latest_batches.push(tb);
+                },
+                Err(e) => {
+                    debug!("gravity error on get_batches_and_signatures {:?}", e);
+                }
+
             }
         }
         if latest_batches.is_empty() {
