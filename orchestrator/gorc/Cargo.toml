@@ -26,7 +26,7 @@ orchestrator = { path = "../orchestrator" }
 relayer = { path = "../relayer" }
 
 deep_space = { git = "https://github.com/crypto-org-chain/deep_space/", branch = "update/deps" }
-ethers = { git = "https://github.com/gakonst/ethers-rs.git", branch = "master", features = ["abigen"] }
+ethers = { version = "1", features = ["abigen"] }
 clarity = "0.4.12"
 actix-rt = "2.5"
 rpassword = "5"

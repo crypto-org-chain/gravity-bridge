@@ -12,7 +12,7 @@ gravity_utils = { path = "../gravity_utils" }
 gravity_proto = { path = "../gravity_proto" }
 
 deep_space = { git = "https://github.com/crypto-org-chain/deep_space/", branch = "update/deps" }
-ethers = { git = "https://github.com/gakonst/ethers-rs.git", branch = "master", features = ["abigen"] }
+ethers = { version = "1", features = ["abigen"] }
 clarity = "0.4.11"
 web30 = "0.15.4"
 log = "0.4"

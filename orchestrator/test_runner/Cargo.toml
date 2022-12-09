@@ -21,7 +21,7 @@ deep_space = { git = "https://github.com/crypto-org-chain/deep_space/", branch =
 serde_derive = "1.0"
 clarity = "0.4.11"
 docopt = "1"
-ethers = { git = "https://github.com/gakonst/ethers-rs.git", branch = "master", features = ["abigen"] }
+ethers = { version = "1", features = ["abigen"] }
 serde = "1.0"
 actix = "0.12"
 actix-web = {version = "3", features=["openssl"]}
