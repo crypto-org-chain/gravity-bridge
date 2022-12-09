@@ -16,9 +16,11 @@ pub mod gravity {
     use ethers::providers::Middleware;
     #[doc = "Gravity was auto-generated with ethers-rs Abigen. More information at: https://github.com/gakonst/ethers-rs"]
     use std::sync::Arc;
+    # [rustfmt :: skip] const __ABI : & str = "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_gravityId\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"_powerThreshold\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address[]\",\"name\":\"_validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"_powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"relayerAdmin\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"BatchTimedOut\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"IncorrectCheckpoint\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"cumulativePower\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"powerThreshold\",\"type\":\"uint256\",\"components\":[]}],\"type\":\"error\",\"name\":\"InsufficientPower\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"currentNonce\",\"type\":\"uint256\",\"components\":[]}],\"type\":\"error\",\"name\":\"InvalidBatchNonce\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"InvalidLogicCallFees\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"currentNonce\",\"type\":\"uint256\",\"components\":[]}],\"type\":\"error\",\"name\":\"InvalidLogicCallNonce\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"InvalidLogicCallTransfers\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"InvalidSendToCosmos\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"InvalidSignature\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"currentNonce\",\"type\":\"uint256\",\"components\":[]}],\"type\":\"error\",\"name\":\"InvalidValsetNonce\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"LogicCallTimedOut\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"MalformedBatch\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"MalformedCurrentValidatorSet\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"MalformedNewValidatorSet\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"anyoneCanRelay\",\"type\":\"bool\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"AnyoneCanRelay\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_cosmosDenom\",\"type\":\"string\",\"components\":[],\"indexed\":false},{\"internalType\":\"address\",\"name\":\"_tokenContract\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"string\",\"name\":\"_name\",\"type\":\"string\",\"components\":[],\"indexed\":false},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint8\",\"name\":\"_decimals\",\"type\":\"uint8\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint256\",\"name\":\"_eventNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"ERC20DeployedEvent\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_invalidationId\",\"type\":\"bytes32\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint256\",\"name\":\"_invalidationNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":false},{\"internalType\":\"bytes\",\"name\":\"_returnData\",\"type\":\"bytes\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint256\",\"name\":\"_eventNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"LogicCallEvent\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"migration\",\"type\":\"bool\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"Migration\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\",\"components\":[],\"indexed\":true}],\"type\":\"event\",\"name\":\"OwnershipTransferred\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"Paused\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[],\"indexed\":true},{\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\",\"components\":[],\"indexed\":true},{\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\",\"components\":[],\"indexed\":true}],\"type\":\"event\",\"name\":\"RoleAdminChanged\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\",\"components\":[],\"indexed\":true}],\"type\":\"event\",\"name\":\"RoleGranted\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\",\"components\":[],\"indexed\":true}],\"type\":\"event\",\"name\":\"RoleRevoked\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenContract\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"_sender\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"bytes32\",\"name\":\"_destination\",\"type\":\"bytes32\",\"components\":[],\"indexed\":true},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint256\",\"name\":\"_eventNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"SendToCosmosEvent\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_batchNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"uint256\",\"name\":\"_eventNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"TransactionBatchExecutedEvent\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"Unpaused\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_newValsetNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":true},{\"internalType\":\"uint256\",\"name\":\"_eventNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint256\",\"name\":\"_rewardAmount\",\"type\":\"uint256\",\"components\":[],\"indexed\":false},{\"internalType\":\"address\",\"name\":\"_rewardToken\",\"type\":\"address\",\"components\":[],\"indexed\":false},{\"internalType\":\"address[]\",\"name\":\"_validators\",\"type\":\"address[]\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint256[]\",\"name\":\"_powers\",\"type\":\"uint256[]\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"ValsetUpdatedEvent\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"MIGRATION_PERIOD\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"RELAYER\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"RELAYER_ADMIN\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"anyoneCanRelay\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_cosmosDenom\",\"type\":\"string\",\"components\":[]},{\"internalType\":\"string\",\"name\":\"_name\",\"type\":\"string\",\"components\":[]},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\",\"components\":[]},{\"internalType\":\"uint8\",\"name\":\"_decimals\",\"type\":\"uint8\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"deployERC20\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"grantRole\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_erc20Address\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"lastBatchNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_invalidation_id\",\"type\":\"bytes32\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"lastLogicCallNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenContract\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"_newGravityAddress\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"bool\",\"name\":\"isCosmosToken\",\"type\":\"bool\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"migrateToken\",\"outputs\":[]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"migration\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"migrationHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"pause\",\"outputs\":[]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"paused\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_nonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"_newDestination\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"redeemVoucher\",\"outputs\":[]},{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"renounceOwnership\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"renounceRole\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"revokeRole\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"safeTransferSelf\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenContract\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"_destination\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"sendToCosmos\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenContract\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"_destination\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"sendToCronos\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_anyoneCanRelay\",\"type\":\"bool\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"setAnyoneCanRelay\",\"outputs\":[]},{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"startMigration\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_RevertedVouchers\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"tokenContract\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"destination\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_gravityId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_invalidationMapping\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_lastBatchNonces\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_lastEventNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_lastRevertedNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_lastValsetCheckpoint\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_lastValsetNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_powerThreshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"stopMigration\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"struct ValsetArgs\",\"name\":\"_currentValset\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"valsetNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"rewardToken\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"struct ValSignature[]\",\"name\":\"_sigs\",\"type\":\"tuple[]\",\"components\":[{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\",\"components\":[]}]},{\"internalType\":\"struct PaymentArgs\",\"name\":\"_payments\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"address[]\",\"name\":\"destinations\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"fees\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"feePaymentAddress\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"uint256\",\"name\":\"_batchNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"_tokenContract\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"_batchTimeout\",\"type\":\"uint256\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"submitBatch\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"struct ValsetArgs\",\"name\":\"_currentValset\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"valsetNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"rewardToken\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"struct ValSignature[]\",\"name\":\"_sigs\",\"type\":\"tuple[]\",\"components\":[{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\",\"components\":[]}]},{\"internalType\":\"address\",\"name\":\"_paymentAddress\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"struct LogicCallArgs\",\"name\":\"_args\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"uint256[]\",\"name\":\"transferAmounts\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"address[]\",\"name\":\"transferTokenContracts\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"feeAmounts\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"address[]\",\"name\":\"feeTokenContracts\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"logicContractAddress\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"bytes\",\"name\":\"payload\",\"type\":\"bytes\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"timeOut\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"invalidationId\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"invalidationNonce\",\"type\":\"uint256\",\"components\":[]}]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"submitLogicCall\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"struct ValsetArgs\",\"name\":\"_currentValset\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"valsetNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"rewardToken\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"struct ValSignature[]\",\"name\":\"_sigs\",\"type\":\"tuple[]\",\"components\":[{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\",\"components\":[]}]},{\"internalType\":\"bytes32\",\"name\":\"_theHash\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"_powerThreshold\",\"type\":\"uint256\",\"components\":[]}],\"stateMutability\":\"pure\",\"type\":\"function\",\"name\":\"testCheckValidatorSignatures\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"struct ValsetArgs\",\"name\":\"_valsetArgs\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"valsetNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"rewardToken\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"bytes32\",\"name\":\"_gravityId\",\"type\":\"bytes32\",\"components\":[]}],\"stateMutability\":\"pure\",\"type\":\"function\",\"name\":\"testMakeCheckpoint\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"transferOwnership\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_newAdmin\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"transferRelayerAdmin\",\"outputs\":[]},{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"unpause\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"struct ValsetArgs\",\"name\":\"_newValset\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"valsetNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"rewardToken\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"struct ValsetArgs\",\"name\":\"_currentValset\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"valsetNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"rewardToken\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"struct ValSignature[]\",\"name\":\"_sigs\",\"type\":\"tuple[]\",\"components\":[{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\",\"components\":[]}]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"updateValset\",\"outputs\":[]}]" ;
+    #[doc = r" The parsed JSON-ABI of the contract."]
     pub static GRAVITY_ABI: ethers::contract::Lazy<ethers::core::abi::Abi> =
         ethers::contract::Lazy::new(|| {
-            ethers :: core :: utils :: __serde_json :: from_str ("[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_gravityId\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"_powerThreshold\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address[]\",\"name\":\"_validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"_powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"relayerAdmin\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"BatchTimedOut\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"IncorrectCheckpoint\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"cumulativePower\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"powerThreshold\",\"type\":\"uint256\",\"components\":[]}],\"type\":\"error\",\"name\":\"InsufficientPower\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"currentNonce\",\"type\":\"uint256\",\"components\":[]}],\"type\":\"error\",\"name\":\"InvalidBatchNonce\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"InvalidLogicCallFees\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"currentNonce\",\"type\":\"uint256\",\"components\":[]}],\"type\":\"error\",\"name\":\"InvalidLogicCallNonce\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"InvalidLogicCallTransfers\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"InvalidSendToCosmos\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"InvalidSignature\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"currentNonce\",\"type\":\"uint256\",\"components\":[]}],\"type\":\"error\",\"name\":\"InvalidValsetNonce\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"LogicCallTimedOut\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"MalformedBatch\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"MalformedCurrentValidatorSet\",\"outputs\":[]},{\"inputs\":[],\"type\":\"error\",\"name\":\"MalformedNewValidatorSet\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"anyoneCanRelay\",\"type\":\"bool\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"AnyoneCanRelay\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_cosmosDenom\",\"type\":\"string\",\"components\":[],\"indexed\":false},{\"internalType\":\"address\",\"name\":\"_tokenContract\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"string\",\"name\":\"_name\",\"type\":\"string\",\"components\":[],\"indexed\":false},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint8\",\"name\":\"_decimals\",\"type\":\"uint8\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint256\",\"name\":\"_eventNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"ERC20DeployedEvent\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_invalidationId\",\"type\":\"bytes32\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint256\",\"name\":\"_invalidationNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":false},{\"internalType\":\"bytes\",\"name\":\"_returnData\",\"type\":\"bytes\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint256\",\"name\":\"_eventNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"LogicCallEvent\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"migration\",\"type\":\"bool\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"Migration\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\",\"components\":[],\"indexed\":true}],\"type\":\"event\",\"name\":\"OwnershipTransferred\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"Paused\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[],\"indexed\":true},{\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\",\"components\":[],\"indexed\":true},{\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\",\"components\":[],\"indexed\":true}],\"type\":\"event\",\"name\":\"RoleAdminChanged\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\",\"components\":[],\"indexed\":true}],\"type\":\"event\",\"name\":\"RoleGranted\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\",\"components\":[],\"indexed\":true}],\"type\":\"event\",\"name\":\"RoleRevoked\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenContract\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"_sender\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"bytes32\",\"name\":\"_destination\",\"type\":\"bytes32\",\"components\":[],\"indexed\":true},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint256\",\"name\":\"_eventNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"SendToCosmosEvent\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_batchNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":true},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\",\"components\":[],\"indexed\":true},{\"internalType\":\"uint256\",\"name\":\"_eventNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"TransactionBatchExecutedEvent\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"Unpaused\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_newValsetNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":true},{\"internalType\":\"uint256\",\"name\":\"_eventNonce\",\"type\":\"uint256\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint256\",\"name\":\"_rewardAmount\",\"type\":\"uint256\",\"components\":[],\"indexed\":false},{\"internalType\":\"address\",\"name\":\"_rewardToken\",\"type\":\"address\",\"components\":[],\"indexed\":false},{\"internalType\":\"address[]\",\"name\":\"_validators\",\"type\":\"address[]\",\"components\":[],\"indexed\":false},{\"internalType\":\"uint256[]\",\"name\":\"_powers\",\"type\":\"uint256[]\",\"components\":[],\"indexed\":false}],\"type\":\"event\",\"name\":\"ValsetUpdatedEvent\",\"outputs\":[],\"anonymous\":false},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"MIGRATION_PERIOD\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"RELAYER\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"RELAYER_ADMIN\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"anyoneCanRelay\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_cosmosDenom\",\"type\":\"string\",\"components\":[]},{\"internalType\":\"string\",\"name\":\"_name\",\"type\":\"string\",\"components\":[]},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\",\"components\":[]},{\"internalType\":\"uint8\",\"name\":\"_decimals\",\"type\":\"uint8\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"deployERC20\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"grantRole\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_erc20Address\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"lastBatchNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_invalidation_id\",\"type\":\"bytes32\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"lastLogicCallNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenContract\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"_newGravityAddress\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"bool\",\"name\":\"isCosmosToken\",\"type\":\"bool\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"migrateToken\",\"outputs\":[]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"migration\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"migrationHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"pause\",\"outputs\":[]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"paused\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_nonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"_newDestination\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"redeemVoucher\",\"outputs\":[]},{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"renounceOwnership\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"renounceRole\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"revokeRole\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"safeTransferSelf\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenContract\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"_destination\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"sendToCosmos\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenContract\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"_destination\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"sendToCronos\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_anyoneCanRelay\",\"type\":\"bool\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"setAnyoneCanRelay\",\"outputs\":[]},{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"startMigration\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_RevertedVouchers\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"tokenContract\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"destination\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_gravityId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_invalidationMapping\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_lastBatchNonces\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_lastEventNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_lastRevertedNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_lastValsetCheckpoint\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_lastValsetNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"state_powerThreshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\",\"components\":[]}]},{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"stopMigration\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"struct ValsetArgs\",\"name\":\"_currentValset\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"valsetNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"rewardToken\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"struct ValSignature[]\",\"name\":\"_sigs\",\"type\":\"tuple[]\",\"components\":[{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\",\"components\":[]}]},{\"internalType\":\"struct PaymentArgs\",\"name\":\"_payments\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"address[]\",\"name\":\"destinations\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"fees\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"feePaymentAddress\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"uint256\",\"name\":\"_batchNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"_tokenContract\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"_batchTimeout\",\"type\":\"uint256\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"submitBatch\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"struct ValsetArgs\",\"name\":\"_currentValset\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"valsetNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"rewardToken\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"struct ValSignature[]\",\"name\":\"_sigs\",\"type\":\"tuple[]\",\"components\":[{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\",\"components\":[]}]},{\"internalType\":\"address\",\"name\":\"_paymentAddress\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"struct LogicCallArgs\",\"name\":\"_args\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"uint256[]\",\"name\":\"transferAmounts\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"address[]\",\"name\":\"transferTokenContracts\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"feeAmounts\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"address[]\",\"name\":\"feeTokenContracts\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"logicContractAddress\",\"type\":\"address\",\"components\":[]},{\"internalType\":\"bytes\",\"name\":\"payload\",\"type\":\"bytes\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"timeOut\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"invalidationId\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"invalidationNonce\",\"type\":\"uint256\",\"components\":[]}]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"submitLogicCall\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\",\"components\":[]}],\"stateMutability\":\"view\",\"type\":\"function\",\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\",\"components\":[]}]},{\"inputs\":[{\"internalType\":\"struct ValsetArgs\",\"name\":\"_currentValset\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"valsetNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"rewardToken\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"struct ValSignature[]\",\"name\":\"_sigs\",\"type\":\"tuple[]\",\"components\":[{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\",\"components\":[]}]},{\"internalType\":\"bytes32\",\"name\":\"_theHash\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"_powerThreshold\",\"type\":\"uint256\",\"components\":[]}],\"stateMutability\":\"pure\",\"type\":\"function\",\"name\":\"testCheckValidatorSignatures\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"struct ValsetArgs\",\"name\":\"_valsetArgs\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"valsetNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"rewardToken\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"bytes32\",\"name\":\"_gravityId\",\"type\":\"bytes32\",\"components\":[]}],\"stateMutability\":\"pure\",\"type\":\"function\",\"name\":\"testMakeCheckpoint\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"transferOwnership\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_newAdmin\",\"type\":\"address\",\"components\":[]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"transferRelayerAdmin\",\"outputs\":[]},{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"unpause\",\"outputs\":[]},{\"inputs\":[{\"internalType\":\"struct ValsetArgs\",\"name\":\"_newValset\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"valsetNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"rewardToken\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"struct ValsetArgs\",\"name\":\"_currentValset\",\"type\":\"tuple\",\"components\":[{\"internalType\":\"address[]\",\"name\":\"validators\",\"type\":\"address[]\",\"components\":[]},{\"internalType\":\"uint256[]\",\"name\":\"powers\",\"type\":\"uint256[]\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"valsetNonce\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"uint256\",\"name\":\"rewardAmount\",\"type\":\"uint256\",\"components\":[]},{\"internalType\":\"address\",\"name\":\"rewardToken\",\"type\":\"address\",\"components\":[]}]},{\"internalType\":\"struct ValSignature[]\",\"name\":\"_sigs\",\"type\":\"tuple[]\",\"components\":[{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\",\"components\":[]},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\",\"components\":[]}]}],\"stateMutability\":\"nonpayable\",\"type\":\"function\",\"name\":\"updateValset\",\"outputs\":[]}]") . expect ("invalid abi")
+            ethers::core::utils::__serde_json::from_str(__ABI).expect("invalid abi")
         });
     pub struct Gravity<M>(ethers::contract::Contract<M>);
     impl<M> Clone for Gravity<M> {
@@ -32,7 +34,7 @@ pub mod gravity {
             &self.0
         }
     }
-    impl<M: ethers::providers::Middleware> std::fmt::Debug for Gravity<M> {
+    impl<M> std::fmt::Debug for Gravity<M> {
         fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
             f.debug_tuple(stringify!(Gravity))
                 .field(&self.address())
@@ -986,13 +988,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(name = "AnyoneCanRelay", abi = "AnyoneCanRelay(bool)")]
     pub struct AnyoneCanRelayFilter {
@@ -1001,13 +1003,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(
         name = "ERC20DeployedEvent",
@@ -1025,13 +1027,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(
         name = "LogicCallEvent",
@@ -1046,13 +1048,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(name = "Migration", abi = "Migration(bool)")]
     pub struct MigrationFilter {
@@ -1061,13 +1063,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(
         name = "OwnershipTransferred",
@@ -1082,13 +1084,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(name = "Paused", abi = "Paused(address)")]
     pub struct PausedFilter {
@@ -1097,13 +1099,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(
         name = "RoleAdminChanged",
@@ -1120,13 +1122,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(name = "RoleGranted", abi = "RoleGranted(bytes32,address,address)")]
     pub struct RoleGrantedFilter {
@@ -1140,13 +1142,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(name = "RoleRevoked", abi = "RoleRevoked(bytes32,address,address)")]
     pub struct RoleRevokedFilter {
@@ -1160,13 +1162,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(
         name = "SendToCosmosEvent",
@@ -1185,13 +1187,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(
         name = "TransactionBatchExecutedEvent",
@@ -1207,13 +1209,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(name = "Unpaused", abi = "Unpaused(address)")]
     pub struct UnpausedFilter {
@@ -1222,13 +1224,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthEvent,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethevent(
         name = "ValsetUpdatedEvent",
@@ -1339,13 +1341,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "DEFAULT_ADMIN_ROLE", abi = "DEFAULT_ADMIN_ROLE()")]
     pub struct DefaultAdminRoleCall;
@@ -1353,13 +1355,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "MIGRATION_PERIOD", abi = "MIGRATION_PERIOD()")]
     pub struct MigrationPeriodCall;
@@ -1367,13 +1369,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "RELAYER", abi = "RELAYER()")]
     pub struct RelayerCall;
@@ -1381,13 +1383,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "RELAYER_ADMIN", abi = "RELAYER_ADMIN()")]
     pub struct RelayerAdminCall;
@@ -1395,13 +1397,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "anyoneCanRelay", abi = "anyoneCanRelay()")]
     pub struct AnyoneCanRelayCall;
@@ -1409,13 +1411,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "deployERC20", abi = "deployERC20(string,string,string,uint8)")]
     pub struct DeployERC20Call {
@@ -1428,13 +1430,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "getRoleAdmin", abi = "getRoleAdmin(bytes32)")]
     pub struct GetRoleAdminCall {
@@ -1444,13 +1446,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "grantRole", abi = "grantRole(bytes32,address)")]
     pub struct GrantRoleCall {
@@ -1461,13 +1463,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "hasRole", abi = "hasRole(bytes32,address)")]
     pub struct HasRoleCall {
@@ -1478,13 +1480,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "lastBatchNonce", abi = "lastBatchNonce(address)")]
     pub struct LastBatchNonceCall {
@@ -1494,13 +1496,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "lastLogicCallNonce", abi = "lastLogicCallNonce(bytes32)")]
     pub struct LastLogicCallNonceCall {
@@ -1510,13 +1512,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(
         name = "migrateToken",
@@ -1532,13 +1534,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "migration", abi = "migration()")]
     pub struct MigrationCall;
@@ -1546,13 +1548,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "migrationHeight", abi = "migrationHeight()")]
     pub struct MigrationHeightCall;
@@ -1560,13 +1562,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "owner", abi = "owner()")]
     pub struct OwnerCall;
@@ -1574,13 +1576,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "pause", abi = "pause()")]
     pub struct PauseCall;
@@ -1588,13 +1590,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "paused", abi = "paused()")]
     pub struct PausedCall;
@@ -1602,13 +1604,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "redeemVoucher", abi = "redeemVoucher(uint256,address)")]
     pub struct RedeemVoucherCall {
@@ -1619,13 +1621,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "renounceOwnership", abi = "renounceOwnership()")]
     pub struct RenounceOwnershipCall;
@@ -1633,13 +1635,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "renounceRole", abi = "renounceRole(bytes32,address)")]
     pub struct RenounceRoleCall {
@@ -1650,13 +1652,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "revokeRole", abi = "revokeRole(bytes32,address)")]
     pub struct RevokeRoleCall {
@@ -1667,13 +1669,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(
         name = "safeTransferSelf",
@@ -1688,13 +1690,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "sendToCosmos", abi = "sendToCosmos(address,bytes32,uint256)")]
     pub struct SendToCosmosCall {
@@ -1706,13 +1708,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "sendToCronos", abi = "sendToCronos(address,address,uint256)")]
     pub struct SendToCronosCall {
@@ -1724,13 +1726,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "setAnyoneCanRelay", abi = "setAnyoneCanRelay(bool)")]
     pub struct SetAnyoneCanRelayCall {
@@ -1740,13 +1742,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "startMigration", abi = "startMigration()")]
     pub struct StartMigrationCall;
@@ -1754,13 +1756,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(
         name = "state_RevertedVouchers",
@@ -1771,13 +1773,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "state_gravityId", abi = "state_gravityId()")]
     pub struct StateGravityIdCall;
@@ -1785,13 +1787,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(
         name = "state_invalidationMapping",
@@ -1802,13 +1804,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "state_lastBatchNonces", abi = "state_lastBatchNonces(address)")]
     pub struct StateLastBatchNoncesCall(pub ethers::core::types::Address);
@@ -1816,13 +1818,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "state_lastEventNonce", abi = "state_lastEventNonce()")]
     pub struct StateLastEventNonceCall;
@@ -1830,13 +1832,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "state_lastRevertedNonce", abi = "state_lastRevertedNonce()")]
     pub struct StateLastRevertedNonceCall;
@@ -1844,13 +1846,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(
         name = "state_lastValsetCheckpoint",
@@ -1861,13 +1863,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "state_lastValsetNonce", abi = "state_lastValsetNonce()")]
     pub struct StateLastValsetNonceCall;
@@ -1875,13 +1877,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "state_powerThreshold", abi = "state_powerThreshold()")]
     pub struct StatePowerThresholdCall;
@@ -1889,13 +1891,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "stopMigration", abi = "stopMigration()")]
     pub struct StopMigrationCall;
@@ -1903,13 +1905,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(
         name = "submitBatch",
@@ -1927,13 +1929,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(
         name = "submitLogicCall",
@@ -1949,13 +1951,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "supportsInterface", abi = "supportsInterface(bytes4)")]
     pub struct SupportsInterfaceCall {
@@ -1965,13 +1967,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(
         name = "testCheckValidatorSignatures",
@@ -1987,13 +1989,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(
         name = "testMakeCheckpoint",
@@ -2007,13 +2009,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "transferOwnership", abi = "transferOwnership(address)")]
     pub struct TransferOwnershipCall {
@@ -2023,13 +2025,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "transferRelayerAdmin", abi = "transferRelayerAdmin(address)")]
     pub struct TransferRelayerAdminCall {
@@ -2039,13 +2041,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(name = "unpause", abi = "unpause()")]
     pub struct UnpauseCall;
@@ -2053,13 +2055,13 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthCall,
         ethers :: contract :: EthDisplay,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     #[ethcall(
         name = "updateValset",
@@ -2692,182 +2694,182 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct DefaultAdminRoleReturn(pub [u8; 32]);
     #[doc = "Container type for all return fields from the `MIGRATION_PERIOD` function with signature `MIGRATION_PERIOD()` and selector `[40, 183, 199, 240]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct MigrationPeriodReturn(pub ethers::core::types::U256);
     #[doc = "Container type for all return fields from the `RELAYER` function with signature `RELAYER()` and selector `[36, 131, 231, 21]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct RelayerReturn(pub [u8; 32]);
     #[doc = "Container type for all return fields from the `RELAYER_ADMIN` function with signature `RELAYER_ADMIN()` and selector `[169, 124, 207, 211]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct RelayerAdminReturn(pub [u8; 32]);
     #[doc = "Container type for all return fields from the `anyoneCanRelay` function with signature `anyoneCanRelay()` and selector `[60, 3, 39, 18]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct AnyoneCanRelayReturn(pub bool);
     #[doc = "Container type for all return fields from the `getRoleAdmin` function with signature `getRoleAdmin(bytes32)` and selector `[36, 138, 156, 163]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct GetRoleAdminReturn(pub [u8; 32]);
     #[doc = "Container type for all return fields from the `hasRole` function with signature `hasRole(bytes32,address)` and selector `[145, 209, 72, 84]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct HasRoleReturn(pub bool);
     #[doc = "Container type for all return fields from the `lastBatchNonce` function with signature `lastBatchNonce(address)` and selector `[1, 27, 33, 116]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct LastBatchNonceReturn(pub ethers::core::types::U256);
     #[doc = "Container type for all return fields from the `lastLogicCallNonce` function with signature `lastLogicCallNonce(bytes32)` and selector `[201, 209, 148, 213]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct LastLogicCallNonceReturn(pub ethers::core::types::U256);
     #[doc = "Container type for all return fields from the `migration` function with signature `migration()` and selector `[23, 5, 163, 189]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct MigrationReturn(pub bool);
     #[doc = "Container type for all return fields from the `migrationHeight` function with signature `migrationHeight()` and selector `[96, 150, 158, 134]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct MigrationHeightReturn(pub ethers::core::types::U256);
     #[doc = "Container type for all return fields from the `owner` function with signature `owner()` and selector `[141, 165, 203, 91]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct OwnerReturn(pub ethers::core::types::Address);
     #[doc = "Container type for all return fields from the `paused` function with signature `paused()` and selector `[92, 151, 90, 187]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct PausedReturn(pub bool);
     #[doc = "Container type for all return fields from the `state_RevertedVouchers` function with signature `state_RevertedVouchers(uint256)` and selector `[125, 85, 24, 11]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct StateRevertedVouchersReturn {
         pub token_contract: ethers::core::types::Address,
@@ -2878,117 +2880,117 @@ pub mod gravity {
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct StateGravityIdReturn(pub [u8; 32]);
     #[doc = "Container type for all return fields from the `state_invalidationMapping` function with signature `state_invalidationMapping(bytes32)` and selector `[125, 251, 111, 134]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct StateInvalidationMappingReturn(pub ethers::core::types::U256);
     #[doc = "Container type for all return fields from the `state_lastBatchNonces` function with signature `state_lastBatchNonces(address)` and selector `[223, 151, 23, 75]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct StateLastBatchNoncesReturn(pub ethers::core::types::U256);
     #[doc = "Container type for all return fields from the `state_lastEventNonce` function with signature `state_lastEventNonce()` and selector `[115, 178, 5, 71]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct StateLastEventNonceReturn(pub ethers::core::types::U256);
     #[doc = "Container type for all return fields from the `state_lastRevertedNonce` function with signature `state_lastRevertedNonce()` and selector `[241, 109, 103, 204]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct StateLastRevertedNonceReturn(pub ethers::core::types::U256);
     #[doc = "Container type for all return fields from the `state_lastValsetCheckpoint` function with signature `state_lastValsetCheckpoint()` and selector `[242, 181, 51, 7]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct StateLastValsetCheckpointReturn(pub [u8; 32]);
     #[doc = "Container type for all return fields from the `state_lastValsetNonce` function with signature `state_lastValsetNonce()` and selector `[181, 101, 97, 254]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct StateLastValsetNonceReturn(pub ethers::core::types::U256);
     #[doc = "Container type for all return fields from the `state_powerThreshold` function with signature `state_powerThreshold()` and selector `[229, 162, 181, 210]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct StatePowerThresholdReturn(pub ethers::core::types::U256);
     #[doc = "Container type for all return fields from the `supportsInterface` function with signature `supportsInterface(bytes4)` and selector `[1, 255, 201, 167]`"]
     #[derive(
         Clone,
         Debug,
-        Default,
         Eq,
         PartialEq,
         ethers :: contract :: EthAbiType,
         ethers :: contract :: EthAbiCodec,
         serde :: Deserialize,
         serde :: Serialize,
+        Default,
     )]
     pub struct SupportsInterfaceReturn(pub bool);
     #[doc = "`LogicCallArgs(uint256[],address[],uint256[],address[],address,bytes,uint256,bytes32,uint256)`"]
