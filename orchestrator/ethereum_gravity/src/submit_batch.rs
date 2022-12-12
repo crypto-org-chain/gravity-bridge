@@ -146,6 +146,9 @@ pub fn build_submit_batch_contract_call<S: Signer + 'static>(
     let sig_data = current_valset.order_sigs(&hash, confirms)?;
     let (amounts, destinations, fees) = batch.get_checkpoint_values();
 
+    info!("submit batch with params fee payment address {:?}, batch nonce {:?}, token contract {:?}, batch timed out {:?}",
+        payment_address, new_batch_nonce, batch.token_contract, batch.batch_timeout);
+
     let contract_call = Gravity::new(gravity_contract_address, eth_client.clone())
         .submit_batch(
             ValsetArgs {
