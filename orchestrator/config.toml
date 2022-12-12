@@ -1,0 +1,18 @@
+keystore = "/tmp/keystore"
+
+[gravity]
+contract = "0xAA1Ca02916a7C30d827226450540b6240E4a93CF"
+fees_denom = "basetcro"
+
+[ethereum]
+key_derivation_path = "m/44'/60'/0'/0/0"
+rpc = "https://goerli.infura.io/v3/a15b2bc840d34eefb60f1df61cee5c9e"
+
+[cosmos]
+gas_price = { amount = 5000000000000, denom = "basetcro" }
+grpc = "https://grpc-p11.cronos.org:443"
+key_derivation_path = "m/44'/60'/0'/0/0"
+prefix = "tcrc"
+
+[metrics]
+listen_addr = "127.0.0.1:3000"
