@@ -41,12 +41,8 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
 ) -> Result<U64, GravityError> {
     let prefix = contact.get_prefix();
     let our_cosmos_address = cosmos_key.to_address(&prefix).unwrap();
-    let mut latest_block = get_block_number_with_retry(eth_client.clone()).await;
-    if latest_block >= block_delay {
-        latest_block = latest_block - block_delay;
-    } else {
-        latest_block = U64::zero();
-    }
+    let latest_block = get_block_number_with_retry(eth_client.clone()).await;
+    let latest_block = latest_block.saturating_sub(block_delay);
 
     let mut ending_block = starting_block + blocks_to_search;
     if ending_block > latest_block {
