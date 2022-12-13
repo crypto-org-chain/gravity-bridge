@@ -3,7 +3,7 @@ module github.com/peggyjv/gravity-bridge
 go 1.18
 
 require (
-	github.com/cosmos/cosmos-sdk v0.46.7
+	github.com/cosmos/cosmos-sdk v0.47.0-alpha2
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/miguelmota/go-ethereum-hdwallet v0.1.1
@@ -11,7 +11,7 @@ require (
 	github.com/peggyjv/gravity-bridge/module/v2 v2.0.0-20220414231624-592368d8e8e1
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
-	github.com/tendermint/tendermint v0.34.24
+	github.com/tendermint/tendermint v0.37.0-rc1
 )
 
 require (
