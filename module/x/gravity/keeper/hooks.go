@@ -82,6 +82,10 @@ func (k Keeper) AfterSendToCosmosEvent(ctx sdk.Context, event types.SendToCosmos
 	}
 }
 
+func (h Hooks) AfterUnbondingInitiated(_ sdk.Context, _ uint64) error {
+	return nil
+}
+
 func (k *Keeper) SetHooks(sh types.GravityHooks) *Keeper {
 	if k.hooks != nil {
 		panic("cannot set gravity hooks twice")

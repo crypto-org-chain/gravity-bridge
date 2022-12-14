@@ -3,13 +3,13 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/ibc-go/v5/testing/simapp/helpers"
 	"io/ioutil"
 
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 	"github.com/cosmos/cosmos-sdk/types/module"
