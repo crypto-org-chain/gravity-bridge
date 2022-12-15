@@ -2,7 +2,7 @@
 //! or a transaction batch update. It then responds to these events by performing actions on the Cosmos chain if required
 
 use crate::get_with_retry::get_block_number_with_retry;
-use crate::get_with_retry::get_chain_id_with_retry;
+use crate::get_with_retry::get_network_id_with_retry;
 use crate::metrics;
 use cosmos_gravity::build;
 use cosmos_gravity::crypto::CosmosSigner;
@@ -274,18 +274,16 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
 ///
 ///
 pub async fn get_block_delay<S: Signer>(eth_client: EthClient<S>) -> Result<U64, GravityError> {
-    // TODO(bolten): get_net_version() exists on the version of ethers we are currently
-    // depending on, but it's broken, so we're relying on chain ID
-    let chain_id_result = get_chain_id_with_retry(eth_client.clone()).await;
-    let chain_id = downcast_to_u64(chain_id_result);
-    if chain_id.is_none() {
+    let network_id_string = get_network_id_with_retry(eth_client.clone()).await;
+    let network_id = network_id_string.parse::<u64>();
+    if network_id.is_err() {
         return Err(GravityError::EthereumBadDataError(format!(
-            "Chain ID is larger than u64 max: {}",
-            chain_id_result
+            "Chain ID is not valid {}",
+            network_id.err().unwrap()
         )));
     }
 
-    match chain_id.unwrap() {
+    match network_id.unwrap() {
         // Mainline Ethereum, Ethereum classic, or the Ropsten, Kotti, Mordor testnets
         // all Ethereum proof of stake Chains
         1 | 3 | 6 | 7 => Ok(96u8.into()),

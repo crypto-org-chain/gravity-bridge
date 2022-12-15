@@ -160,6 +160,8 @@ pub async fn eth_oracle_main_loop<S: Signer + 'static, CS: CosmosSigner>(
             exit(1);
         }
     };
+
+    info!("Using block delay {:?}", block_delay);
     let mut last_checked_block = get_last_checked_block(
         grpc_client.clone(),
         our_cosmos_address,
