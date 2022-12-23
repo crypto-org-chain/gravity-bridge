@@ -3,8 +3,8 @@ package simulation
 import (
 	"fmt"
 	"math/rand"
-	"time"
 
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
@@ -42,16 +42,22 @@ var (
 	TypeMsgRequestBatchTx               = sdk.MsgTypeURL(&types.MsgRequestBatchTx{})
 	TypeMsgCancelSendToEthereum         = sdk.MsgTypeURL(&types.MsgCancelSendToEthereum{})
 	TypeMsgEthereumHeightVote           = sdk.MsgTypeURL(&types.MsgEthereumHeightVote{})
+
+	eventTypes = []string{"SendToCosmosEvent", "BatchExecutedEvent", "ContractCallExecutedEvent", "ERC20DeployedEvent", "SignerSetTxExecutedEvent"}
+	txTypes    = []string{"SignerSetTx", "BatchTx"}
 )
 
 type simulateContext struct {
+	ctx sdk.Context
 	gk  keeper.Keeper
 	ak  types.AccountKeeper
 	bk  types.BankKeeper
 	cdc codec.JSONCodec
+	r   *rand.Rand
+	app *baseapp.BaseApp
 }
 
-type opGenerator func(ctx *simulateContext) simtypes.Operation
+type opGenerator func(codec.JSONCodec, keeper.Keeper, types.AccountKeeper, types.BankKeeper) simtypes.Operation
 
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
@@ -68,13 +74,6 @@ func WeightedOperations(
 		OpWeightMsgEthereumHeightVote:           SimulateMsgEthereumHeightVote,
 	}
 
-	ctx := &simulateContext{
-		gk:  gk,
-		ak:  ak,
-		bk:  bk,
-		cdc: cdc,
-	}
-
 	for k, f := range opFuncs {
 		var v int
 		appParams.GetOrGenerate(cdc, k, &v, nil,
@@ -86,22 +85,19 @@ func WeightedOperations(
 			ops,
 			simulation.NewWeightedOperation(
 				v,
-				f(ctx),
+				f(cdc, gk, ak, bk),
 			),
 		)
 	}
 	return ops
 }
 
-func SimulateMsgDeleteKeys(simCtx *simulateContext) simtypes.Operation {
+func SimulateMsgDeleteKeys(cdc codec.JSONCodec, gk keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		ak := simCtx.ak
-		bk := simCtx.bk
-		sk := simCtx.gk.StakingKeeper
-		cdc := simCtx.cdc
+		sk := gk.StakingKeeper
 
 		val, err := randomValidator(ctx, r, sk, accs)
 		if err != nil {
@@ -157,21 +153,55 @@ func SimulateMsgDeleteKeys(simCtx *simulateContext) simtypes.Operation {
 	}
 }
 
-func SimulateMsgSubmitEthereumTxConfirmation(simCtx *simulateContext) simtypes.Operation {
-	return simulateMsgSubmitEthereumTxConfirmation(simCtx)
-}
-
-func SimulateMsgSubmitEthereumEvent(simCtx *simulateContext) simtypes.Operation {
-	return simulateMsgSubmitEthereumEvent(simCtx)
-}
-
-func SimulateMsgSendToEthereum(simCtx *simulateContext) simtypes.Operation {
+func SimulateMsgSubmitEthereumTxConfirmation(cdc codec.JSONCodec, gk keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		ak := simCtx.ak
-		bk := simCtx.bk
+		acc, err := randomValidator(ctx, r, gk.StakingKeeper, accs)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "no validator found"), nil, err
+		}
+		simCtx := &simulateContext{
+			ctx: ctx,
+			gk:  gk,
+			ak:  ak,
+			bk:  bk,
+			cdc: cdc,
+			r:   r,
+			app: app,
+		}
+		return simulateMsgSubmitEthereumTxConfirmation(simCtx, acc, eventTypes[r.Intn(len(eventTypes))])
+	}
+}
+
+func SimulateMsgSubmitEthereumEvent(cdc codec.JSONCodec, gk keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper) simtypes.Operation {
+	return func(
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
+		accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		acc, err := randomValidator(ctx, r, gk.StakingKeeper, accs)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumEvent, "no validator found"), nil, err
+		}
+		simCtx := &simulateContext{
+			ctx: ctx,
+			gk:  gk,
+			ak:  ak,
+			bk:  bk,
+			cdc: cdc,
+			r:   r,
+			app: app,
+		}
+		return simulateMsgSubmitEthereumEvent(simCtx, acc, eventTypes[r.Intn(len(eventTypes))])
+	}
+}
+
+func SimulateMsgSendToEthereum(cdc codec.JSONCodec, gk keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper) simtypes.Operation {
+	return func(
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
+		accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		acc, _ := simtypes.RandomAcc(r, accs)
 		expendable := bk.SpendableCoin(ctx, acc.Address, sdk.DefaultBondDenom)
 		amount := sdk.NewCoin(sdk.DefaultBondDenom, simtypes.RandomAmount(r, expendable.Amount))
@@ -201,117 +231,284 @@ func SimulateMsgSendToEthereum(simCtx *simulateContext) simtypes.Operation {
 
 		oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
 
-		whenCall := ctx.BlockHeader().Time.Add(time.Duration(r.Intn(maxWaitSeconds)+1) * time.Second)
-		ops = append(ops, simtypes.FutureOperation{
-			BlockTime: whenCall,
-			Op:        simulateMsgRequestBatchTx(simCtx),
-		})
+		// whenCall := ctx.BlockHeader().Time.Add(time.Duration(r.Intn(maxWaitSeconds)+1) * time.Second)
+		// ops = append(ops, simtypes.FutureOperation{
+		// 	BlockTime: whenCall,
+		// 	Op:        simulateMsgRequestBatchTx(simCtx),
+		// })
 		return oper, ops, err
 	}
 }
 
-func SimulateMsgRequestBatchTx(simCtx *simulateContext) simtypes.Operation {
-	return simulateMsgRequestBatchTx(simCtx)
-}
-
-func SimulateMsgCancelSendToEthereum(simCtx *simulateContext) simtypes.Operation {
-	return simulateMsgCancelSendToEthereum(simCtx)
-}
-
-func SimulateMsgEthereumHeightVote(simCtx *simulateContext) simtypes.Operation {
-	return simulateMsgEthereumHeightVote(simCtx)
-}
-
-func simulateMsgSubmitEthereumTxConfirmation(simCtx *simulateContext, txType string) simtypes.Operation {
+func SimulateMsgRequestBatchTx(cdc codec.JSONCodec, gk keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		gk := simCtx.gk
+		simCtx := &simulateContext{
+			ctx: ctx,
+			gk:  gk,
+			ak:  ak,
+			bk:  bk,
+			cdc: cdc,
+			r:   r,
+			app: app,
+		}
+		return simulateMsgRequestBatchTx(simCtx)
+	}
+}
 
-		acc, err := randomValidator(ctx, r, gk.StakingKeeper, accs)
+func SimulateMsgCancelSendToEthereum(cdc codec.JSONCodec, gk keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper) simtypes.Operation {
+	return func(
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
+		accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		simCtx := &simulateContext{
+			ctx: ctx,
+			gk:  gk,
+			ak:  ak,
+			bk:  bk,
+			cdc: cdc,
+			r:   r,
+			app: app,
+		}
+		return simulateMsgCancelSendToEthereum(simCtx)
+	}
+}
+
+func SimulateMsgEthereumHeightVote(cdc codec.JSONCodec, gk keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper) simtypes.Operation {
+	return func(
+		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
+		accs []simtypes.Account, chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		simCtx := &simulateContext{
+			ctx: ctx,
+			gk:  gk,
+			ak:  ak,
+			bk:  bk,
+			cdc: cdc,
+			r:   r,
+			app: app,
+		}
+		return simulateMsgEthereumHeightVote(simCtx)
+	}
+}
+
+func simulateMsgSubmitEthereumTxConfirmation(simCtx *simulateContext, acc simtypes.Account, txType string) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+	app := simCtx.app
+	r := simCtx.r
+	ctx := simCtx.ctx
+	ak := simCtx.ak
+	bk := simCtx.bk
+	gk := simCtx.gk
+
+	orchAddr := acc.Address.String()
+	val := gk.GetOrchestratorValidatorAddress(ctx, acc.Address)
+	if val == nil {
+		return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "sim account is not validator"), nil, nil
+	}
+
+	ethPrivKey, err := crypto.ToECDSA(acc.PrivKey.Bytes())
+	if err != nil {
+		return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "can not get eth private key"), nil, err
+	}
+	ethAddr := common.BytesToAddress(acc.Address.Bytes()).String()
+
+	var msg *types.MsgSubmitEthereumTxConfirmation
+
+	switch txType {
+	case "SignerSetTx":
+		tx := gk.GetLatestSignerSetTx(ctx)
+
+		if tx == nil {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, ""), nil, nil
+		}
+
+		gravityId := gk.GetParams(ctx).GravityId
+		checkpoint := tx.GetCheckpoint([]byte(gravityId))
+		signature, err := types.NewEthereumSignature(checkpoint, ethPrivKey)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "no validator found"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "can not sign the msg"), nil, err
 		}
-		ethPrivKey, err := crypto.ToECDSA(acc.PrivKey.Bytes())
+
+		signerSetTxConfirmation := &types.SignerSetTxConfirmation{
+			SignerSetNonce: tx.Nonce,
+			EthereumSigner: ethAddr,
+			Signature:      signature,
+		}
+
+		confirmation, err := types.PackConfirmation(signerSetTxConfirmation)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "can not get eth private key"), nil, err
-		}
-		ethAddr := common.BytesToAddress(acc.Address.Bytes()).String()
-		orchAddr := acc.Address.String()
-
-		var msg *types.MsgSubmitEthereumTxConfirmation
-
-		switch txType {
-		case "SignerSetTx":
-			tx := gk.GetLatestSignerSetTx(ctx)
-
-			if tx == nil {
-				return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, ""), nil, nil
-			}
-
-			gravityId := gk.GetParams(ctx).GravityId
-			checkpoint := tx.GetCheckpoint([]byte(gravityId))
-			signature, err := types.NewEthereumSignature(checkpoint, ethPrivKey)
-			if err != nil {
-				return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "can not sign the msg"), nil, err
-			}
-
-			signerSetTxConfirmation := &types.SignerSetTxConfirmation{
-				SignerSetNonce: tx.Nonce,
-				EthereumSigner: ethAddr,
-				Signature:      signature,
-			}
-
-			confirmation, err := types.PackConfirmation(signerSetTxConfirmation)
-			if err != nil {
-				return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "failed to pack the confirmation"), nil, err
-			}
-
-			msg = &types.MsgSubmitEthereumTxConfirmation{
-				Confirmation: confirmation,
-				Signer:       orchAddr,
-			}
-
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "failed to pack the confirmation"), nil, err
 		}
 
+		msg = &types.MsgSubmitEthereumTxConfirmation{
+			Confirmation: confirmation,
+			Signer:       orchAddr,
+		}
+
+	case "BatchTx":
+		_, tokenContract, err := gk.DenomToERC20Lookup(ctx, sdk.DefaultBondDenom)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "can not find token contract"), nil, err
+		}
+		resp, err := gk.LastBatchTx(ctx, &types.LastBatchTxRequest{TokenContract: tokenContract.Hex()})
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "can not fetch the last batch tx"), nil, err
+		}
+		batch := resp.Batch
+		if batch == nil {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "there is no batchtx"), nil, err
+		}
+
+		gravityId := gk.GetParams(ctx).GravityId
+		checkpoint := batch.GetCheckpoint([]byte(gravityId))
+		signature, err := types.NewEthereumSignature(checkpoint, ethPrivKey)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "can not sign the msg"), nil, err
+		}
+
+		batchTxConfirmation := &types.BatchTxConfirmation{
+			TokenContract:  batch.TokenContract,
+			BatchNonce:     batch.BatchNonce,
+			EthereumSigner: ethAddr,
+			Signature:      signature,
+		}
+
+		confirmation, err := types.PackConfirmation(batchTxConfirmation)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "failed to pack the confirmation"), nil, err
+		}
+
+		msg = &types.MsgSubmitEthereumTxConfirmation{
+			Confirmation: confirmation,
+			Signer:       orchAddr,
+		}
+
+	default:
+		return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "not supported tx type"), nil, err
 	}
+
+	txCtx := simulation.OperationInput{
+		R:               r,
+		App:             app,
+		TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
+		Cdc:             nil,
+		Msg:             msg,
+		MsgType:         msg.Type(),
+		Context:         ctx,
+		SimAccount:      acc,
+		AccountKeeper:   ak,
+		Bankkeeper:      bk,
+		ModuleName:      types.ModuleName,
+		CoinsSpentInMsg: sdk.Coins{},
+	}
+
+	oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
+	return oper, ops, err
 }
 
-func simulateMsgSubmitEthereumEvent(simCtx *simulateContext) simtypes.Operation {
-	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
-		accs []simtypes.Account, chainID string,
-	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		return simtypes.OperationMsg{}, nil, nil
+func simulateMsgSubmitEthereumEvent(simCtx *simulateContext, acc simtypes.Account, eventType string) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+	app := simCtx.app
+	r := simCtx.r
+	ctx := simCtx.ctx
+	ak := simCtx.ak
+	bk := simCtx.bk
+	gk := simCtx.gk
+
+	orchAddr := acc.Address.String()
+	val := gk.GetOrchestratorValidatorAddress(ctx, acc.Address)
+	if val == nil {
+		return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumEvent, "sim account is not validator"), nil, nil
 	}
+
+	var event types.EthereumEvent
+	switch eventType {
+	case "SendToCosmosEvent":
+		event = &types.SendToCosmosEvent{
+			EventNonce:     1,
+			TokenContract:  randomEthAddress(r).String(),
+			Amount:         simtypes.RandomAmount(r, math.NewIntFromUint64(1e18)),
+			EthereumSender: randomEthAddress(r).String(),
+			CosmosReceiver: simtypes.RandomAccounts(r, 1)[0].Address.String(),
+			EthereumHeight: uint64(r.Int63n(1e10)),
+		}
+
+	case "BatchExecutedEvent":
+		event = &types.BatchExecutedEvent{
+			TokenContract:  randomEthAddress(r).String(),
+			EventNonce:     uint64(r.Int63n(1e10)),
+			EthereumHeight: uint64(r.Int63n(1e10)),
+			BatchNonce:     uint64(r.Int63n(1e10)),
+		}
+
+	case "ContractCallExecutedEvent":
+		event = &types.ContractCallExecutedEvent{
+			EventNonce:        uint64(r.Int63n(1e10)),
+			InvalidationNonce: uint64(r.Int63n(1e10)),
+			EthereumHeight:    uint64(r.Int63n(1e10)),
+		}
+
+	case "ERC20DeployedEvent":
+		event = &types.ERC20DeployedEvent{
+			EventNonce:    uint64(r.Int63n(1e10)),
+			CosmosDenom:   sdk.DefaultBondDenom,
+			TokenContract: randomEthAddress(r).String(),
+		}
+
+	case "SignerSetTxExecutedEvent":
+		event = &types.SignerSetTxExecutedEvent{
+			EventNonce:       uint64(r.Int63n(1e10)),
+			SignerSetTxNonce: uint64(r.Int63n(1e10)),
+			EthereumHeight:   uint64(r.Int63n(1e10)),
+			Members: []*types.EthereumSigner{
+				&types.EthereumSigner{
+					Power:           uint64(r.Int63n(1e10)),
+					EthereumAddress: randomEthAddress(r).String(),
+				},
+			},
+		}
+	}
+
+	packed, err := types.PackEvent(event)
+	if err != nil {
+		return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumEvent, "can not pack eth event"), nil, err
+	}
+
+	msg := &types.MsgSubmitEthereumEvent{
+		Event:  packed,
+		Signer: orchAddr,
+	}
+
+	txCtx := simulation.OperationInput{
+		R:               r,
+		App:             app,
+		TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
+		Cdc:             nil,
+		Msg:             msg,
+		MsgType:         msg.Type(),
+		Context:         ctx,
+		SimAccount:      acc,
+		AccountKeeper:   ak,
+		Bankkeeper:      bk,
+		ModuleName:      types.ModuleName,
+		CoinsSpentInMsg: sdk.Coins{},
+	}
+
+	oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
+	return oper, ops, err
 }
 
-func simulateMsgRequestBatchTx(simCtx *simulateContext) simtypes.Operation {
-	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
-		accs []simtypes.Account, chainID string,
-	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		return simtypes.OperationMsg{}, nil, nil
-	}
+func simulateMsgRequestBatchTx(simCtx *simulateContext) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+	return simtypes.OperationMsg{}, nil, nil
 }
 
-func simulateMsgCancelSendToEthereum(simCtx *simulateContext) simtypes.Operation {
-	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
-		accs []simtypes.Account, chainID string,
-	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		return simtypes.OperationMsg{}, nil, nil
-	}
+func simulateMsgCancelSendToEthereum(simCtx *simulateContext) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+	return simtypes.OperationMsg{}, nil, nil
 }
 
-func simulateMsgEthereumHeightVote(simCtx *simulateContext) simtypes.Operation {
-	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
-		accs []simtypes.Account, chainID string,
-	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		return simtypes.OperationMsg{}, nil, nil
-	}
+func simulateMsgEthereumHeightVote(simCtx *simulateContext) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+	return simtypes.OperationMsg{}, nil, nil
 }
 
 func randomEthAddress(r *rand.Rand) common.Address {
