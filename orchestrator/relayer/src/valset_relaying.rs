@@ -17,6 +17,7 @@ use tonic::transport::Channel;
 
 /// Check the last validator set on Ethereum, if it's lower than our latest validator
 /// set then we should package and submit the update as an Ethereum transaction
+#[allow(clippy::too_many_arguments)]
 pub async fn relay_valsets<S: Signer + 'static>(
     // the validator set currently in the contract on Ethereum
     current_eth_valset: Valset,

@@ -25,6 +25,7 @@ pub const TIMEOUT: Duration = Duration::from_secs(60);
 
 /// Send a transaction updating the eth address for the sending
 /// Cosmos address. The sending Cosmos address should be a validator
+#[allow(clippy::too_many_arguments)]
 pub async fn update_gravity_delegate_addresses<S: Signer + 'static, CS: CosmosSigner>(
     contact: &Contact,
     delegate_eth_address: EthAddress,
@@ -86,6 +87,7 @@ pub async fn update_gravity_delegate_addresses<S: Signer + 'static, CS: CosmosSi
 
 /// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
 /// they will require some time to be included in a batch
+#[allow(clippy::too_many_arguments)]
 pub async fn send_to_eth<CS: CosmosSigner>(
     cosmos_key: CS,
     cosmos_granter: Option<String>,
@@ -208,6 +210,7 @@ pub async fn send_messages<CS: CosmosSigner>(
     Ok(contact.wait_for_tx(response, TIMEOUT).await?)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn send_main_loop<CS: CosmosSigner>(
     contact: &Contact,
     cosmos_key: CS,
