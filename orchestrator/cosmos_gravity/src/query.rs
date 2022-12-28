@@ -106,7 +106,7 @@ pub async fn get_latest_batch(
     let request = client
         .last_batch_tx(LastBatchTxRequest { token_contract: format_eth_address(contract)})
         .await?;
-    return match request.into_inner().batch {
+    match request.into_inner().batch {
         Some(b) => TransactionBatch::from_proto(b),
         None => {
             Err(GravityError::CosmosGrpcError(CosmosGrpcError::BadResponse(String::from("no batch found"))))

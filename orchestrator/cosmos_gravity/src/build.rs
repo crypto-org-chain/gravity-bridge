@@ -123,8 +123,7 @@ pub async fn ethereum_vote_height_messages<CS: CosmosSigner>(
     };
     let msg = Msg::new("/gravity.v1.MsgEthereumHeightVote", msg);
 
-    let mut msgs = Vec::new();
-    msgs.push(msg);
+    let msgs = vec![msg];
 
     msgs
 }

@@ -24,9 +24,9 @@ impl Runnable for ShowEthKeyCmd {
         let address = verifying_key_to_address(&pub_key);
 
         if self.show_name {
-            print!("{}\t", name);
+            print!("{name}\t");
         }
 
-        println!("{:?}", address);
+        println!("{address:?}");
     }
 }

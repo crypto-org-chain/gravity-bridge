@@ -75,8 +75,7 @@ impl Runnable for EthToCosmosCmd {
 
             if erc20_balance == 0u8.into() {
                 panic!(
-                    "You have zero {} tokens, please double check your sender and erc20 addresses!",
-                    contract_address
+                    "You have zero {contract_address} tokens, please double check your sender and erc20 addresses!"
                 );
             } else if amount * times_u256 > erc20_balance {
                 panic!(
@@ -105,8 +104,8 @@ impl Runnable for EthToCosmosCmd {
                 )
                 .await;
                 match res {
-                    Ok(tx_id) => println!("Send to Cosmos txid: {}", tx_id),
-                    Err(e) => println!("Failed to send tokens! {:?}", e),
+                    Ok(tx_id) => println!("Send to Cosmos txid: {tx_id}"),
+                    Err(e) => println!("Failed to send tokens! {e:?}"),
                 }
             }
         })

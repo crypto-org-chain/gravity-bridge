@@ -13,7 +13,6 @@ use ethers::prelude::*;
 use ethers::types::Address as EthAddress;
 use gravity_abi::gravity::*;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use gravity_utils::ethereum::downcast_to_u64;
 use gravity_utils::types::EventNonceFilter;
 use gravity_utils::types::{FromLogs, FromLogsWithPrefix};
 use gravity_utils::{
@@ -234,9 +233,8 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
         while new_event_nonce != last_message_nonce {
             if error_count == 10 {
                 return Err(GravityError::InvalidBridgeStateError(
-                    format!("Claims did not process, trying to update but still on event nonce {},\
-                     retrying from block {} to block {} in a moment"
-                            , new_event_nonce , starting_block , ending_block),
+                    format!("Claims did not process, trying to update but still on event nonce {new_event_nonce},\
+                     retrying from block {starting_block} to block {ending_block} in a moment")
                 ));
             }
             info!("Waiting for claims to process, current on event nonce {}, trying to update to {}"

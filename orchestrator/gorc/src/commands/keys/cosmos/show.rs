@@ -19,6 +19,6 @@ impl Runnable for ShowCosmosKeyCmd {
             .to_address(config.cosmos.prefix.trim())
             .expect("Could not generate public key");
 
-        println!("{}\t{}", name, address)
+        println!("{name}\t{address}")
     }
 }

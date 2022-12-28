@@ -250,8 +250,7 @@ async fn submit_batches<S: Signer + 'static>(
                         total_cost / one_eth_f32()
                     );
 
-                    cost.gas_price = ((gas_price_as_f32 as u128 * eth_gas_price_multiplier as u128)
-                        as u128)
+                    cost.gas_price = (gas_price_as_f32 as u128 * eth_gas_price_multiplier as u128)
                         .into();
 
                     cost.gas = ((gas_as_f32 * eth_gas_multiplier) as u128).into();

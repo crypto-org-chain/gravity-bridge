@@ -36,13 +36,13 @@ pub fn one_atom() -> f64 {
 pub fn print_atom(input: Uint256) -> String {
     let float: f64 = input.to_string().parse().unwrap();
     let res = float / one_atom();
-    format!("{}", res)
+    format!("{res}")
 }
 
 pub fn print_eth(input: Uint256) -> String {
     let float: f64 = input.to_string().parse().unwrap();
     let res = float / one_eth();
-    format!("{}", res)
+    format!("{res}")
 }
 
 impl Runnable for CosmosToEthCmd {
@@ -62,7 +62,7 @@ impl Runnable for CosmosToEthCmd {
         let cosmos_address = cosmos_key.to_address(cosmos_prefix).unwrap();
         let cosmos_grpc = config.cosmos.grpc.trim();
         let cosmos_granter = config.cosmos.granter.clone();
-        println!("Sending from Cosmos address {}", cosmos_address);
+        println!("Sending from Cosmos address {cosmos_address}");
         abscissa_tokio::run_with_actix(&APP, async {
         let connections = create_rpc_connections(
             cosmos_prefix.to_string(),
@@ -86,8 +86,7 @@ impl Runnable for CosmosToEthCmd {
             ),
             Err(_e) => {
                 println!(
-                    "Asset {} has no ERC20 representation, you may need to deploy an ERC20 for it!",
-                    gravity_denom
+                    "Asset {gravity_denom} has no ERC20 representation, you may need to deploy an ERC20 for it!"
                 );
                 exit(1);
             }
@@ -117,13 +116,13 @@ impl Runnable for CosmosToEthCmd {
             }
         }
 
-        println!("Cosmos balances {:?}", balances);
+        println!("Cosmos balances {balances:?}");
 
         let times = self.args.get(4).expect("times is required");
         let times = times.parse::<usize>().expect("cannot parse times");
 
         match found {
-            None => panic!("You don't have any {} tokens!", gravity_denom),
+            None => panic!("You don't have any {gravity_denom} tokens!"),
             Some(found) => {
                 if amount.amount.clone() * times.into() >= found.amount && times == 1 {
                     if is_cosmos_originated {
@@ -165,7 +164,7 @@ impl Runnable for CosmosToEthCmd {
                     successful_sends += 1;
                     println!("Send to Eth txid {}", tx_id.txhash);
                 }
-                Err(e) => println!("Failed to send tokens! {:?}", e),
+                Err(e) => println!("Failed to send tokens! {e:?}"),
             }
         }
 

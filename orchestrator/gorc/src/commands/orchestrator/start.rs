@@ -96,7 +96,7 @@ impl Runnable for StartCommand {
 
             let mut supported_contract: Vec<EthAddress> = Vec::new();
             for contract in &config.relayer.ethereum_contracts {
-                if let Ok(c) = H160::from_str(&*contract) {
+                if let Ok(c) = H160::from_str(contract) {
                     supported_contract.push(c);
                 } else {
                     error!("error parsing contract in config {}", contract)
@@ -104,7 +104,7 @@ impl Runnable for StartCommand {
             }
             if supported_contract.is_empty() {
                 info!("no contracts found in config, relayer will relay all contracts");
-            } {
+            } else {
                 info!("supported contracts by the relayer {:?}", supported_contract);
             }
 

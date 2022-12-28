@@ -95,8 +95,7 @@ impl Runnable for SendToCosmos {
 
             if erc20_balance == 0u8.into() {
                 panic!(
-                    "You have zero {} tokens, please double check your sender and erc20 addresses!",
-                    erc20_contract
+                    "You have zero {erc20_contract} tokens, please double check your sender and erc20 addresses!"
                 );
             }
             println!(
@@ -117,8 +116,8 @@ impl Runnable for SendToCosmos {
             )
             .await;
             match res {
-                Ok(tx_id) => println!("Send to Cosmos txid: {:#066x}", tx_id),
-                Err(e) => println!("Failed to send tokens! {:?}", e),
+                Ok(tx_id) => println!("Send to Cosmos txid: {tx_id:#066x}"),
+                Err(e) => println!("Failed to send tokens! {e:?}"),
             }
         })
         .unwrap_or_else(|e| {
