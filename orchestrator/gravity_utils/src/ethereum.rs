@@ -47,7 +47,7 @@ pub fn format_eth_hash(hash: H256) -> String {
 pub fn bytes_to_hex_str(bytes: &[u8]) -> String {
     bytes
         .iter()
-        .map(|b| format!("{:0>2x?}", b))
+        .map(|b| format!("{b:0>2x?}"))
         .fold(String::new(), |acc, x| acc + &x)
 }
 
@@ -73,8 +73,7 @@ pub fn hex_str_to_bytes(s: &str) -> Result<Vec<u8>, GravityError> {
 pub fn vec_u8_to_fixed_32(v: Vec<u8>) -> Result<[u8; 32], GravityError> {
     if v.len() != 32 {
         return Err(GravityError::InvalidArgumentError(format!(
-            "Error converting Vec<u8> to [u8; 32], length is not 32: {:?}",
-            v
+            "Error converting Vec<u8> to [u8; 32], length is not 32: {v:?}"
         )));
     }
 
@@ -84,8 +83,7 @@ pub fn vec_u8_to_fixed_32(v: Vec<u8>) -> Result<[u8; 32], GravityError> {
 pub fn u8_slice_to_fixed_32(v: &[u8]) -> Result<[u8; 32], GravityError> {
     if v.len() != 32 {
         return Err(GravityError::InvalidArgumentError(format!(
-            "Error converting &[u8] to [u8; 32], length is not 32: {:?}",
-            v
+            "Error converting &[u8] to [u8; 32], length is not 32: {v:?}"
         )));
     }
 

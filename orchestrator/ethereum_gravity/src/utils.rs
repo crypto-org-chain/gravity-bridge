@@ -149,9 +149,7 @@ pub async fn get_gravity_id<S: Signer + 'static>(
                     if gravity_id != contract_id_value {
                         error!("Contract gravity id does not match with the chain gravity id");
                         return Err(GravityError::GravityContractError(format!(
-                            "Gravity contract id {} does not match with chain gravity id {}",
-                            gravity_id,
-                            contract_id_value,
+                            "Gravity contract id {gravity_id} does not match with chain gravity id {contract_id_value}"
                         )))
                     }
 
@@ -159,7 +157,7 @@ pub async fn get_gravity_id<S: Signer + 'static>(
                     Ok(params.gravity_id)
                 }
                 None => Err(GravityError::CosmosGrpcError(CosmosGrpcError::BadResponse(
-                    format!("Cannot get params from the chain"))))
+                    "Cannot get params from the chain".to_string())))
             }
 
         },
@@ -196,8 +194,7 @@ pub async fn get_chain<S: Signer + 'static>(
 
     if chain_id.is_none() {
         return Err(GravityError::EthereumBadDataError(format!(
-            "Chain ID is larger than u64 max: {}",
-            chain_id_result
+            "Chain ID is larger than u64 max: {chain_id_result}"
         )));
     }
 
@@ -231,11 +228,10 @@ impl GasCost {
 // returns a bool indicating whether or not this error means we should permanently
 // skip this logic call
 pub fn handle_contract_error<S: Signer + 'static>(gravity_error: GravityError) -> bool {
-    let error_string = format!("LogicCall error: {:?}", gravity_error);
-    let gravity_contract_error = extract_gravity_contract_error::<S>(gravity_error);
+    let error_string = format!("LogicCall error: {gravity_error:?}");
 
-    if gravity_contract_error.is_some() {
-        match gravity_contract_error.unwrap() {
+    if let Some(gravity_contract_error) = extract_gravity_contract_error::<S>(gravity_error) {
+        match gravity_contract_error {
             GravityContractError::InvalidLogicCallNonce(nonce_error) => {
                 info!(
                     "LogicCall already processed, skipping until observed on chain: {}",

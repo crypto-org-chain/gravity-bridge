@@ -225,23 +225,18 @@ impl LogicCallSkips {
     }
 
     pub fn skips_left(&self, call: &LogicCall) -> u32 {
-        let id_skips = self.skip_map.get(&call.invalidation_id);
-        if id_skips.is_some() {
-            let skip_state = id_skips.unwrap().get(&call.invalidation_nonce);
-            if skip_state.is_some() {
-                return skip_state.unwrap().skips_left;
+        if let Some(id_skips) = self.skip_map.get(&call.invalidation_id) {
+                if let Some(skip_state) = id_skips.get(&call.invalidation_nonce) {
+                    return skip_state.skips_left;
+                }
             }
-        }
-
         0
     }
 
     pub fn permanently_skipped(&self, call: &LogicCall) -> bool {
-        let id_skips = self.skip_map.get(&call.invalidation_id);
-        if id_skips.is_some() {
-            let skip_state = id_skips.unwrap().get(&call.invalidation_nonce);
-            if skip_state.is_some() {
-                return skip_state.unwrap().permanently_skipped;
+        if let Some(id_skips) = self.skip_map.get(&call.invalidation_id) {
+            if let Some(skip_state) = id_skips.get(&call.invalidation_nonce) {
+                return skip_state.permanently_skipped;
             }
         }
 
@@ -264,20 +259,8 @@ impl LogicCallSkips {
             permanently_skipped: permanently_skip,
         };
 
-        let id_skips = self.skip_map.get_mut(&call.invalidation_id);
-        if id_skips.is_none() {
-            // first time we've seen this invalidation id, start at 2 skips
-            let new_id_skips = HashMap::from([(call.invalidation_nonce, new_skip_state)]);
-            self.skip_map
-                .insert(call.invalidation_id.clone(), new_id_skips);
-        } else {
-            let id_skips = id_skips.unwrap();
-            let skip_state = id_skips.get_mut(&call.invalidation_nonce);
-            if skip_state.is_none() {
-                // first time we've seen this invalidation id and nonce combo, start at 2 skips
-                id_skips.insert(call.invalidation_nonce.clone(), new_skip_state);
-            } else {
-                let mut skip_state = skip_state.unwrap();
+        if let Some(id_skips) = self.skip_map.get_mut(&call.invalidation_id) {
+            if let Some(skip_state) = id_skips.get_mut(&call.invalidation_nonce) {
                 if !skip_state.permanently_skipped {
                     if skip_state.skips_left == 0 {
                         // exponential backoff: double the number of skips and reset the skip counter
@@ -288,7 +271,14 @@ impl LogicCallSkips {
                         skip_state.skips_left -= 1;
                     }
                 }
+            } else {
+                // first time we've seen this invalidation id and nonce combo, start at 2 skips
+                id_skips.insert(call.invalidation_nonce, new_skip_state);
             }
+        } else {
+            // first time we've seen this invalidation id, start at 2 skips
+            let new_id_skips = HashMap::from([(call.invalidation_nonce, new_skip_state)]);
+            self.skip_map.insert(call.invalidation_id.clone(), new_id_skips);
         }
     }
 
@@ -307,6 +297,12 @@ impl LogicCallSkips {
                 }
             }
         }
+    }
+}
+
+impl Default for LogicCallSkips {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

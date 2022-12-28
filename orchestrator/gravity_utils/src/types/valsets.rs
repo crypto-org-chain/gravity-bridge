@@ -386,7 +386,7 @@ impl From<gravity_proto::gravity::EthereumSigner> for ValsetMember {
             Err(_) => None,
         };
         ValsetMember {
-            power: input.power as u64,
+            power: input.power,
             eth_address,
         }
     }
@@ -399,7 +399,7 @@ impl From<&gravity_proto::gravity::EthereumSigner> for ValsetMember {
             Err(_) => None,
         };
         ValsetMember {
-            power: input.power as u64,
+            power: input.power,
             eth_address,
         }
     }

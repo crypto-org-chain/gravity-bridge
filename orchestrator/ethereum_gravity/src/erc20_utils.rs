@@ -45,8 +45,7 @@ pub async fn approve_erc20_transfers<S: Signer + 'static>(
     // additionally we are mirroring only waiting for 1 confirmation by leaving that as default
     let pending_tx = pending_tx.interval(Duration::from_secs(1));
     let potential_error = GravityError::GravityContractError(format!(
-        "Did not receive transaction receipt when approving ERC-20 {}: {}",
-        erc20, tx_hash
+        "Did not receive transaction receipt when approving ERC-20 {erc20}: {tx_hash}"
     ));
 
     if let Some(timeout) = timeout_option {

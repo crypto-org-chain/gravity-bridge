@@ -36,8 +36,7 @@ pub async fn deploy_erc20<S: Signer + 'static>(
     let gas_as_f64 = downcast_to_f64(gas);
     if gas_as_f64.is_none() {
         return Err(GravityError::GravityContractError(format!(
-            "Gas estimate too large to downcast to f64: {}",
-            gas
+            "Gas estimate too large to downcast to f64: {gas}"
         )));
     }
     let gas = (gas_as_f64.unwrap() * gas_multiplier) as u128;
@@ -54,8 +53,7 @@ pub async fn deploy_erc20<S: Signer + 'static>(
     // additionally we are mirroring only waiting for 1 confirmation by leaving that as default
     let pending_tx = pending_tx.interval(Duration::from_secs(1));
     let potential_error = GravityError::GravityContractError(format!(
-        "Did not receive transaction receipt when deploying ERC-20 {}: {}",
-        erc20_symbol,
+        "Did not receive transaction receipt when deploying ERC-20 {erc20_symbol}: {}",
         format_eth_hash(tx_hash)
     ));
 
