@@ -64,7 +64,10 @@ impl Runnable for StartCommand {
         if supported_contract.is_empty() {
             info!("no contracts found in config, relayer will relay all contracts");
         } else {
-            info!("supported contracts by the relayer {:?}", supported_contract);
+            info!(
+                "supported contracts by the relayer {:?}",
+                supported_contract
+            );
         }
 
         let timeout = RELAYER_LOOP_SPEED;

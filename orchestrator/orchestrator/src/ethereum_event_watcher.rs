@@ -71,7 +71,10 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
 
     let search_range = starting_block..ending_block;
 
-    info!("check_for_events from {:?} to {:?}", starting_block, ending_block);
+    info!(
+        "check_for_events from {:?} to {:?}",
+        starting_block, ending_block
+    );
 
     // select uses an inclusive version of the range
     erc20_deployed_filter = erc20_deployed_filter.select(search_range.clone());
@@ -224,7 +227,6 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
             .await
             .expect("Could not send messages");
 
-
         let mut error_count: u32 = 0;
         let timeout = time::Duration::from_secs(30);
         contact.wait_for_next_block(timeout).await?;
@@ -237,8 +239,10 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
                      retrying from block {starting_block} to block {ending_block} in a moment")
                 ));
             }
-            info!("Waiting for claims to process, current on event nonce {}, trying to update to {}"
-                , new_event_nonce, last_message_nonce);
+            info!(
+                "Waiting for claims to process, current on event nonce {}, trying to update to {}",
+                new_event_nonce, last_message_nonce
+            );
 
             error_count += 1;
             contact.wait_for_next_block(timeout).await?;

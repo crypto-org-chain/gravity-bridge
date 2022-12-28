@@ -1,4 +1,5 @@
 use crate::types::EthClient;
+use deep_space::error::CosmosGrpcError;
 use ethers::middleware::gas_oracle::Etherscan;
 use ethers::prelude::gas_oracle::GasOracle;
 use ethers::prelude::*;
@@ -8,9 +9,8 @@ use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use gravity_utils::error::GravityError;
 use gravity_utils::ethereum::{downcast_to_u64, hex_str_to_bytes, vec_u8_to_fixed_32};
 use gravity_utils::types::{decode_gravity_error, GravityContractError};
-use tonic::transport::Channel;
 use std::result::Result;
-use deep_space::error::CosmosGrpcError;
+use tonic::transport::Channel;
 
 /// Gets the latest validator set nonce
 pub async fn get_valset_nonce<S: Signer + 'static>(
@@ -120,7 +120,7 @@ pub async fn get_event_nonce<S: Signer + 'static>(
 pub async fn get_gravity_id<S: Signer + 'static>(
     gravity_contract_address: EthAddress,
     eth_client: EthClient<S>,
-    mut cosmos_client: GravityQueryClient<Channel>
+    mut cosmos_client: GravityQueryClient<Channel>,
 ) -> Result<String, GravityError> {
     let contract_call = Gravity::new(gravity_contract_address, eth_client.clone())
         .state_gravity_id()
@@ -150,25 +150,25 @@ pub async fn get_gravity_id<S: Signer + 'static>(
                         error!("Contract gravity id does not match with the chain gravity id");
                         return Err(GravityError::GravityContractError(format!(
                             "Gravity contract id {gravity_id} does not match with chain gravity id {contract_id_value}"
-                        )))
+                        )));
                     }
 
-                    info!("Gravity contract id {} match with chain gravity id {}", gravity_id, contract_id_value);
+                    info!(
+                        "Gravity contract id {} match with chain gravity id {}",
+                        gravity_id, contract_id_value
+                    );
                     Ok(params.gravity_id)
                 }
                 None => Err(GravityError::CosmosGrpcError(CosmosGrpcError::BadResponse(
-                    "Cannot get params from the chain".to_string())))
+                    "Cannot get params from the chain".to_string(),
+                ))),
             }
-
-        },
+        }
         Err(err) => Err(GravityError::GravityContractError(format!(
             "Received invalid utf8 when getting gravity id {:?}: {}",
             &gravity_id, err
         ))),
     }
-
-
-
 }
 
 /// If ETHERSCAN_API_KEY env var is set, we'll call out to Etherscan for a gas estimate.

@@ -140,12 +140,18 @@ pub async fn eth_oracle_main_loop<S: Signer + 'static, CS: CosmosSigner>(
     blocks_to_search: u64,
     msg_sender: tokio::sync::mpsc::Sender<Vec<Msg>>,
 ) {
-
     info!("Check gravity id");
     let gravity_id = get_gravity_id(
-        gravity_contract_address, eth_client.clone(), grpc_client.clone()).await;
+        gravity_contract_address,
+        eth_client.clone(),
+        grpc_client.clone(),
+    )
+    .await;
     if gravity_id.is_err() {
-        error!("Error when fetching the GravityID {}", gravity_id.err().unwrap());
+        error!(
+            "Error when fetching the GravityID {}",
+            gravity_id.err().unwrap()
+        );
         return;
     }
 
@@ -246,7 +252,7 @@ pub async fn eth_oracle_main_loop<S: Signer + 'static, CS: CosmosSigner>(
                                 .await
                                 .expect("Could not send Ethereum height votes");
                         }
-                },
+                    }
                     Err(e) => {
                         metrics::ETHEREUM_EVENT_CHECK_FAILURES.inc();
                         error!("Failed to get events for block range, Check your Eth node and Cosmos gRPC {:?}", e);
@@ -281,10 +287,13 @@ pub async fn eth_signer_main_loop<S: Signer + 'static, CS: CosmosSigner>(
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
     let mut grpc_client = grpc_client;
 
-    let gravity_id = get_gravity_id(
-        contract_address, eth_client.clone(), grpc_client.clone()).await;
+    let gravity_id =
+        get_gravity_id(contract_address, eth_client.clone(), grpc_client.clone()).await;
     if gravity_id.is_err() {
-        error!("Error when fetching the GravityID {}", gravity_id.err().unwrap());
+        error!(
+            "Error when fetching the GravityID {}",
+            gravity_id.err().unwrap()
+        );
         return;
     }
     let gravity_id = gravity_id.unwrap();

@@ -1,6 +1,6 @@
 use crate::fee_manager::FeeManager;
-use cosmos_gravity::query::{get_latest_batch, get_latest_transaction_batches};
 use cosmos_gravity::query::get_transaction_batch_signatures;
+use cosmos_gravity::query::{get_latest_batch, get_latest_transaction_batches};
 use ethereum_gravity::{
     one_eth_f32, submit_batch::send_eth_transaction_batch, types::EthClient,
     utils::get_tx_batch_nonce,
@@ -43,8 +43,13 @@ pub async fn relay_batches<S: Signer + 'static>(
     eth_gas_multiplier: f32,
     supported_contracts: Vec<EthAddress>,
 ) {
-    let possible_batches =
-        get_batches_and_signatures(current_valset.clone(), grpc_client, gravity_id.clone(), supported_contracts).await;
+    let possible_batches = get_batches_and_signatures(
+        current_valset.clone(),
+        grpc_client,
+        gravity_id.clone(),
+        supported_contracts,
+    )
+    .await;
 
     debug!("possible batches {:?}", possible_batches);
 
@@ -91,11 +96,10 @@ async fn get_batches_and_signatures(
             match get_latest_batch(grpc_client, contract).await {
                 Ok(tb) => {
                     latest_batches.push(tb);
-                },
+                }
                 Err(e) => {
                     debug!("gravity error on get_batches_and_signatures {:?}", e);
                 }
-
             }
         }
         if latest_batches.is_empty() {
@@ -250,8 +254,8 @@ async fn submit_batches<S: Signer + 'static>(
                         total_cost / one_eth_f32()
                     );
 
-                    cost.gas_price = (gas_price_as_f32 as u128 * eth_gas_price_multiplier as u128)
-                        .into();
+                    cost.gas_price =
+                        (gas_price_as_f32 as u128 * eth_gas_price_multiplier as u128).into();
 
                     cost.gas = ((gas_as_f32 * eth_gas_multiplier) as u128).into();
 

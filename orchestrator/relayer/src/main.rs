@@ -3,12 +3,12 @@ use std::sync::Arc;
 use crate::fee_manager::FeeManager;
 use crate::main_loop::relayer_main_loop;
 use crate::main_loop::LOOP_SPEED;
+use cosmos_gravity::crypto::EthPubkey;
 use docopt::Docopt;
 use env_logger::Env;
 use ethers::prelude::*;
 use ethers::signers::LocalWallet as EthWallet;
 use ethers::types::Address as EthAddress;
-use cosmos_gravity::crypto::EthPubkey;
 use gravity_utils::types::config::RelayerMode;
 use gravity_utils::{
     connection_prep::{check_for_eth, create_rpc_connections, wait_for_cosmos_node_ready},

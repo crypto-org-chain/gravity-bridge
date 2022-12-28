@@ -27,13 +27,20 @@ pub async fn relayer_main_loop<S: Signer + 'static>(
     eth_gas_multiplier: f32,
     blocks_to_search: u64,
     supported_contracts: Vec<EthAddress>,
- ) {
+) {
     let mut grpc_client = grpc_client;
 
     let gravity_id = get_gravity_id(
-        gravity_contract_address, eth_client.clone(), grpc_client.clone()).await;
+        gravity_contract_address,
+        eth_client.clone(),
+        grpc_client.clone(),
+    )
+    .await;
     if gravity_id.is_err() {
-        error!("Error when fetching the GravityID {}", gravity_id.err().unwrap());
+        error!(
+            "Error when fetching the GravityID {}",
+            gravity_id.err().unwrap()
+        );
         return;
     }
     let gravity_id = gravity_id.unwrap();

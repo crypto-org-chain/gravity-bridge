@@ -313,7 +313,7 @@ impl Default for RelayerSection {
         Self {
             mode: "AlwaysRelay".to_owned(),
             payment_address: "0x0000000000000000000000000000000000000000".to_owned(),
-            ethereum_contracts: vec![]
+            ethereum_contracts: vec![],
         }
     }
 }

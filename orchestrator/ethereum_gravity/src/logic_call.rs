@@ -226,10 +226,10 @@ impl LogicCallSkips {
 
     pub fn skips_left(&self, call: &LogicCall) -> u32 {
         if let Some(id_skips) = self.skip_map.get(&call.invalidation_id) {
-                if let Some(skip_state) = id_skips.get(&call.invalidation_nonce) {
-                    return skip_state.skips_left;
-                }
+            if let Some(skip_state) = id_skips.get(&call.invalidation_nonce) {
+                return skip_state.skips_left;
             }
+        }
         0
     }
 
@@ -278,7 +278,8 @@ impl LogicCallSkips {
         } else {
             // first time we've seen this invalidation id, start at 2 skips
             let new_id_skips = HashMap::from([(call.invalidation_nonce, new_skip_state)]);
-            self.skip_map.insert(call.invalidation_id.clone(), new_id_skips);
+            self.skip_map
+                .insert(call.invalidation_id.clone(), new_id_skips);
         }
     }
 

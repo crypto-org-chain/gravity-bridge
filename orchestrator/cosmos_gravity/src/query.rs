@@ -102,15 +102,20 @@ pub async fn get_latest_batch(
     client: &mut GravityQueryClient<Channel>,
     contract: EthAddress,
 ) -> Result<TransactionBatch, GravityError> {
-    debug!("ask latest batch for contract {:?}", format_eth_address(contract));
+    debug!(
+        "ask latest batch for contract {:?}",
+        format_eth_address(contract)
+    );
     let request = client
-        .last_batch_tx(LastBatchTxRequest { token_contract: format_eth_address(contract)})
+        .last_batch_tx(LastBatchTxRequest {
+            token_contract: format_eth_address(contract),
+        })
         .await?;
     match request.into_inner().batch {
         Some(b) => TransactionBatch::from_proto(b),
-        None => {
-            Err(GravityError::CosmosGrpcError(CosmosGrpcError::BadResponse(String::from("no batch found"))))
-        },
+        None => Err(GravityError::CosmosGrpcError(CosmosGrpcError::BadResponse(
+            String::from("no batch found"),
+        ))),
     }
 }
 

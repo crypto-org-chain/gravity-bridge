@@ -347,7 +347,7 @@ async fn test_batch(
     .await
     .unwrap();
     info!("Sent tokens to Ethereum with {:?}", res);
-    
+
     info!("Requesting transaction batch with unauthorized user");
     let rsp = send_request_batch_tx(
         dest_cosmos_private_key,
@@ -358,8 +358,8 @@ async fn test_batch(
         contact,
         1.0,
     )
-        .await
-        .unwrap();
+    .await
+    .unwrap();
     assert_eq!(rsp.code, 13);
 
     info!("Requesting transaction batch");
@@ -486,7 +486,10 @@ async fn submit_duplicate_erc20_send(
 
         let gas_price = get_gas_price();
         let gas_limit = 500_000;
-        let res = send::send_messages(contact, cosmos_key, None, gas_price, gas_limit, messages, 1.0).await;
+        let res = send::send_messages(
+            contact, cosmos_key, None, gas_price, gas_limit, messages, 1.0,
+        )
+        .await;
 
         let res = res.unwrap();
         trace!("Submitted duplicate sendToCosmos event: {:?}", res);
