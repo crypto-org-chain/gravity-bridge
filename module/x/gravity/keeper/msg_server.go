@@ -288,8 +288,8 @@ func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchT
 		return nil, err
 	}
 
-	batchID := k.BuildBatchTx(ctx, tokenContract, int(params.BatchMaxElement))
-	if batchID == nil {
+	batchTx := k.BuildBatchTx(ctx, tokenContract, int(params.BatchMaxElement))
+	if batchTx == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "no suitable batch to create")
 	}
 
@@ -298,7 +298,7 @@ func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchT
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, msg.Type()),
 			sdk.NewAttribute(types.AttributeKeyContract, tokenContract.Hex()),
-			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(batchID.BatchNonce)),
+			sdk.NewAttribute(types.AttributeKeyBatchNonce, fmt.Sprint(batchTx.BatchNonce)),
 		),
 	)
 

@@ -406,6 +406,8 @@ func simulateMsgSubmitEthereumEvent(simCtx *simulateContext) simtypes.Operation 
 					},
 				},
 			}
+		default:
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumEvent, "not supported event type"), nil, err
 		}
 
 		packed, err := types.PackEvent(event)
@@ -443,7 +445,37 @@ func simulateMsgRequestBatchTx(simCtx *simulateContext) simtypes.Operation {
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		return simtypes.OperationMsg{}, nil, nil
+		ak := simCtx.ak
+		bk := simCtx.bk
+		gk := simCtx.gk
+
+		orch, err := randomOrchetrator(ctx, r, gk, accs)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgRequestBatchTx, "sim account is not orchestrator"), nil, err
+		}
+		orchAddr := orch.Address.String()
+		msg := &types.MsgRequestBatchTx{
+			Signer: orchAddr,
+			Denom:  sdk.DefaultBondDenom,
+		}
+
+		txCtx := simulation.OperationInput{
+			R:               r,
+			App:             app,
+			TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
+			Cdc:             nil,
+			Msg:             msg,
+			MsgType:         msg.Type(),
+			Context:         ctx,
+			SimAccount:      orch,
+			AccountKeeper:   ak,
+			Bankkeeper:      bk,
+			ModuleName:      types.ModuleName,
+			CoinsSpentInMsg: sdk.Coins{},
+		}
+
+		oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
+		return oper, ops, err
 	}
 }
 
@@ -452,7 +484,37 @@ func simulateMsgCancelSendToEthereum(simCtx *simulateContext) simtypes.Operation
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		return simtypes.OperationMsg{}, nil, nil
+		ak := simCtx.ak
+		bk := simCtx.bk
+		gk := simCtx.gk
+
+		sender, id, err := randomSenderAndID(ctx, r, gk, accs)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgCancelSendToEthereum, "no sender found"), nil, err
+		}
+
+		msg := &types.MsgCancelSendToEthereum{
+			Id:     id,
+			Sender: sender.Address.String(),
+		}
+
+		txCtx := simulation.OperationInput{
+			R:               r,
+			App:             app,
+			TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
+			Cdc:             nil,
+			Msg:             msg,
+			MsgType:         msg.Type(),
+			Context:         ctx,
+			SimAccount:      sender,
+			AccountKeeper:   ak,
+			Bankkeeper:      bk,
+			ModuleName:      types.ModuleName,
+			CoinsSpentInMsg: sdk.Coins{},
+		}
+
+		oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
+		return oper, ops, err
 	}
 }
 
@@ -461,7 +523,38 @@ func simulateMsgEthereumHeightVote(simCtx *simulateContext) simtypes.Operation {
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 		accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		return simtypes.OperationMsg{}, nil, nil
+		ak := simCtx.ak
+		bk := simCtx.bk
+		gk := simCtx.gk
+
+		orch, err := randomOrchetrator(ctx, r, gk, accs)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgRequestBatchTx, "sim account is not orchestrator"), nil, err
+		}
+		orchAddr := orch.Address.String()
+
+		msg := &types.MsgEthereumHeightVote{
+			EthereumHeight: r.Uint64(),
+			Signer:         orchAddr,
+		}
+
+		txCtx := simulation.OperationInput{
+			R:               r,
+			App:             app,
+			TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
+			Cdc:             nil,
+			Msg:             msg,
+			MsgType:         msg.Type(),
+			Context:         ctx,
+			SimAccount:      orch,
+			AccountKeeper:   ak,
+			Bankkeeper:      bk,
+			ModuleName:      types.ModuleName,
+			CoinsSpentInMsg: sdk.Coins{},
+		}
+
+		oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
+		return oper, ops, err
 	}
 }
 
@@ -502,4 +595,27 @@ func randomOrchetrator(ctx sdk.Context, r *rand.Rand, gk keeper.Keeper, accs []s
 	}
 	val, _ := simtypes.RandomAcc(r, orchSet)
 	return val, nil
+}
+
+func randomSenderAndID(ctx sdk.Context, r *rand.Rand, gk keeper.Keeper, accs []simtypes.Account) (simtypes.Account, uint64, error) {
+	var senders []simtypes.Account
+	var ids map[string][]uint64
+	for _, acc := range accs {
+		sender := acc.Address.String()
+		resp, err := gk.UnbatchedSendToEthereums(ctx, &types.UnbatchedSendToEthereumsRequest{SenderAddress: sender, Pagination: nil})
+		if err != nil {
+			return simtypes.Account{}, 0, err
+		}
+		if len(resp.SendToEthereums) == 0 {
+			continue
+		}
+		senders = append(senders, acc)
+		for _, tx := range resp.SendToEthereums {
+			ids[sender] = append(ids[sender], tx.Id)
+		}
+	}
+	sender, _ := simtypes.RandomAcc(r, accs)
+	senderIDs := ids[sender.Address.String()]
+	id := senderIDs[r.Intn(len(senderIDs))]
+	return sender, id, nil
 }
