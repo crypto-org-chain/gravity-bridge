@@ -12,6 +12,8 @@ import (
 	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types"
 )
 
+var maxBlocksInOneRound = 100
+
 const (
 	paramsKey                 = "params"
 	lastObservedEventNonceKey = "last_observed_event_nonce"
@@ -30,25 +32,25 @@ func genRandomString(r *rand.Rand, minLength, maxLength uint8) string {
 
 func genRandomParams(r *rand.Rand) types.Params {
 	return types.Params{
-		GravityId:                                 genRandomString(r, 0, 32),
-		ContractSourceHash:                        genRandomString(r, 0, uint8(r.Int())),
-		BridgeEthereumAddress:                     common.HexToAddress(genRandomString(r, 0, uint8(r.Int()))).String(),
+		GravityId:                                 genRandomString(r, 32, 32),
+		ContractSourceHash:                        genRandomString(r, 32, 32),
+		BridgeEthereumAddress:                     common.HexToAddress(genRandomString(r, 32, 32)).String(),
 		BridgeChainId:                             r.Uint64(),
-		SignedSignerSetTxsWindow:                  r.Uint64(),
-		SignedBatchesWindow:                       r.Uint64(),
-		EthereumSignaturesWindow:                  r.Uint64(),
-		TargetEthTxTimeout:                        r.Uint64() + 60000,
-		AverageBlockTime:                          r.Uint64() + 100,
-		AverageEthereumBlockTime:                  r.Uint64() + 100,
-		SlashFractionSignerSetTx:                  sdk.NewDec(r.Int63()),
-		SlashFractionBatch:                        sdk.NewDec(r.Int63()),
-		SlashFractionEthereumSignature:            sdk.NewDec(r.Int63()),
-		SlashFractionConflictingEthereumSignature: sdk.NewDec(r.Int63()),
-		UnbondSlashingSignerSetTxsWindow:          r.Uint64(),
-		BridgeActive:                              r.Intn(2) > 0,
-		BatchCreationPeriod:                       r.Uint64() + 1,
-		BatchMaxElement:                           r.Uint64(),
-		ObserveEthereumHeightPeriod:               r.Uint64() + 1,
+		SignedSignerSetTxsWindow:                  uint64(r.Intn(maxBlocksInOneRound)),
+		SignedBatchesWindow:                       uint64(r.Intn(maxBlocksInOneRound)),
+		EthereumSignaturesWindow:                  uint64(r.Intn(maxBlocksInOneRound)),
+		TargetEthTxTimeout:                        r.Uint64(),
+		AverageBlockTime:                          5000,
+		AverageEthereumBlockTime:                  15000,
+		SlashFractionSignerSetTx:                  sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		SlashFractionBatch:                        sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		SlashFractionEthereumSignature:            sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		SlashFractionConflictingEthereumSignature: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		UnbondSlashingSignerSetTxsWindow:          uint64(r.Intn(maxBlocksInOneRound)),
+		BridgeActive:                              true,
+		BatchCreationPeriod:                       uint64(r.Intn(maxBlocksInOneRound)),
+		BatchMaxElement:                           uint64(r.Intn(100)),
+		ObserveEthereumHeightPeriod:               r.Uint64(),
 	}
 }
 
