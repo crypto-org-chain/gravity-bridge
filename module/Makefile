@@ -163,3 +163,14 @@ proto-update-deps:
 
 	mkdir -p $(PROTOBUF_GOOGLE_TYPES)
 	curl -sSL $(PROTOBUF_GOOGLE_URL)/any.proto > $(PROTOBUF_GOOGLE_TYPES)/any.proto
+
+###############################################################################
+###                                Sim Test                                 ###
+###############################################################################
+
+SIMAPP = github.com/peggyjv/gravity-bridge/module/v2/app
+
+test-sim-nondeterminism:
+	@echo "Running non-determinism test..."
+	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
+		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h

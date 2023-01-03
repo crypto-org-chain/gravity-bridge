@@ -32,9 +32,9 @@ func genRandomString(r *rand.Rand, minLength, maxLength uint8) string {
 
 func genRandomParams(r *rand.Rand) types.Params {
 	return types.Params{
-		GravityId:                                 genRandomString(r, 32, 32),
-		ContractSourceHash:                        genRandomString(r, 32, 32),
-		BridgeEthereumAddress:                     common.HexToAddress(genRandomString(r, 32, 32)).String(),
+		GravityId:                                 genRandomString(r, 16, 16),
+		ContractSourceHash:                        genRandomString(r, 16, 16),
+		BridgeEthereumAddress:                     common.HexToAddress(genRandomString(r, 16, 16)).String(),
 		BridgeChainId:                             r.Uint64(),
 		SignedSignerSetTxsWindow:                  uint64(r.Intn(maxBlocksInOneRound)),
 		SignedBatchesWindow:                       uint64(r.Intn(maxBlocksInOneRound)),
