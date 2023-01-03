@@ -237,7 +237,7 @@ func simulateMsgSubmitEthereumTxConfirmation(simCtx *simulateContext) simtypes.O
 		bk := simCtx.bk
 		gk := simCtx.gk
 
-		orch, err := randomOrchetrator(ctx, r, gk, accs)
+		orch, err := randomOrchestrator(ctx, r, gk, accs)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "sim account is not orchestrator"), nil, err
 		}
@@ -354,7 +354,7 @@ func simulateMsgSubmitEthereumEvent(simCtx *simulateContext) simtypes.Operation 
 		bk := simCtx.bk
 		gk := simCtx.gk
 
-		orch, err := randomOrchetrator(ctx, r, gk, accs)
+		orch, err := randomOrchestrator(ctx, r, gk, accs)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumEvent, "sim account is not orchestrator"), nil, err
 		}
@@ -450,7 +450,7 @@ func simulateMsgRequestBatchTx(simCtx *simulateContext) simtypes.Operation {
 		bk := simCtx.bk
 		gk := simCtx.gk
 
-		orch, err := randomOrchetrator(ctx, r, gk, accs)
+		orch, err := randomOrchestrator(ctx, r, gk, accs)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, TypeMsgRequestBatchTx, "sim account is not orchestrator"), nil, err
 		}
@@ -528,7 +528,7 @@ func simulateMsgEthereumHeightVote(simCtx *simulateContext) simtypes.Operation {
 		bk := simCtx.bk
 		gk := simCtx.gk
 
-		orch, err := randomOrchetrator(ctx, r, gk, accs)
+		orch, err := randomOrchestrator(ctx, r, gk, accs)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, TypeMsgRequestBatchTx, "sim account is not orchestrator"), nil, err
 		}
@@ -583,7 +583,7 @@ func randomValidator(ctx sdk.Context, r *rand.Rand, sk types.StakingKeeper, accs
 	return val, nil
 }
 
-func randomOrchetrator(ctx sdk.Context, r *rand.Rand, gk keeper.Keeper, accs []simtypes.Account) (simtypes.Account, error) {
+func randomOrchestrator(ctx sdk.Context, r *rand.Rand, gk keeper.Keeper, accs []simtypes.Account) (simtypes.Account, error) {
 	var orchSet []simtypes.Account
 	for _, acc := range accs {
 		val := sdk.ValAddress(acc.Address)
@@ -594,13 +594,13 @@ func randomOrchetrator(ctx sdk.Context, r *rand.Rand, gk keeper.Keeper, accs []s
 	if len(orchSet) == 0 {
 		return simtypes.Account{}, fmt.Errorf("none of the sim account is both a validator and orchestrator")
 	}
-	val, _ := simtypes.RandomAcc(r, orchSet)
-	return val, nil
+	orch, _ := simtypes.RandomAcc(r, orchSet)
+	return orch, nil
 }
 
 func randomSenderAndID(ctx sdk.Context, r *rand.Rand, gk keeper.Keeper, accs []simtypes.Account) (simtypes.Account, uint64, error) {
 	var senders []simtypes.Account
-	var ids map[string][]uint64
+	ids := make(map[string][]uint64)
 	for _, acc := range accs {
 		sender := acc.Address.String()
 		resp, err := gk.UnbatchedSendToEthereums(ctx, &types.UnbatchedSendToEthereumsRequest{SenderAddress: sender, Pagination: nil})
@@ -615,7 +615,10 @@ func randomSenderAndID(ctx sdk.Context, r *rand.Rand, gk keeper.Keeper, accs []s
 			ids[sender] = append(ids[sender], tx.Id)
 		}
 	}
-	sender, _ := simtypes.RandomAcc(r, accs)
+	if len(senders) == 0 {
+		return simtypes.Account{}, 0, fmt.Errorf("there is no sender")
+	}
+	sender, _ := simtypes.RandomAcc(r, senders)
 	senderIDs := ids[sender.Address.String()]
 	id := senderIDs[r.Intn(len(senderIDs))]
 	return sender, id, nil
