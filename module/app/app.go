@@ -499,7 +499,9 @@ func NewGravityApp(
 		params.NewAppModule(app.paramsKeeper),
 		transferModule,
 		gravity.NewAppModule(
+			appCodec,
 			app.gravityKeeper,
+			app.accountKeeper,
 			app.bankKeeper,
 		),
 	)

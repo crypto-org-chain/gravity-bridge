@@ -39,7 +39,6 @@ type BankKeeper interface {
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	GetDenomMetaData(ctx sdk.Context, denom string) (bank.Metadata, bool)
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	SpendableCoin(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
 type SlashingKeeper interface {

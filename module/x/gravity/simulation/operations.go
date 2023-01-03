@@ -178,9 +178,10 @@ func SimulateMsgSendToEthereum(simCtx *simulateContext) simtypes.Operation {
 		bk := simCtx.bk
 
 		acc, _ := simtypes.RandomAcc(r, accs)
-		expendable := bk.SpendableCoin(ctx, acc.Address, sdk.DefaultBondDenom)
-		amount := sdk.NewCoin(sdk.DefaultBondDenom, simtypes.RandomAmount(r, expendable.Amount))
-		fee := sdk.NewCoin(sdk.DefaultBondDenom, simtypes.RandomAmount(r, expendable.Amount.Sub(amount.Amount)))
+		balance := bk.SpendableCoins(ctx, acc.Address)
+		expendable := balance.AmountOf(sdk.DefaultBondDenom)
+		amount := sdk.NewCoin(sdk.DefaultBondDenom, simtypes.RandomAmount(r, expendable))
+		fee := sdk.NewCoin(sdk.DefaultBondDenom, simtypes.RandomAmount(r, expendable.Sub(amount.Amount)))
 
 		msg := &types.MsgSendToEthereum{
 			Sender:            acc.Address.String(),
