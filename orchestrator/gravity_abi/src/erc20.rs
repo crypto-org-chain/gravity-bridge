@@ -1,7 +1,7 @@
 pub use erc20::*;
 #[allow(clippy::too_many_arguments, non_camel_case_types)]
 #[allow(clippy::module_inception)]
-pub mod erc20 {
+mod erc20 {
     #![allow(clippy::enum_variant_names)]
     #![allow(dead_code)]
     #![allow(clippy::type_complexity)]
