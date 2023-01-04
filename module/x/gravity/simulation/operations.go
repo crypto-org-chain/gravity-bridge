@@ -3,6 +3,7 @@ package simulation
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"cosmossdk.io/math"
@@ -10,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	"github.com/ethereum/go-ethereum/common"
@@ -46,20 +48,24 @@ var (
 
 	eventTypes = []string{"SendToCosmosEvent", "BatchExecutedEvent", "ContractCallExecutedEvent", "ERC20DeployedEvent", "SignerSetTxExecutedEvent"}
 	txTypes    = []string{"SignerSetTx", "BatchTx"}
+
+	errNoValidatorFound    = fmt.Errorf("no validator found")
+	errNoOrchestratorFound = fmt.Errorf("no orchestrator found")
+	errNoSenderFound       = fmt.Errorf("no sender found")
 )
 
 type simulateContext struct {
 	gk  keeper.Keeper
 	ak  types.AccountKeeper
 	bk  types.BankKeeper
-	cdc codec.JSONCodec
+	cdc codec.Codec
 }
 
 type opGenerator func(*simulateContext) simtypes.Operation
 
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
-	appParams simtypes.AppParams, cdc codec.JSONCodec, gk keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper,
+	appParams simtypes.AppParams, cdc codec.Codec, gk keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper,
 ) simulation.WeightedOperations {
 	var ops simulation.WeightedOperations
 	opFuncs := map[string]opGenerator{
@@ -109,17 +115,16 @@ func SimulateMsgDeleteKeys(simCtx *simulateContext) simtypes.Operation {
 
 		val, err := randomValidator(ctx, r, sk, accs)
 		if err != nil {
-			return simtypes.OperationMsg{}, nil, fmt.Errorf("none of the sim account is a validator")
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgDeleteKeys, "none of the sim account is validator"), nil, nil
 		}
 		valAddr := sdk.ValAddress(val.Address).String()
 		orchAddr := val.Address.String()
-		ethAddr := common.BytesToAddress(val.Address.Bytes()).String()
 		nonce, err := ak.GetSequence(ctx, val.Address)
 		if err != nil {
-			return simtypes.OperationMsg{}, nil, err
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgDeleteKeys, "can not fetch sequence of account"), nil, err
 		}
 
-		bz := cdc.MustMarshalJSON(&types.DelegateKeysSignMsg{
+		bz := cdc.MustMarshal(&types.DelegateKeysSignMsg{
 			ValidatorAddress: valAddr,
 			Nonce:            nonce,
 		})
@@ -129,6 +134,7 @@ func SimulateMsgDeleteKeys(simCtx *simulateContext) simtypes.Operation {
 		if err != nil {
 			return simtypes.OperationMsg{}, nil, err
 		}
+		ethAddr := crypto.PubkeyToAddress(ethPrivKey.PublicKey).String()
 		sig, err := types.NewEthereumSignature(hash, ethPrivKey)
 		if err != nil {
 			return simtypes.OperationMsg{}, nil, err
@@ -156,7 +162,10 @@ func SimulateMsgDeleteKeys(simCtx *simulateContext) simtypes.Operation {
 			CoinsSpentInMsg: sdk.NewCoins(),
 		}
 
-		oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
+		oper, ops, err := GenAndDeliverTxWithRandFees(txCtx)
+		if err != nil && strings.Contains(err.Error(), sdkerrors.Wrapf(types.ErrDelegateKeys, "ethereum address %s in use", ethAddr).Error()) {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgDeleteKeys, "ethereum address has been set"), nil, nil
+		}
 		return oper, ops, err
 	}
 }
@@ -180,7 +189,10 @@ func SimulateMsgSendToEthereum(simCtx *simulateContext) simtypes.Operation {
 		acc, _ := simtypes.RandomAcc(r, accs)
 		balance := bk.SpendableCoins(ctx, acc.Address)
 		expendable := balance.AmountOf(sdk.DefaultBondDenom)
-		amount := sdk.NewCoin(sdk.DefaultBondDenom, simtypes.RandomAmount(r, expendable))
+		if expendable.IsZero() {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgMsgSendToEthereum, "no enough balance to send"), nil, nil
+		}
+		amount := sdk.NewCoin(sdk.DefaultBondDenom, simtypes.RandomAmount(r, expendable.Sub(sdk.OneInt())).Add(sdk.OneInt()))
 		fee := sdk.NewCoin(sdk.DefaultBondDenom, simtypes.RandomAmount(r, expendable.Sub(amount.Amount)))
 
 		msg := &types.MsgSendToEthereum{
@@ -205,7 +217,7 @@ func SimulateMsgSendToEthereum(simCtx *simulateContext) simtypes.Operation {
 			CoinsSpentInMsg: sdk.Coins{amount.Add(fee)},
 		}
 
-		oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
+		oper, ops, err := GenAndDeliverTxWithRandFees(txCtx)
 
 		whenCall := ctx.BlockHeader().Time.Add(time.Duration(r.Intn(maxWaitSeconds)+1) * time.Second)
 		ops = append(ops, simtypes.FutureOperation{
@@ -239,7 +251,7 @@ func simulateMsgSubmitEthereumTxConfirmation(simCtx *simulateContext) simtypes.O
 
 		orch, err := randomOrchestrator(ctx, r, gk, accs)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "sim account is not orchestrator"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "no orchestrator found"), nil, nil
 		}
 		orchAddr := orch.Address.String()
 
@@ -247,7 +259,7 @@ func simulateMsgSubmitEthereumTxConfirmation(simCtx *simulateContext) simtypes.O
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "can not get eth private key"), nil, err
 		}
-		ethAddr := common.BytesToAddress(orch.Address.Bytes()).String()
+		ethAddr := crypto.PubkeyToAddress(ethPrivKey.PublicKey).String()
 
 		var msg *types.MsgSubmitEthereumTxConfirmation
 
@@ -257,7 +269,7 @@ func simulateMsgSubmitEthereumTxConfirmation(simCtx *simulateContext) simtypes.O
 			tx := gk.GetLatestSignerSetTx(ctx)
 
 			if tx == nil {
-				return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, ""), nil, nil
+				return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "no latest signer set tx found"), nil, nil
 			}
 
 			gravityId := gk.GetParams(ctx).GravityId
@@ -294,7 +306,7 @@ func simulateMsgSubmitEthereumTxConfirmation(simCtx *simulateContext) simtypes.O
 			}
 			batch := resp.Batch
 			if batch == nil {
-				return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "there is no batchtx"), nil, err
+				return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "there is no batchtx"), nil, nil
 			}
 
 			gravityId := gk.GetParams(ctx).GravityId
@@ -340,7 +352,10 @@ func simulateMsgSubmitEthereumTxConfirmation(simCtx *simulateContext) simtypes.O
 			CoinsSpentInMsg: sdk.Coins{},
 		}
 
-		oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
+		oper, ops, err := GenAndDeliverTxWithRandFees(txCtx)
+		if err != nil && strings.Contains(err.Error(), sdkerrors.Wrap(types.ErrInvalid, "signature duplicate").Error()) {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumTxConfirmation, "signature duplicate"), nil, nil
+		}
 		return oper, ops, err
 	}
 }
@@ -356,16 +371,21 @@ func simulateMsgSubmitEthereumEvent(simCtx *simulateContext) simtypes.Operation 
 
 		orch, err := randomOrchestrator(ctx, r, gk, accs)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumEvent, "sim account is not orchestrator"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumEvent, "no orchestrator found"), nil, nil
 		}
 		orchAddr := orch.Address.String()
+		resp, err := gk.LastSubmittedEthereumEvent(ctx, &types.LastSubmittedEthereumEventRequest{Address: orchAddr})
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgSubmitEthereumEvent, "can not get the last submitted event"), nil, err
+		}
+		lastEventNonce := resp.EventNonce
 
 		var event types.EthereumEvent
 		eventType := eventTypes[r.Intn(len(eventTypes))]
 		switch eventType {
 		case "SendToCosmosEvent":
 			event = &types.SendToCosmosEvent{
-				EventNonce:     1,
+				EventNonce:     lastEventNonce + 1,
 				TokenContract:  randomEthAddress(r).String(),
 				Amount:         simtypes.RandomAmount(r, math.NewIntFromUint64(1e18)),
 				EthereumSender: randomEthAddress(r).String(),
@@ -376,28 +396,28 @@ func simulateMsgSubmitEthereumEvent(simCtx *simulateContext) simtypes.Operation 
 		case "BatchExecutedEvent":
 			event = &types.BatchExecutedEvent{
 				TokenContract:  randomEthAddress(r).String(),
-				EventNonce:     uint64(r.Int63n(1e10)),
+				EventNonce:     lastEventNonce + 1,
 				EthereumHeight: uint64(r.Int63n(1e10)),
 				BatchNonce:     uint64(r.Int63n(1e10)),
 			}
 
 		case "ContractCallExecutedEvent":
 			event = &types.ContractCallExecutedEvent{
-				EventNonce:        uint64(r.Int63n(1e10)),
+				EventNonce:        lastEventNonce + 1,
 				InvalidationNonce: uint64(r.Int63n(1e10)),
 				EthereumHeight:    uint64(r.Int63n(1e10)),
 			}
 
 		case "ERC20DeployedEvent":
 			event = &types.ERC20DeployedEvent{
-				EventNonce:    uint64(r.Int63n(1e10)),
+				EventNonce:    lastEventNonce + 1,
 				CosmosDenom:   sdk.DefaultBondDenom,
 				TokenContract: randomEthAddress(r).String(),
 			}
 
 		case "SignerSetTxExecutedEvent":
 			event = &types.SignerSetTxExecutedEvent{
-				EventNonce:       uint64(r.Int63n(1e10)),
+				EventNonce:       lastEventNonce + 1,
 				SignerSetTxNonce: uint64(r.Int63n(1e10)),
 				EthereumHeight:   uint64(r.Int63n(1e10)),
 				Members: []*types.EthereumSigner{
@@ -436,7 +456,7 @@ func simulateMsgSubmitEthereumEvent(simCtx *simulateContext) simtypes.Operation 
 			CoinsSpentInMsg: sdk.Coins{},
 		}
 
-		oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
+		oper, ops, err := GenAndDeliverTxWithRandFees(txCtx)
 		return oper, ops, err
 	}
 }
@@ -452,7 +472,7 @@ func simulateMsgRequestBatchTx(simCtx *simulateContext) simtypes.Operation {
 
 		orch, err := randomOrchestrator(ctx, r, gk, accs)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, TypeMsgRequestBatchTx, "sim account is not orchestrator"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgRequestBatchTx, "no orchestrator found"), nil, nil
 		}
 		orchAddr := orch.Address.String()
 		msg := &types.MsgRequestBatchTx{
@@ -475,7 +495,10 @@ func simulateMsgRequestBatchTx(simCtx *simulateContext) simtypes.Operation {
 			CoinsSpentInMsg: sdk.Coins{},
 		}
 
-		oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
+		oper, ops, err := GenAndDeliverTxWithRandFees(txCtx)
+		if err != nil && strings.Contains(err.Error(), sdkerrors.Wrap(types.ErrInvalid, "no suitable batch to create").Error()) {
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgRequestBatchTx, "no batch to create"), nil, nil
+		}
 		return oper, ops, err
 	}
 }
@@ -491,7 +514,7 @@ func simulateMsgCancelSendToEthereum(simCtx *simulateContext) simtypes.Operation
 
 		sender, id, err := randomSenderAndID(ctx, r, gk, accs)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, TypeMsgCancelSendToEthereum, "no sender found"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgCancelSendToEthereum, "no sender found"), nil, nil
 		}
 
 		msg := &types.MsgCancelSendToEthereum{
@@ -514,7 +537,7 @@ func simulateMsgCancelSendToEthereum(simCtx *simulateContext) simtypes.Operation
 			CoinsSpentInMsg: sdk.Coins{},
 		}
 
-		oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
+		oper, ops, err := GenAndDeliverTxWithRandFees(txCtx)
 		return oper, ops, err
 	}
 }
@@ -530,7 +553,7 @@ func simulateMsgEthereumHeightVote(simCtx *simulateContext) simtypes.Operation {
 
 		orch, err := randomOrchestrator(ctx, r, gk, accs)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, TypeMsgRequestBatchTx, "sim account is not orchestrator"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, TypeMsgRequestBatchTx, "no orchestrator found"), nil, nil
 		}
 		orchAddr := orch.Address.String()
 
@@ -554,7 +577,7 @@ func simulateMsgEthereumHeightVote(simCtx *simulateContext) simtypes.Operation {
 			CoinsSpentInMsg: sdk.Coins{},
 		}
 
-		oper, ops, err := simulation.GenAndDeliverTxWithRandFees(txCtx)
+		oper, ops, err := GenAndDeliverTxWithRandFees(txCtx)
 		return oper, ops, err
 	}
 }
@@ -571,13 +594,13 @@ func randomEthAddress(r *rand.Rand) common.Address {
 func randomValidator(ctx sdk.Context, r *rand.Rand, sk types.StakingKeeper, accs []simtypes.Account) (simtypes.Account, error) {
 	var valset []simtypes.Account
 	for _, acc := range accs {
-		val := sdk.ValAddress(acc.Address)
-		if sk.Validator(ctx, val) != nil {
+		val := sk.Validator(ctx, sdk.ValAddress(acc.Address))
+		if val != nil && val.IsBonded() {
 			valset = append(valset, acc)
 		}
 	}
 	if len(valset) == 0 {
-		return simtypes.Account{}, fmt.Errorf("none of the sim account is a validator")
+		return simtypes.Account{}, errNoValidatorFound
 	}
 	val, _ := simtypes.RandomAcc(r, valset)
 	return val, nil
@@ -586,13 +609,13 @@ func randomValidator(ctx sdk.Context, r *rand.Rand, sk types.StakingKeeper, accs
 func randomOrchestrator(ctx sdk.Context, r *rand.Rand, gk keeper.Keeper, accs []simtypes.Account) (simtypes.Account, error) {
 	var orchSet []simtypes.Account
 	for _, acc := range accs {
-		val := sdk.ValAddress(acc.Address)
-		if gk.StakingKeeper.Validator(ctx, val) != nil && gk.GetOrchestratorValidatorAddress(ctx, acc.Address) != nil {
+		val := gk.StakingKeeper.Validator(ctx, sdk.ValAddress(acc.Address))
+		if val != nil && val.IsBonded() && gk.GetOrchestratorValidatorAddress(ctx, acc.Address) != nil {
 			orchSet = append(orchSet, acc)
 		}
 	}
 	if len(orchSet) == 0 {
-		return simtypes.Account{}, fmt.Errorf("none of the sim account is both a validator and orchestrator")
+		return simtypes.Account{}, errNoOrchestratorFound
 	}
 	orch, _ := simtypes.RandomAcc(r, orchSet)
 	return orch, nil
@@ -605,7 +628,7 @@ func randomSenderAndID(ctx sdk.Context, r *rand.Rand, gk keeper.Keeper, accs []s
 		sender := acc.Address.String()
 		resp, err := gk.UnbatchedSendToEthereums(ctx, &types.UnbatchedSendToEthereumsRequest{SenderAddress: sender, Pagination: nil})
 		if err != nil {
-			return simtypes.Account{}, 0, err
+			panic(err)
 		}
 		if len(resp.SendToEthereums) == 0 {
 			continue
@@ -616,7 +639,7 @@ func randomSenderAndID(ctx sdk.Context, r *rand.Rand, gk keeper.Keeper, accs []s
 		}
 	}
 	if len(senders) == 0 {
-		return simtypes.Account{}, 0, fmt.Errorf("there is no sender")
+		return simtypes.Account{}, 0, errNoSenderFound
 	}
 	sender, _ := simtypes.RandomAcc(r, senders)
 	senderIDs := ids[sender.Address.String()]
