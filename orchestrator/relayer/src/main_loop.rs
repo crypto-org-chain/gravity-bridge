@@ -36,15 +36,14 @@ pub async fn relayer_main_loop<S: Signer + 'static>(
         grpc_client.clone(),
     )
     .await;
-    if gravity_id.is_err() {
+    if let Err(e) = gravity_id {
         error!(
-            "Error when fetching the GravityID {}",
-            gravity_id.err().unwrap()
+            "Error when fetching the GravityID {e}"
         );
         return;
     }
     let gravity_id = gravity_id.unwrap();
-    let mut logic_call_skips = LogicCallSkips::new();
+    let mut logic_call_skips = LogicCallSkips::default();
 
     loop {
         let (async_resp, _) = tokio::join!(

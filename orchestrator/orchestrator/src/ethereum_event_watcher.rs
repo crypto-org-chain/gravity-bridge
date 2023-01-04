@@ -72,8 +72,7 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
     let search_range = starting_block..ending_block;
 
     info!(
-        "check_for_events from {:?} to {:?}",
-        starting_block, ending_block
+        "check_for_events from {starting_block:?} to {ending_block:?}"
     );
 
     // select uses an inclusive version of the range
@@ -84,30 +83,30 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
     valset_updated_filter = valset_updated_filter.select(search_range.clone());
 
     let erc20_deployed_events = eth_client.get_logs(&erc20_deployed_filter).await?;
-    debug!("ERC20 events detected {:?}", erc20_deployed_events);
+    debug!("ERC20 events detected {erc20_deployed_events:?}");
     let erc20_deployed_events = Erc20DeployedEvent::from_logs(&erc20_deployed_events)?;
-    debug!("parsed erc20 deploys {:?}", erc20_deployed_events);
+    debug!("parsed erc20 deploys {erc20_deployed_events:?}");
 
     let logic_call_events = eth_client.get_logs(&logic_call_filter).await?;
-    debug!("Logic call events detected {:?}", logic_call_events);
+    debug!("Logic call events detected {logic_call_events:?}");
     let logic_call_events = LogicCallExecutedEvent::from_logs(&logic_call_events)?;
-    debug!("parsed logic call executions {:?}", logic_call_events);
+    debug!("parsed logic call executions {logic_call_events:?}");
 
     let send_to_cosmos_events = eth_client.get_logs(&send_to_cosmos_filter).await?;
-    debug!("Send to Cosmos events detected {:?}", send_to_cosmos_events);
+    debug!("Send to Cosmos events detected {send_to_cosmos_events:?}");
     let send_to_cosmos_events = SendToCosmosEvent::from_logs(&send_to_cosmos_events, &prefix)?;
-    debug!("parsed send to cosmos events {:?}", send_to_cosmos_events);
+    debug!("parsed send to cosmos events {send_to_cosmos_events:?}");
 
     let transaction_batch_events = eth_client.get_logs(&transaction_batch_filter).await?;
-    debug!("Batch events detected {:?}", transaction_batch_events);
+    debug!("Batch events detected {transaction_batch_events:?}");
     let transaction_batch_events =
         TransactionBatchExecutedEvent::from_logs(&transaction_batch_events)?;
-    debug!("parsed batches {:?}", transaction_batch_events);
+    debug!("parsed batches {transaction_batch_events:?}");
 
     let valset_updated_events = eth_client.get_logs(&valset_updated_filter).await?;
-    debug!("Valset events detected {:?}", valset_updated_events);
+    debug!("Valset events detected {valset_updated_events:?}");
     let valset_updated_events = ValsetUpdatedEvent::from_logs(&valset_updated_events)?;
-    debug!("parsed valsets {:?}", valset_updated_events);
+    debug!("parsed valsets {valset_updated_events:?}");
 
     // note that starting block overlaps with our last checked block, because we have to deal with
     // the possibility that the relayer was killed after relaying only one of multiple events in a single
@@ -240,15 +239,14 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
                 ));
             }
             info!(
-                "Waiting for claims to process, current on event nonce {}, trying to update to {}",
-                new_event_nonce, last_message_nonce
+                "Waiting for claims to process, current on event nonce {new_event_nonce}, trying to update to {last_message_nonce}"
             );
 
             error_count += 1;
             contact.wait_for_next_block(timeout).await?;
             new_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
         }
-        info!("Claims processed, new nonce: {}", new_event_nonce);
+        info!("Claims processed, new nonce: {new_event_nonce}");
     }
 
     Ok(ending_block)

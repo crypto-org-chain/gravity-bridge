@@ -205,6 +205,7 @@ pub fn build_send_logic_call_contract_call<S: Signer + 'static>(
 }
 
 #[derive(Clone)]
+#[derive(Default)]
 pub struct LogicCallSkips {
     skip_map: HashMap<Vec<u8>, HashMap<u64, LogicCallSkipState>>,
 }
@@ -218,12 +219,6 @@ pub struct LogicCallSkipState {
 }
 
 impl LogicCallSkips {
-    pub fn new() -> Self {
-        LogicCallSkips {
-            skip_map: HashMap::new(),
-        }
-    }
-
     pub fn skips_left(&self, call: &LogicCall) -> u32 {
         if let Some(id_skips) = self.skip_map.get(&call.invalidation_id) {
             if let Some(skip_state) = id_skips.get(&call.invalidation_nonce) {
@@ -301,12 +296,6 @@ impl LogicCallSkips {
     }
 }
 
-impl Default for LogicCallSkips {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[test]
 fn test_logic_call_skips() {
     let logic_call_1_nonce_1 = LogicCall {
@@ -349,7 +338,7 @@ fn test_logic_call_skips() {
         invalidation_nonce: 1,
     };
 
-    let mut skips = LogicCallSkips::new();
+    let mut skips = LogicCallSkips::default();
 
     assert_eq!(skips.skips_left(&logic_call_1_nonce_1), 0);
     assert_eq!(skips.skips_left(&logic_call_1_nonce_2), 0);

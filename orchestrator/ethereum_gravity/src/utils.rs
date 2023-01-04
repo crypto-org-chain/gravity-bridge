@@ -154,8 +154,7 @@ pub async fn get_gravity_id<S: Signer + 'static>(
                     }
 
                     info!(
-                        "Gravity contract id {} match with chain gravity id {}",
-                        gravity_id, contract_id_value
+                        "Gravity contract id {gravity_id} match with chain gravity id {contract_id_value}"
                     );
                     Ok(params.gravity_id)
                 }
@@ -248,11 +247,11 @@ pub fn handle_contract_error<S: Signer + 'static>(gravity_error: GravityError) -
             }
             // TODO(bolten): implement other cases if necessary
             _ => {
-                error!("Unspecified gravity contract error: {}", error_string)
+                error!("Unspecified gravity contract error: {error_string}")
             }
         }
     } else {
-        error!("Non-gravity contract error: {}", error_string);
+        error!("Non-gravity contract error: {error_string}");
     }
 
     false

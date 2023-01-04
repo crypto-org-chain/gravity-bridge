@@ -34,7 +34,7 @@ impl Runnable for StartCommand {
         let mode_str = self.mode.as_deref().unwrap_or(&*mode_config);
         let mode = RelayerMode::from_str(mode_str)
             .expect("Incorrect mode, possible value are: AlwaysRelay, Api or File");
-        info!("Relayer using mode {:?}", mode);
+        info!("Relayer using mode {mode:?}");
 
         let cosmos_prefix = config.cosmos.prefix.clone();
 
@@ -58,15 +58,14 @@ impl Runnable for StartCommand {
             if let Ok(c) = H160::from_str(contract) {
                 supported_contract.push(c);
             } else {
-                error!("error parsing contract in config {}", contract)
+                error!("error parsing contract in config {contract}")
             }
         }
         if supported_contract.is_empty() {
             info!("no contracts found in config, relayer will relay all contracts");
         } else {
             info!(
-                "supported contracts by the relayer {:?}",
-                supported_contract
+                "supported contracts by the relayer {supported_contract:?}"
             );
         }
 
