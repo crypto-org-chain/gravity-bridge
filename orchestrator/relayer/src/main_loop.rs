@@ -37,9 +37,7 @@ pub async fn relayer_main_loop<S: Signer + 'static>(
     )
     .await;
     if let Err(e) = gravity_id {
-        error!(
-            "Error when fetching the GravityID {e}"
-        );
+        error!("Error when fetching the GravityID {e}");
         return;
     }
     let gravity_id = gravity_id.unwrap();

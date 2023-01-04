@@ -204,8 +204,7 @@ pub fn build_send_logic_call_contract_call<S: Signer + 'static>(
     Ok(contract_call)
 }
 
-#[derive(Clone)]
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LogicCallSkips {
     skip_map: HashMap<Vec<u8>, HashMap<u64, LogicCallSkipState>>,
 }

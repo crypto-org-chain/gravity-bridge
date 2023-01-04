@@ -71,9 +71,7 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
 
     let search_range = starting_block..ending_block;
 
-    info!(
-        "check_for_events from {starting_block:?} to {ending_block:?}"
-    );
+    info!("check_for_events from {starting_block:?} to {ending_block:?}");
 
     // select uses an inclusive version of the range
     erc20_deployed_filter = erc20_deployed_filter.select(search_range.clone());
