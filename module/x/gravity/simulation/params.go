@@ -23,27 +23,27 @@ func ParamChanges(r *rand.Rand) []simtypes.ParamChange {
 	return []simtypes.ParamChange{
 		simulation.NewSimParamChange(types.ModuleName, keySignedSignerSetTxsWindow,
 			func(r *rand.Rand) string {
-				return fmt.Sprintf("\"%d\"", uint64(r.Intn(maxBlocksInOneRound)))
+				return fmt.Sprintf("\"%d\"", uint64(r.Intn(maxBlocksInOneRound))+1)
 			},
 		),
 		simulation.NewSimParamChange(types.ModuleName, keySignedBatchesWindow,
 			func(r *rand.Rand) string {
-				return fmt.Sprintf("\"%d\"", uint64(r.Intn(maxBlocksInOneRound)))
+				return fmt.Sprintf("\"%d\"", uint64(r.Intn(maxBlocksInOneRound))+1)
 			},
 		),
 		simulation.NewSimParamChange(types.ModuleName, keyEthereumSignaturesWindow,
 			func(r *rand.Rand) string {
-				return fmt.Sprintf("\"%d\"", uint64(r.Intn(maxBlocksInOneRound)))
+				return fmt.Sprintf("\"%d\"", uint64(r.Intn(maxBlocksInOneRound))+1)
 			},
 		),
 		simulation.NewSimParamChange(types.ModuleName, keyBatchCreationPeriod,
 			func(r *rand.Rand) string {
-				return fmt.Sprintf("\"%d\"", uint64(r.Intn(maxBlocksInOneRound)))
+				return fmt.Sprintf("\"%d\"", uint64(r.Intn(maxBlocksInOneRound))+1)
 			},
 		),
 		simulation.NewSimParamChange(types.ModuleName, keyBatchMaxElement,
 			func(r *rand.Rand) string {
-				return fmt.Sprintf("\"%d\"", uint64(r.Intn(100)))
+				return fmt.Sprintf("\"%d\"", uint64(r.Intn(100))+1)
 			},
 		),
 	}
