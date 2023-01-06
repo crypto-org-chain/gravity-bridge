@@ -2,7 +2,7 @@
 
 e2e_build_images:
 	@docker build -t gravity:prebuilt -f module/Dockerfile module/
-	@docker build -t ethereum:prebuilt -f integration_tests/ethereum/Dockerfile integration_tests/ethereum/
+	@docker build -t ethereum:prebuilt -f integration_tests/ethereum/Dockerfile .
 	@docker build -t orchestrator:prebuilt -f orchestrator/Dockerfile orchestrator/
 
 
