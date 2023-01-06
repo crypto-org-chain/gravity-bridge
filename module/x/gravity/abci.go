@@ -377,33 +377,31 @@ func outgoingTxSlashing(ctx sdk.Context, k keeper.Keeper) {
 		// SLASH BONDED VALIDATORS who didn't sign batch txs
 		signatures := k.GetEthereumSignatures(ctx, otx.GetStoreIndex())
 		for _, valInfo := range valInfos {
-			// Don't slash already slashed validators
-			if !slashedVals[valInfo.cons.String()] {
-				// Don't slash validators who joined after outgoingtx is created
-				if valInfo.exist && valInfo.sigs.StartHeight < int64(otx.GetCosmosHeight()) {
-					if _, ok := signatures[valInfo.val.GetOperator().String()]; !ok {
-						if !valInfo.val.IsJailed() {
-							power := valInfo.val.ConsensusPower(k.PowerReduction)
-							k.StakingKeeper.Slash(
-								ctx,
-								valInfo.cons,
-								ctx.BlockHeight(),
-								power,
-								params.SlashFractionBatch,
-							)
-							k.StakingKeeper.Jail(ctx, valInfo.cons)
-							slashedVals[valInfo.cons.String()] = true
+			// Don't slash validators who joined after outgoingtx is created
+			if valInfo.exist && valInfo.sigs.StartHeight < int64(otx.GetCosmosHeight()) {
+				if _, ok := signatures[valInfo.val.GetOperator().String()]; !ok {
+					// Don't slash already slashed validators
+					if !valInfo.val.IsJailed() && !slashedVals[valInfo.cons.String()] {
+						power := valInfo.val.ConsensusPower(k.PowerReduction)
+						k.StakingKeeper.Slash(
+							ctx,
+							valInfo.cons,
+							ctx.BlockHeight(),
+							power,
+							params.SlashFractionBatch,
+						)
+						k.StakingKeeper.Jail(ctx, valInfo.cons)
+						slashedVals[valInfo.cons.String()] = true
 
-							ctx.EventManager().EmitEvent(
-								sdk.NewEvent(
-									slashingtypes.EventTypeSlash,
-									sdk.NewAttribute(slashingtypes.AttributeKeyAddress, valInfo.cons.String()),
-									sdk.NewAttribute(slashingtypes.AttributeKeyJailed, valInfo.cons.String()),
-									sdk.NewAttribute(slashingtypes.AttributeKeyReason, types.AttributeMissingBridgeBatchSig),
-									sdk.NewAttribute(slashingtypes.AttributeKeyPower, fmt.Sprintf("%d", power)),
-								),
-							)
-						}
+						ctx.EventManager().EmitEvent(
+							sdk.NewEvent(
+								slashingtypes.EventTypeSlash,
+								sdk.NewAttribute(slashingtypes.AttributeKeyAddress, valInfo.cons.String()),
+								sdk.NewAttribute(slashingtypes.AttributeKeyJailed, valInfo.cons.String()),
+								sdk.NewAttribute(slashingtypes.AttributeKeyReason, types.AttributeMissingBridgeBatchSig),
+								sdk.NewAttribute(slashingtypes.AttributeKeyPower, fmt.Sprintf("%d", power)),
+							),
+						)
 					}
 				}
 			}
@@ -418,7 +416,8 @@ func outgoingTxSlashing(ctx sdk.Context, k keeper.Keeper) {
 					sstx.Height < uint64(valInfo.val.UnbondingHeight)+params.UnbondSlashingSignerSetTxsWindow {
 					// check if validator has confirmed valset or not
 					if _, found := signatures[valInfo.val.GetOperator().String()]; !found {
-						if !valInfo.val.IsJailed() {
+						// Don't slash already slashed validators
+						if !valInfo.val.IsJailed() && !slashedVals[valInfo.cons.String()] {
 							// TODO: Do we want to slash jailed validators?
 							power := valInfo.val.ConsensusPower(k.PowerReduction)
 							k.StakingKeeper.Slash(
@@ -429,6 +428,7 @@ func outgoingTxSlashing(ctx sdk.Context, k keeper.Keeper) {
 								params.SlashFractionSignerSetTx,
 							)
 							k.StakingKeeper.Jail(ctx, valInfo.cons)
+							slashedVals[valInfo.cons.String()] = true
 
 							ctx.EventManager().EmitEvent(
 								sdk.NewEvent(
