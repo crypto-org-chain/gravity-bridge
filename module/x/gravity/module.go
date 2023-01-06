@@ -176,7 +176,7 @@ func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes
 	return nil
 }
 
-// RandomizedParams creates randomized gtavity param changes for the simulator.
+// RandomizedParams creates randomized gravity param changes for the simulator.
 func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
 	return simulation.ParamChanges(r)
 }
