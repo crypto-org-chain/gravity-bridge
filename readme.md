@@ -82,7 +82,10 @@ To interact with the ethereum side of the chain, use the JSON-RPC server located
 
 To interact with the gravity module itself, you'll want to build the `gravity` module locally by running the following command.
 
-`user@pc:/gravity-bridge/module$ go build -o build/gravity cmd/gravity/main.go`
+`
+cd module
+make build
+`
 
 You can then use this binary to interact with the Cosmos side of the chain. Check out the Cosmos documentation for more inforatmion on this.
 
