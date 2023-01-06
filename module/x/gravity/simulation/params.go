@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	keySignedSignerSetTxsWindow = "SignedSignerSetTxsWindow"
+	keySignedSignerSetTxsWindow = "SignedSignerSetTxWindow"
 	keySignedBatchesWindow      = "SignedBatchesWindow"
 	keyEthereumSignaturesWindow = "EthereumSignaturesWindow"
 	keyBatchCreationPeriod      = "BatchCreationPeriod"
