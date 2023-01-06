@@ -87,7 +87,7 @@ cd module
 make build
 `
 
-You can then use this binary to interact with the Cosmos side of the chain. Check out the Cosmos documentation for more inforatmion on this.
+You can then use the binary in the build directory to interact with the Cosmos side of the chain. Check out the Cosmos documentation for more information on this.
 
 ### Other tests
 
