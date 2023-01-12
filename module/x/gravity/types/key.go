@@ -17,9 +17,6 @@ const (
 
 	// RouterKey is the module name router key
 	RouterKey = ModuleName
-
-	// QuerierRoute to be used for query msgs
-	QuerierRoute = ModuleName
 )
 
 const (
