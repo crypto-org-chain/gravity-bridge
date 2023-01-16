@@ -153,9 +153,6 @@ func (e20de *ERC20DeployedEvent) Validate() error {
 	if !common.IsHexAddress(e20de.TokenContract) {
 		return sdkerrors.Wrap(ErrInvalid, "ethereum contract address")
 	}
-	if err := sdk.ValidateDenom(e20de.CosmosDenom); err != nil {
-		return err
-	}
 	return nil
 }
 

@@ -101,6 +101,10 @@ func (k Keeper) Handle(ctx sdk.Context, eve types.EthereumEvent) (err error) {
 }
 
 func (k Keeper) verifyERC20DeployedEvent(ctx sdk.Context, event *types.ERC20DeployedEvent) error {
+	if err := sdk.ValidateDenom(event.CosmosDenom); err != nil {
+		return err
+	}
+
 	if existingERC20, exists := k.getCosmosOriginatedERC20(ctx, event.CosmosDenom); exists {
 		return sdkerrors.Wrapf(
 			types.ErrInvalidERC20Event,
