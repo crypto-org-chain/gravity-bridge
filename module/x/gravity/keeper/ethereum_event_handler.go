@@ -23,6 +23,7 @@ func (k Keeper) DetectMaliciousSupply(ctx sdk.Context, denom string, amount sdk.
 }
 
 // Handle is the entry point for EthereumEvent processing
+// Return error when an irrecoverable error is detected
 func (k Keeper) Handle(ctx sdk.Context, eve types.EthereumEvent) (err error) {
 	switch event := eve.(type) {
 	case *types.SendToCosmosEvent:
@@ -33,7 +34,15 @@ func (k Keeper) Handle(ctx sdk.Context, eve types.EthereumEvent) (err error) {
 
 		if !isCosmosOriginated {
 			if err := k.DetectMaliciousSupply(ctx, denom, event.Amount); err != nil {
-				return err
+				// log the error and return nil, otherwise the bridge will be desactivated
+				k.Logger(ctx).Error(
+					"verify SendToCosmosEvent event failed",
+					"cause", err.Error(),
+					"event type", fmt.Sprintf("%T", event),
+					"id", types.MakeEthereumEventVoteRecordKey(event.GetEventNonce(), event.Hash()),
+					"nonce", fmt.Sprint(event.GetEventNonce()),
+				)
+				return nil
 			}
 
 			// if it is not cosmos originated, mint the coins (aka vouchers)
