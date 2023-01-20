@@ -51,6 +51,16 @@ func (k Keeper) Handle(ctx sdk.Context, eve types.EthereumEvent) (err error) {
 			}
 		}
 
+		if k.bankKeeper.BlockedAddr(addr) {
+			// keep the minted coin in module account and return there
+			k.Logger(ctx).Info(
+				"SendToCosmos to a blocked address: ", addr.String(),
+				"event type", fmt.Sprintf("%T", event),
+				"id", types.MakeEthereumEventVoteRecordKey(event.GetEventNonce(), event.Hash()),
+				"nonce", fmt.Sprint(event.GetEventNonce()),
+			)
+			return nil
+		}
 		if recipientModule, ok := k.ReceiverModuleAccounts[event.CosmosReceiver]; ok {
 			if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, recipientModule, coins); err != nil {
 				return err
