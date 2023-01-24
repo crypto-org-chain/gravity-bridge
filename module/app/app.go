@@ -71,16 +71,16 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibctransfer "github.com/cosmos/ibc-go/v5/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v5/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v5/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v5/modules/core/02-client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-	ibcporttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v5/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
-	"github.com/cosmos/ibc-go/v5/testing/simapp"
+	ibctransfer "github.com/cosmos/ibc-go/v6/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v6/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v6/modules/core"
+	ibcclient "github.com/cosmos/ibc-go/v6/modules/core/02-client"
+	ibcclienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
+	ibcporttypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v6/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
+	"github.com/cosmos/ibc-go/v6/testing/simapp"
 	"github.com/gorilla/mux"
 	gravityparams "github.com/peggyjv/gravity-bridge/module/v2/app/params"
 	v2 "github.com/peggyjv/gravity-bridge/module/v2/app/upgrades/v2"
@@ -205,7 +205,7 @@ type Gravity struct {
 	distrKeeper           distrkeeper.Keeper
 	govKeeper             *govkeeper.Keeper
 	crisisKeeper          *crisiskeeper.Keeper
-	upgradeKeeper         upgradekeeper.Keeper
+	upgradeKeeper         *upgradekeeper.Keeper
 	paramsKeeper          paramskeeper.Keeper
 	ibcKeeper             *ibckeeper.Keeper
 	evidenceKeeper        evidencekeeper.Keeper
@@ -414,7 +414,7 @@ func NewGravityApp(
 		keys[gravitytypes.StoreKey],
 		app.GetSubspace(gravitytypes.ModuleName),
 		app.accountKeeper,
-		&stakingKeeper,
+		app.stakingKeeper,
 		app.bankKeeper,
 		app.slashingKeeper,
 		app.distrKeeper,
@@ -425,7 +425,7 @@ func NewGravityApp(
 
 	// we should set hooks after the gravity keeper is properly initialized so that the gravity keeper
 	// hooks could include the correct gravity keeper.
-	app.stakingKeeper = *stakingKeeper.SetHooks(
+	stakingKeeper.SetHooks(
 		stakingtypes.NewMultiStakingHooks(
 			app.distrKeeper.Hooks(),
 			app.slashingKeeper.Hooks(),

@@ -4,8 +4,9 @@ go 1.18
 
 require (
 	cosmossdk.io/math v1.0.0-beta.4
-	github.com/cosmos/cosmos-sdk v0.47.0-alpha2
-	github.com/cosmos/ibc-go/v5 v5.2.0
+	github.com/cosmos/cosmos-sdk v0.47.0-rc1
+	github.com/cosmos/gogoproto v1.4.3
+	github.com/cosmos/ibc-go/v6 v6.1.0
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/gogo/protobuf v1.3.3
 	github.com/gorilla/mux v1.8.0

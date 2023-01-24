@@ -2,6 +2,7 @@ package integration_tests
 
 import (
 	"fmt"
+	"github.com/cosmos/ibc-go/v6/testing/simapp"
 	"io/ioutil"
 	"os"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	sdkTx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -228,7 +228,7 @@ func (c *chain) clientContext(nodeURI string, kb *keyring.Keyring, fromName stri
 		WithInput(os.Stdin).
 		WithNodeURI(nodeURI).
 		WithClient(rpcClient).
-		WithBroadcastMode(flags.BroadcastBlock).
+		WithBroadcastMode(flags.BroadcastSync).
 		WithKeyring(*kb).
 		WithAccountRetriever(authtypes.AccountRetriever{}).
 		WithOutputFormat("json").
