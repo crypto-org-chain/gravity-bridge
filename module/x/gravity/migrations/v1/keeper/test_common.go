@@ -27,7 +27,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	"github.com/cosmos/cosmos-sdk/x/distribution"
-	distrclient "github.com/cosmos/cosmos-sdk/x/distribution/client"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/evidence"
@@ -36,14 +35,12 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	paramsproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -72,7 +69,7 @@ var (
 		mint.AppModuleBasic{},
 		distribution.AppModuleBasic{},
 		gov.NewAppModuleBasic([]govclient.ProposalHandler{
-			paramsclient.ProposalHandler, distrclient.ProposalHandler, upgradeclient.LegacyProposalHandler, upgradeclient.LegacyCancelProposalHandler,
+			paramsclient.ProposalHandler, upgradeclient.LegacyProposalHandler, upgradeclient.LegacyCancelProposalHandler,
 		}),
 		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},
@@ -283,11 +280,11 @@ func CreateTestEnv(t *testing.T) TestInput {
 
 	accountKeeper := authkeeper.NewAccountKeeper(
 		marshaler,
-		keyAcc, // target store
-		getSubspace(paramsKeeper, authtypes.ModuleName),
+		keyAcc,                     // target store
 		authtypes.ProtoBaseAccount, // prototype
 		maccPerms,
 		sdk.GetConfig().GetBech32AccountAddrPrefix(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	blockedAddr := make(map[string]bool, len(maccPerms))
@@ -299,15 +296,15 @@ func CreateTestEnv(t *testing.T) TestInput {
 		marshaler,
 		keyBank,
 		accountKeeper,
-		getSubspace(paramsKeeper, banktypes.ModuleName),
 		blockedAddr,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	bankKeeper.SetParams(ctx, banktypes.Params{DefaultSendEnabled: true})
 
-	stakingKeeper := stakingkeeper.NewKeeper(marshaler, keyStaking, accountKeeper, bankKeeper, getSubspace(paramsKeeper, stakingtypes.ModuleName))
+	stakingKeeper := stakingkeeper.NewKeeper(marshaler, keyStaking, accountKeeper, bankKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String())
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
 
-	distKeeper := distrkeeper.NewKeeper(marshaler, keyDistro, getSubspace(paramsKeeper, distrtypes.ModuleName), accountKeeper, bankKeeper, stakingKeeper, authtypes.FeeCollectorName)
+	distKeeper := distrkeeper.NewKeeper(marshaler, keyDistro, accountKeeper, bankKeeper, stakingKeeper, authtypes.FeeCollectorName, authtypes.NewModuleAddress(govtypes.ModuleName).String())
 	distKeeper.SetParams(ctx, distrtypes.DefaultParams())
 
 	// set genesis items required for distribution
@@ -336,26 +333,19 @@ func CreateTestEnv(t *testing.T) TestInput {
 
 	// Load default wasm config
 
-	govRouter := govv1beta1.NewRouter().
-		AddRoute(paramsproposal.RouterKey, params.NewParamChangeProposalHandler(paramsKeeper)).
-		AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler)
-
 	govKeeper := govkeeper.NewKeeper(
-		marshaler, keyGov, getSubspace(paramsKeeper, govtypes.ModuleName).WithKeyTable(govv1.ParamKeyTable()), accountKeeper, bankKeeper, stakingKeeper, govRouter,
-		baseapp.NewMsgServiceRouter(),
-		govtypes.DefaultConfig(),
+		marshaler, keyGov, accountKeeper, bankKeeper, stakingKeeper, baseapp.NewMsgServiceRouter(), govtypes.DefaultConfig(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	govKeeper.SetProposalID(ctx, govv1beta1.DefaultStartingProposalID)
-	govKeeper.SetDepositParams(ctx, govv1.DefaultDepositParams())
-	govKeeper.SetVotingParams(ctx, govv1.DefaultVotingParams())
-	govKeeper.SetTallyParams(ctx, govv1.DefaultTallyParams())
 
 	slashingKeeper := slashingkeeper.NewKeeper(
 		marshaler,
+		cdc,
 		keySlashing,
-		&stakingKeeper,
-		getSubspace(paramsKeeper, slashingtypes.ModuleName).WithKeyTable(slashingtypes.ParamKeyTable()),
+		stakingKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	k := NewKeeper(
@@ -369,7 +359,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		sdk.DefaultPowerReduction,
 	)
 
-	stakingKeeper = *stakingKeeper.SetHooks(
+	stakingKeeper.SetHooks(
 		stakingtypes.NewMultiStakingHooks(
 			distKeeper.Hooks(),
 			slashingKeeper.Hooks(),
@@ -383,10 +373,9 @@ func CreateTestEnv(t *testing.T) TestInput {
 		GravityKeeper:   k,
 		AccountKeeper:   accountKeeper,
 		BankKeeper:      bankKeeper,
-		StakingKeeper:   stakingKeeper,
+		StakingKeeper:   *stakingKeeper,
 		SlashingKeeper:  slashingKeeper,
 		DistKeeper:      distKeeper,
-		GovKeeper:       govKeeper,
 		Context:         ctx,
 		Marshaler:       marshaler,
 		LegacyAmino:     cdc,

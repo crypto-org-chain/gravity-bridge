@@ -92,13 +92,13 @@ func TestSignerSetTxCreationUponUnbonding(t *testing.T) {
 	// begin unbonding
 	router := baseapp.NewMsgServiceRouter()
 	router.SetInterfaceRegistry(input.InterfaceRegistry)
-	stakingtypes.RegisterMsgServer(router, stakingkeeper.NewMsgServerImpl(input.StakingKeeper))
+	stakingtypes.RegisterMsgServer(router, stakingkeeper.NewMsgServerImpl(&input.StakingKeeper))
 	sh := router.Handler(&stakingtypes.MsgUndelegate{})
 	undelegateMsg := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[0], keeper.StakingAmount)
 	sh(input.Context, undelegateMsg)
 
 	// Run the staking endblocker to ensure signer set tx is set in state
-	staking.EndBlocker(input.Context, input.StakingKeeper)
+	staking.EndBlocker(input.Context, &input.StakingKeeper)
 	gravity.BeginBlocker(input.Context, gravityKeeper)
 
 	require.EqualValues(t, 2, gravityKeeper.GetLatestSignerSetTxNonce(ctx))
@@ -190,7 +190,7 @@ func TestSignerSetTxSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testi
 	input.Context = ctx.WithBlockHeight(valUnbondingHeight)
 	router := baseapp.NewMsgServiceRouter()
 	router.SetInterfaceRegistry(input.InterfaceRegistry)
-	stakingtypes.RegisterMsgServer(router, stakingkeeper.NewMsgServerImpl(input.StakingKeeper))
+	stakingtypes.RegisterMsgServer(router, stakingkeeper.NewMsgServerImpl(&input.StakingKeeper))
 	sh := router.Handler(&stakingtypes.MsgUndelegate{})
 	undelegateMsg1 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[0], keeper.StakingAmount)
 	sh(input.Context, undelegateMsg1)
@@ -204,7 +204,7 @@ func TestSignerSetTxSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testi
 		}
 		gravityKeeper.SetEthereumSignature(ctx, &types.SignerSetTxConfirmation{vs.Nonce, keeper.EthAddrs[i].Hex(), []byte("dummySig")}, val)
 	}
-	staking.EndBlocker(input.Context, input.StakingKeeper)
+	staking.EndBlocker(input.Context, &input.StakingKeeper)
 
 	ctx = ctx.WithBlockHeight(currentBlockHeight)
 	gravity.EndBlocker(ctx, gravityKeeper)
@@ -294,7 +294,7 @@ func TestSignerSetTxSetting(t *testing.T) {
 	require.EqualValues(t, 1, len(gk.GetSignerSetTxs(ctx)))
 }
 
-/// Test batch timeout
+// / Test batch timeout
 func TestBatchTxTimeout(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
 	gravityKeeper := input.GravityKeeper

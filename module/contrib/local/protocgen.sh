@@ -19,7 +19,7 @@ cd ..
 cp -r github.com/peggyjv/gravity-bridge/module/* ./
 rm -rf github.com
 
-go mod tidy -compat=1.17
+go mod tidy -compat=1.18
 
 
 

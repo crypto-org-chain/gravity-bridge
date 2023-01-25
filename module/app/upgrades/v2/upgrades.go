@@ -19,8 +19,10 @@ func CreateUpgradeHandler(
 		// Since this is the first in-place upgrade and InitChainer was not set up for this at genesis
 		// time, we must initialize the VM map ourselves.
 		fromVM := make(map[string]uint64)
-		for moduleName, module := range mm.Modules {
-			fromVM[moduleName] = module.ConsensusVersion()
+		for moduleName, mod := range mm.Modules {
+			if mc, ok := mod.(module.HasConsensusVersion); ok {
+				fromVM[moduleName] = mc.ConsensusVersion()
+			}
 		}
 
 		// Overwrite the gravity module's version back to 1 so the migration will run to v2

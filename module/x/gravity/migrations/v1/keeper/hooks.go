@@ -42,6 +42,10 @@ func (h Hooks) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, 
 	return nil
 }
 
+func (h Hooks) AfterUnbondingInitiated(ctx sdk.Context, id uint64) error {
+	return nil
+}
+
 var _ types.GravityHooks = Keeper{}
 
 func (k Keeper) AfterContractCallExecutedEvent(ctx sdk.Context, event types.ContractCallExecutedEvent) {

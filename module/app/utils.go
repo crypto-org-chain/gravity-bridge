@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cosmos/ibc-go/v5/testing/simapp/helpers"
 	"io/ioutil"
 
 	"github.com/tendermint/tendermint/libs/log"
@@ -16,6 +15,9 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 )
 
+// SimAppChainID hardcoded chainID for simulation
+const SimAppChainID = "simulation-app"
+
 // SetupSimulation creates the config, db (levelDB), temporary directory and logger for
 // the simulation tests. If `FlagEnabledValue` is false it skips the current test.
 // Returns error on an invalid db intantiation or temp dir creation.
@@ -25,7 +27,7 @@ func SetupSimulation(dirPrefix, dbName string) (simtypes.Config, dbm.DB, string,
 	}
 
 	config := NewConfigFromFlags()
-	config.ChainID = helpers.SimAppChainID
+	config.ChainID = SimAppChainID
 
 	var logger log.Logger
 	if FlagVerboseValue {
@@ -39,7 +41,7 @@ func SetupSimulation(dirPrefix, dbName string) (simtypes.Config, dbm.DB, string,
 		return simtypes.Config{}, nil, "", nil, false, err
 	}
 
-	db, err := sdk.NewLevelDB(dbName, dir)
+	db, err := dbm.NewDB(dbName, dbm.GoLevelDBBackend, dir)
 	if err != nil {
 		return simtypes.Config{}, nil, "", nil, false, err
 	}
@@ -67,7 +69,7 @@ func SimulationOperations(app Gravity, cdc codec.JSONCodec, config simtypes.Conf
 		}
 	}
 
-	simState.ParamChanges = app.SimulationManager().GenerateParamChanges(config.Seed)
+	//simState.ParamChanges = app.SimulationManager().GenerateParamChanges(config.Seed)
 	simState.Contents = app.SimulationManager().GetProposalContents(simState)
 	return app.SimulationManager().WeightedOperations(simState)
 }
@@ -75,11 +77,11 @@ func SimulationOperations(app Gravity, cdc codec.JSONCodec, config simtypes.Conf
 // CheckExportSimulation exports the app state and simulation parameters to JSON
 // if the export paths are defined.
 func CheckExportSimulation(
-	app Gravity, config simtypes.Config, params simtypes.Params,
+	app Gravity, config simtypes.Config, params simtypes.Params, modulesToExport []string,
 ) error {
 	if config.ExportStatePath != "" {
 		fmt.Println("exporting app state...")
-		exported, err := app.ExportAppStateAndValidators(false, nil)
+		exported, err := app.ExportAppStateAndValidators(false, nil, modulesToExport)
 		if err != nil {
 			return err
 		}

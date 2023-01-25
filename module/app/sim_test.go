@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cosmos/ibc-go/v6/testing/simapp"
-	"github.com/cosmos/ibc-go/v6/testing/simapp/helpers"
 	"math/rand"
 	"os"
 	"testing"
@@ -27,16 +26,12 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
-	ibchost "github.com/cosmos/ibc-go/v6/modules/core/24-host"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
-
-// SimAppChainID hardcoded chainID for simulation
-const SimAppChainID = "simulation-app"
 
 func init() {
 	simcli.GetSimulatorFlags()
@@ -85,7 +80,7 @@ func TestFullAppSimulation(t *testing.T) {
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = CheckExportSimulation(*app, config, simParams)
+	err = CheckExportSimulation(*app, config, simParams, []string{})
 	require.NoError(t, err)
 	require.NoError(t, simErr)
 
@@ -123,7 +118,7 @@ func TestAppImportExport(t *testing.T) {
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = CheckExportSimulation(*app, config, simParams)
+	err = CheckExportSimulation(*app, config, simParams, []string{})
 	require.NoError(t, err)
 	require.NoError(t, simErr)
 
@@ -174,7 +169,6 @@ func TestAppImportExport(t *testing.T) {
 		{app.keys[govtypes.StoreKey], newApp.keys[govtypes.StoreKey], [][]byte{}},
 		{app.keys[evidencetypes.StoreKey], newApp.keys[evidencetypes.StoreKey], [][]byte{}},
 		{app.keys[capabilitytypes.StoreKey], newApp.keys[capabilitytypes.StoreKey], [][]byte{}},
-		{app.keys[ibchost.StoreKey], newApp.keys[ibchost.StoreKey], [][]byte{}},
 		{app.keys[ibctransfertypes.StoreKey], newApp.keys[ibctransfertypes.StoreKey], [][]byte{}},
 		// TODO: Add gravity module once simulation code is write
 	}
@@ -220,7 +214,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = CheckExportSimulation(*app, config, simParams)
+	err = CheckExportSimulation(*app, config, simParams, []string{})
 	require.NoError(t, err)
 	require.NoError(t, simErr)
 
@@ -279,7 +273,7 @@ func TestAppStateDeterminism(t *testing.T) {
 	config.ExportParamsPath = ""
 	config.OnOperation = false
 	config.AllInvariants = false
-	config.ChainID = helpers.SimAppChainID
+	config.ChainID = SimAppChainID
 
 	numSeeds := 3
 	numTimesToRunPerSeed := 5
