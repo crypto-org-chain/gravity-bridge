@@ -69,8 +69,6 @@ func SimulationOperations(app Gravity, cdc codec.JSONCodec, config simtypes.Conf
 		}
 	}
 
-	// TODO uncomment
-	//simState.ParamChanges = app.SimulationManager().GenerateParamChanges(config.Seed)
 	simState.Contents = app.SimulationManager().GetProposalContents(simState)
 	return app.SimulationManager().WeightedOperations(simState)
 }

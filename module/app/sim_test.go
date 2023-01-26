@@ -306,7 +306,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				app.BaseApp,
 				simapp.AppStateFn(app.AppCodec(), app.SimulationManager()),
 				simtypes.RandomAccounts,
-				simapp.SimulationOperations(app, app.AppCodec(), config),
+				simtestutil.SimulationOperations(app, app.AppCodec(), config),
 				app.ModuleAccountAddrs(),
 				config,
 				app.AppCodec(),
