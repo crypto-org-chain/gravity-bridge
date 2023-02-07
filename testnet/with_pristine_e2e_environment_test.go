@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/simapp"
+	simappparams "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"io"
 	"io/fs"
 	"os"
@@ -38,12 +38,12 @@ func withPristineE2EEnvironment(t *testing.T, cb func(
 )) {
 	t.Helper()
 
-	cdc := simapp.MakeTestEncodingConfig().Codec
+	cdc := simappparams.MakeTestEncodingConfig().Codec
 
 	chain := Chain{
 		DataDir: "testdata",
 		ID:      "testchain",
-		codec:   cdc,
+		Codec:   cdc,
 	}
 
 	err := chain.CreateAndInitializeValidators(4)
