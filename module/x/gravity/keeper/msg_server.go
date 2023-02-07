@@ -29,6 +29,10 @@ var _ types.MsgServer = msgServer{}
 
 func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys) (*types.MsgDelegateKeysResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+	params := k.GetParams(ctx)
+	if !params.BridgeActive {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "the bridge is disabled")
+	}
 
 	valAddr, err := sdk.ValAddressFromBech32(msg.ValidatorAddress)
 	if err != nil {
@@ -108,6 +112,10 @@ func (k msgServer) SetDelegateKeys(c context.Context, msg *types.MsgDelegateKeys
 // SubmitEthereumTxConfirmation handles MsgSubmitEthereumTxConfirmation
 func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.MsgSubmitEthereumTxConfirmation) (*types.MsgSubmitEthereumTxConfirmationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+	params := k.GetParams(ctx)
+	if !params.BridgeActive {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "the bridge is disabled")
+	}
 
 	confirmation, err := types.UnpackConfirmation(msg.Confirmation)
 	if err != nil {
@@ -174,6 +182,10 @@ func (k msgServer) SubmitEthereumTxConfirmation(c context.Context, msg *types.Ms
 // SubmitEthereumEvent handles MsgSubmitEthereumEvent
 func (k msgServer) SubmitEthereumEvent(c context.Context, msg *types.MsgSubmitEthereumEvent) (*types.MsgSubmitEthereumEventResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+	params := k.GetParams(ctx)
+	if !params.BridgeActive {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "the bridge is disabled")
+	}
 
 	event, err := types.UnpackEvent(msg.Event)
 	if err != nil {
@@ -256,6 +268,9 @@ func (k msgServer) SendToEthereum(c context.Context, msg *types.MsgSendToEthereu
 func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchTx) (*types.MsgRequestBatchTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	params := k.GetParams(ctx)
+	if !params.BridgeActive {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "the bridge is disabled")
+	}
 
 	// Check sender is either from a validator or orchestrator
 	isAuthorized := false
@@ -307,6 +322,10 @@ func (k msgServer) RequestBatchTx(c context.Context, msg *types.MsgRequestBatchT
 
 func (k msgServer) CancelSendToEthereum(c context.Context, msg *types.MsgCancelSendToEthereum) (*types.MsgCancelSendToEthereumResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+	params := k.GetParams(ctx)
+	if !params.BridgeActive {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "the bridge is disabled")
+	}
 
 	err := k.Keeper.cancelSendToEthereum(ctx, msg.Id, msg.Sender)
 	if err != nil {
@@ -332,6 +351,10 @@ func (k msgServer) CancelSendToEthereum(c context.Context, msg *types.MsgCancelS
 
 func (k msgServer) SubmitEthereumHeightVote(c context.Context, msg *types.MsgEthereumHeightVote) (*types.MsgEthereumHeightVoteResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+	params := k.GetParams(ctx)
+	if !params.BridgeActive {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "the bridge is disabled")
+	}
 
 	val, err := k.getSignerValidator(ctx, msg.Signer)
 	if err != nil {
