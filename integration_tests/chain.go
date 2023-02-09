@@ -2,10 +2,10 @@ package integration_tests
 
 import (
 	"fmt"
-	"github.com/cosmos/ibc-go/v6/testing/simapp"
 	"io/ioutil"
 	"os"
 
+	"cosmossdk.io/simapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"

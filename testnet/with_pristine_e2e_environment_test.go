@@ -2,9 +2,9 @@ package main
 
 import (
 	"bytes"
+	simappparams "cosmossdk.io/simapp/params"
 	"encoding/json"
 	"fmt"
-	simappparams "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"io"
 	"io/fs"
 	"os"
