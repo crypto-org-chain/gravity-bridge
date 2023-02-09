@@ -1,6 +1,7 @@
 package app
 
 import (
+	"cosmossdk.io/simapp"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -80,7 +81,6 @@ import (
 	ibcporttypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v6/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
-	"github.com/cosmos/ibc-go/v6/testing/simapp"
 	"github.com/gorilla/mux"
 	gravityparams "github.com/peggyjv/gravity-bridge/module/v2/app/params"
 	v2 "github.com/peggyjv/gravity-bridge/module/v2/app/upgrades/v2"

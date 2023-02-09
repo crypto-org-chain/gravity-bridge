@@ -1,9 +1,9 @@
 package app
 
 import (
+	"cosmossdk.io/simapp"
 	"encoding/json"
 	"fmt"
-	"github.com/cosmos/ibc-go/v6/testing/simapp"
 	"math/rand"
 	"os"
 	"testing"
@@ -134,7 +134,7 @@ func TestAppImportExport(t *testing.T) {
 
 	fmt.Printf("importing genesis...\n")
 
-	_, newDB, newDir, _, _, err := simapp.SetupSimulation("leveldb-app-sim-2", "Simulation-2")
+	newDB, newDir, _, _, err := simtestutil.SetupSimulation(config, "leveldb-app-sim-2", "Simulation-2", simcli.FlagVerboseValue, simcli.FlagEnabledValue)
 	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
@@ -188,7 +188,10 @@ func TestAppImportExport(t *testing.T) {
 }
 
 func TestAppSimulationAfterImport(t *testing.T) {
-	config, db, dir, logger, skip, err := simapp.SetupSimulation("leveldb-app-sim", "Simulation")
+	config := simcli.NewConfigFromFlags()
+	config.ChainID = SimAppChainID
+	db, dir, logger, skip, err := simtestutil.SetupSimulation(config, "leveldb-app-sim", "Simulation", simcli.FlagVerboseValue, simcli.FlagEnabledValue)
+
 	if skip {
 		t.Skip("skipping application simulation after import")
 	}
@@ -266,11 +269,11 @@ func TestAppSimulationAfterImport(t *testing.T) {
 }
 
 func TestAppStateDeterminism(t *testing.T) {
-	if !simapp.FlagEnabledValue {
+	if !simcli.FlagEnabledValue {
 		t.Skip("skipping application simulation")
 	}
 
-	config := simapp.NewConfigFromFlags()
+	config := simcli.NewConfigFromFlags()
 	config.InitialBlockHeight = 1
 	config.ExportParamsPath = ""
 	config.OnOperation = false

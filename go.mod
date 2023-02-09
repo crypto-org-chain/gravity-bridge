@@ -3,8 +3,8 @@ module github.com/peggyjv/gravity-bridge
 go 1.19
 
 require (
-	github.com/cosmos/cosmos-sdk v0.47.0-rc1
 	cosmossdk.io/simapp v0.0.0-20221216140705-ee8890cf30e7
+	github.com/cosmos/cosmos-sdk v0.47.0-rc1
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/miguelmota/go-ethereum-hdwallet v0.1.1
@@ -26,7 +26,6 @@ require (
 	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
 	cosmossdk.io/errors v1.0.0-beta.7 // indirect
 	cosmossdk.io/math v1.0.0-beta.4 // indirect
-	cosmossdk.io/simapp v0.0.0-20221216140705-ee8890cf30e7 // indirect
 	cosmossdk.io/tools/rosetta v0.2.0 // indirect
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
