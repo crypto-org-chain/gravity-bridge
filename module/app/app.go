@@ -542,6 +542,9 @@ func NewGravityApp(
 		vestingtypes.ModuleName,
 		gravitytypes.ModuleName,
 	)
+
+	// Note: genutiltypes needs to be last because some genesis transactions needs context
+	// from other module to be populated first
 	app.mm.SetOrderInitGenesis(
 		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
@@ -553,13 +556,13 @@ func NewGravityApp(
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
 		ibchost.ModuleName,
-		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		gravitytypes.ModuleName,
+		genutiltypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
