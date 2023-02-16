@@ -10,7 +10,7 @@
 # > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simappcli:/root/.simapp simapp gravity keys add foo
 # > docker run -it -p 26657:26657 -p 26656:26656 -v ~/.simappcli:/root/.simapp simapp gravity keys list
 # TODO: demo connecting rest-server (or is this in server now?)
-FROM golang:alpine AS build-env
+FROM golang:1.19-alpine AS build-env
 
 # Install minimum necessary dependencies,
 ENV PACKAGES curl make git libc-dev bash gcc linux-headers eudev-dev python3
@@ -20,12 +20,11 @@ RUN apk add --no-cache $PACKAGES
 WORKDIR /go/src/github.com/PeggyJV/gravity-bridge/module
 
 # Get dependancies - will also be cached if we won't change mod/sum
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
-
 # Add source files
 COPY . .
+
+# install simapp, remove packages
+RUN make build
 
 # install simapp, remove packages
 RUN go build -o build/gravity ./cmd/gravity/main.go
