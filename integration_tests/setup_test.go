@@ -423,6 +423,8 @@ func (s *IntegrationTestSuite) initValidatorConfigs() {
 		appConfig.API.Enable = true
 		appConfig.Pruning = "nothing"
 		appConfig.MinGasPrices = fmt.Sprintf("%s%s", minGasPrice, testDenom)
+		appConfig.GRPC.Enable = true
+		appConfig.GRPC.Address = "0.0.0.0:9090"
 
 		srvconfig.WriteConfigFile(appCfgPath, appConfig)
 	}
