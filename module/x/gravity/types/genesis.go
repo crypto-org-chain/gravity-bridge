@@ -82,7 +82,7 @@ var (
 )
 
 func (gs *GenesisState) UnpackInterfaces(unpacker cdctypes.AnyUnpacker) error {
-	for _, otx := range gs.OutgoingTxes {
+	for _, otx := range gs.OutgoingTxs {
 		var outgoing OutgoingTx
 		if err := unpacker.UnpackAny(otx, &outgoing); err != nil {
 			return err

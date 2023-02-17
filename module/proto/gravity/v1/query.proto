@@ -9,8 +9,7 @@ import "gravity/v1/genesis.proto";
 import "gravity/v1/gravity.proto";
 import "gravity/v1/msgs.proto";
 
-option go_package =
-  "github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types";
+option go_package = "github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types";
 
 // Query defines the gRPC querier service
 service Query {
@@ -163,52 +162,34 @@ service Query {
 }
 
 //  rpc Params
-message ParamsRequest {
-}
-message ParamsResponse {
-  Params params = 1 [ (gogoproto.nullable) = false ];
-}
+message ParamsRequest {}
+message ParamsResponse { Params params = 1 [ (gogoproto.nullable) = false ]; }
 
 //  rpc SignerSetTx
-message SignerSetTxRequest {
-  uint64 signer_set_nonce = 1;
-}
-message LatestSignerSetTxRequest {
-}
-message SignerSetTxResponse {
-  SignerSetTx signer_set = 1;
-}
+message SignerSetTxRequest { uint64 signer_set_nonce = 1; }
+message LatestSignerSetTxRequest {}
+message SignerSetTxResponse { SignerSetTx signer_set = 1; }
 
 //  rpc BatchTx
 message BatchTxRequest {
   string token_contract = 1;
   uint64 batch_nonce = 2;
 }
-message BatchTxResponse {
-  BatchTx batch = 1;
-}
+message BatchTxResponse { BatchTx batch = 1; }
 
 //  rpc LastBatchTx
-message LastBatchTxRequest {
-  string token_contract = 1;
-}
-message LastBatchTxResponse {
-  BatchTx batch = 1;
-}
+message LastBatchTxRequest { string token_contract = 1; }
+message LastBatchTxResponse { BatchTx batch = 1; }
 
 //  rpc ContractCallTx
 message ContractCallTxRequest {
   bytes invalidation_scope = 1;
   uint64 invalidation_nonce = 2;
 }
-message ContractCallTxResponse {
-  ContractCallTx logic_call = 1;
-}
+message ContractCallTxResponse { ContractCallTx logic_call = 1; }
 
 // rpc SignerSetTxConfirmations
-message SignerSetTxConfirmationsRequest {
-  uint64 signer_set_nonce = 1;
-}
+message SignerSetTxConfirmationsRequest { uint64 signer_set_nonce = 1; }
 message SignerSetTxConfirmationsResponse {
   repeated SignerSetTxConfirmation signatures = 1;
 }
@@ -250,9 +231,7 @@ message UnsignedSignerSetTxsRequest {
   // orchestrator address or the corresponding validator address
   string address = 1;
 }
-message UnsignedSignerSetTxsResponse {
-  repeated SignerSetTx signer_sets = 1;
-}
+message UnsignedSignerSetTxsResponse { repeated SignerSetTx signer_sets = 1; }
 
 message UnsignedBatchTxsRequest {
   // NOTE: this is an sdk.AccAddress and can represent either the
@@ -265,15 +244,10 @@ message UnsignedBatchTxsResponse {
 }
 
 //  rpc UnsignedContractCallTxs
-message UnsignedContractCallTxsRequest {
-  string address = 1;
-}
-message UnsignedContractCallTxsResponse {
-  repeated ContractCallTx calls = 1;
-}
+message UnsignedContractCallTxsRequest { string address = 1; }
+message UnsignedContractCallTxsResponse { repeated ContractCallTx calls = 1; }
 
-message BatchTxFeesRequest {
-}
+message BatchTxFeesRequest {}
 message BatchTxFeesResponse {
   repeated cosmos.base.v1beta1.Coin fees = 1 [
     (gogoproto.nullable) = false,
@@ -297,24 +271,16 @@ message BatchTxConfirmationsResponse {
   repeated BatchTxConfirmation signatures = 1;
 }
 
-message LastSubmittedEthereumEventRequest {
-  string address = 1;
-}
-message LastSubmittedEthereumEventResponse {
-  uint64 event_nonce = 1;
-}
+message LastSubmittedEthereumEventRequest { string address = 1; }
+message LastSubmittedEthereumEventResponse { uint64 event_nonce = 1; }
 
-message ERC20ToDenomRequest {
-  string erc20 = 1;
-}
+message ERC20ToDenomRequest { string erc20 = 1; }
 message ERC20ToDenomResponse {
   string denom = 1;
   bool cosmos_originated = 2;
 }
 
-message DenomToERC20ParamsRequest {
-  string denom = 1;
-}
+message DenomToERC20ParamsRequest { string denom = 1; }
 message DenomToERC20ParamsResponse {
   string base_denom = 1;
   string erc20_name = 2;
@@ -322,43 +288,32 @@ message DenomToERC20ParamsResponse {
   uint64 erc20_decimals = 4;
 }
 
-message DenomToERC20Request {
-  string denom = 1;
-}
+message DenomToERC20Request { string denom = 1; }
 message DenomToERC20Response {
   string erc20 = 1;
   bool cosmos_originated = 2;
 }
 
-message DelegateKeysByValidatorRequest {
-  string validator_address = 1;
-}
+message DelegateKeysByValidatorRequest { string validator_address = 1; }
 message DelegateKeysByValidatorResponse {
   string eth_address = 1;
   string orchestrator_address = 2;
 }
 
-message DelegateKeysByEthereumSignerRequest {
-  string ethereum_signer = 1;
-}
+message DelegateKeysByEthereumSignerRequest { string ethereum_signer = 1; }
 message DelegateKeysByEthereumSignerResponse {
   string validator_address = 1;
   string orchestrator_address = 2;
 }
 
-message DelegateKeysByOrchestratorRequest {
-  string orchestrator_address = 1;
-}
+message DelegateKeysByOrchestratorRequest { string orchestrator_address = 1; }
 message DelegateKeysByOrchestratorResponse {
   string validator_address = 1;
   string ethereum_signer = 2;
 }
 
-message DelegateKeysRequest {
-}
-message DelegateKeysResponse {
-  repeated MsgDelegateKeys delegate_keys = 1;
-}
+message DelegateKeysRequest {}
+message DelegateKeysResponse { repeated MsgDelegateKeys delegate_keys = 1; }
 
 // NOTE: if there is no sender address, return all
 message BatchedSendToEthereumsRequest {
@@ -381,8 +336,7 @@ message UnbatchedSendToEthereumsResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-message LastObservedEthereumHeightRequest {
-}
+message LastObservedEthereumHeightRequest {}
 message LastObservedEthereumHeightResponse {
   LatestEthereumBlockHeight last_observed_ethereum_height = 1;
 }

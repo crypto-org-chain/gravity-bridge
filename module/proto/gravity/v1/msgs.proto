@@ -8,10 +8,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/any.proto";
 import "gravity/v1/gravity.proto";
 
-
-
-option go_package =
-  "github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types";
+option go_package = "github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types";
 
 // Msg defines the state transitions possible within gravity
 service Msg {
@@ -54,9 +51,7 @@ message MsgSendToEthereum {
 
 // MsgSendToEthereumResponse returns the SendToEthereum transaction ID which
 // will be included in the batch tx.
-message MsgSendToEthereumResponse {
-  uint64 id = 1;
-}
+message MsgSendToEthereumResponse { uint64 id = 1; }
 
 // MsgCancelSendToEthereum allows the sender to cancel its own outgoing
 // SendToEthereum tx and recieve a refund of the tokens and bridge fees. This tx
@@ -67,8 +62,7 @@ message MsgCancelSendToEthereum {
   string sender = 2;
 }
 
-message MsgCancelSendToEthereumResponse {
-}
+message MsgCancelSendToEthereumResponse {}
 
 // MsgRequestBatchTx requests a batch of transactions with a given coin
 // denomination to send across the bridge to Ethereum.
@@ -77,8 +71,7 @@ message MsgRequestBatchTx {
   string signer = 2;
 }
 
-message MsgRequestBatchTxResponse {
-}
+message MsgRequestBatchTxResponse {}
 
 // MsgSubmitEthereumTxConfirmation submits an ethereum signature for a given
 // validator
@@ -88,7 +81,7 @@ message MsgSubmitEthereumTxConfirmation {
   // TODO: can we make this take an array?
   google.protobuf.Any confirmation = 1
       [ (cosmos_proto.accepts_interface) =
-        "gravity.v1.EthereumTxConfirmation" ];
+            "gravity.v1.EthereumTxConfirmation" ];
   string signer = 2;
 }
 
@@ -117,8 +110,7 @@ message SignerSetTxConfirmation {
   bytes signature = 3;
 }
 
-message MsgSubmitEthereumTxConfirmationResponse {
-}
+message MsgSubmitEthereumTxConfirmationResponse {}
 
 // MsgSubmitEthereumEvent
 message MsgSubmitEthereumEvent {
@@ -129,8 +121,7 @@ message MsgSubmitEthereumEvent {
   string signer = 2;
 }
 
-message MsgSubmitEthereumEventResponse {
-}
+message MsgSubmitEthereumEventResponse {}
 
 // MsgDelegateKey allows validators to delegate their voting responsibilities
 // to a given orchestrator address. This key is then used as an optional
@@ -142,8 +133,7 @@ message MsgDelegateKeys {
   bytes eth_signature = 4;
 }
 
-message MsgDelegateKeysResponse {
-}
+message MsgDelegateKeysResponse {}
 
 // DelegateKeysSignMsg defines the message structure an operator is expected to
 // sign when submitting a MsgDelegateKeys message. The resulting signature
@@ -160,8 +150,7 @@ message MsgEthereumHeightVote {
   string signer = 2;
 }
 
-message MsgEthereumHeightVoteResponse {
-}
+message MsgEthereumHeightVoteResponse {}
 
 ////////////
 // Events //

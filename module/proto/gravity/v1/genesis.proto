@@ -6,8 +6,7 @@ import "google/protobuf/any.proto";
 import "gravity/v1/gravity.proto";
 import "gravity/v1/msgs.proto";
 
-option go_package =
-  "github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types";
+option go_package = "github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types";
 
 // Params represent the Gravity genesis and store parameters
 // gravity_id:
@@ -113,12 +112,12 @@ message Params {
 message GenesisState {
   Params params = 1;
   uint64 last_observed_event_nonce = 2;
-  repeated google.protobuf.Any outgoing_txes = 3;
+  repeated google.protobuf.Any outgoing_txs = 3;
   repeated google.protobuf.Any confirmations = 4;
   repeated EthereumEventVoteRecord ethereum_event_vote_records = 9;
   repeated MsgDelegateKeys delegate_keys = 10;
   repeated ERC20ToDenom erc20_to_denoms = 11;
-  repeated SendToEthereum unbatched_send_to_ethereum_txes = 12;
+  repeated SendToEthereum unbatched_send_to_ethereum_txs = 12;
 }
 
 // This records the relationship between an ERC20 token and the denom
