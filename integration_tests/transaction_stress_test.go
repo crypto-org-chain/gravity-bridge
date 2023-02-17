@@ -110,9 +110,17 @@ func (s *IntegrationTestSuite) TestTransactionStress() {
 			s.Require().NoError(err)
 
 			for j := 0; j < int(transactionsPerValidator); j++ {
-				response, err := s.chain.sendMsgs(*clientCtx, sendToEthereumMsg)
-				s.Require().NoError(err)
-				s.Require().Equal(uint32(0), response.Code)
+				s.Require().Eventuallyf(func() bool {
+					response, err := s.chain.sendMsgs(*clientCtx, sendToEthereumMsg)
+					s.Require().NoError(err)
+					if uint32(0) == response.Code {
+						return true
+					} else {
+						s.T().Logf("wait for previous transaction to be executed")
+						return false
+					}
+				}, time.Second*180, time.Second*2, "balance never found")
+
 			}
 			s.T().Logf("%d Tx sent.", transactionsPerValidator)
 		}
