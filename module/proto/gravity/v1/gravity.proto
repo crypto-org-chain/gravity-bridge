@@ -6,7 +6,8 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types";
+option go_package =
+  "github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types";
 
 // EthereumEventVoteRecord is an event that is pending of confirmation by 2/3 of
 // the signer set. The event is then attested and executed in the state machine
@@ -85,7 +86,9 @@ message ERC20Token {
   ];
 }
 
-message IDSet { repeated uint64 ids = 1; }
+message IDSet {
+  repeated uint64 ids = 1;
+}
 
 message CommunityPoolEthereumSpendProposal {
   option (gogoproto.equal) = false;

@@ -16,10 +16,10 @@ done
 cd ..
 
 # move proto files to the right places
-cp -r github.com/peggyjv/gravity-bridge/module/* ./
+cp -r github.com/peggyjv/gravity-bridge/module/v2/* ./
 rm -rf github.com
 
-go mod tidy -compat=1.18
+go mod tidy -compat=1.19
 
 
 

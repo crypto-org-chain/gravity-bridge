@@ -15,7 +15,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	k.SetParams(ctx, *data.Params)
 
 	// reset pool transactions in state
-	for _, tx := range data.UnbatchedSendToEthereumTxs {
+	for _, tx := range data.UnbatchedSendToEthereumTxes {
 		k.setUnbatchedSendToEthereum(ctx, tx)
 	}
 
@@ -69,7 +69,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	}
 
 	// reset outgoing txs in state
-	for _, ota := range data.OutgoingTxs {
+	for _, ota := range data.OutgoingTxes {
 		otx, err := types.UnpackOutgoingTx(ota)
 		if err != nil {
 			panic(fmt.Sprintf("invalid outgoing tx any in genesis file: %s", err))
@@ -162,13 +162,13 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	}
 
 	return types.GenesisState{
-		Params:                     &p,
-		LastObservedEventNonce:     lastobserved,
-		OutgoingTxs:                outgoingTxs,
-		Confirmations:              ethereumTxConfirmations,
-		EthereumEventVoteRecords:   ethereumEventVoteRecords,
-		DelegateKeys:               delegates,
-		Erc20ToDenoms:              erc20ToDenoms,
-		UnbatchedSendToEthereumTxs: unbatchedTransfers,
+		Params:                      &p,
+		LastObservedEventNonce:      lastobserved,
+		OutgoingTxes:                outgoingTxs,
+		Confirmations:               ethereumTxConfirmations,
+		EthereumEventVoteRecords:    ethereumEventVoteRecords,
+		DelegateKeys:                delegates,
+		Erc20ToDenoms:               erc20ToDenoms,
+		UnbatchedSendToEthereumTxes: unbatchedTransfers,
 	}
 }
