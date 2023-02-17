@@ -13,7 +13,7 @@ option go_package = "github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types
 // once the required threshold is met.
 message EthereumEventVoteRecord {
   google.protobuf.Any event = 1
-      [ (cosmos_proto.accepts_interface) = "EthereumEvent" ];
+      [ (cosmos_proto.accepts_interface) = "gravity.v1.EthereumEvent" ];
   repeated string votes = 2;
   bool accepted = 3;
 }
