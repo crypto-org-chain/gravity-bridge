@@ -597,7 +597,6 @@ func NewGravityApp(
 		govtypes.ModuleName,
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
-		ibchost.ModuleName,
 		ibcexported.ModuleName,
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
