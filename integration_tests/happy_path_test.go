@@ -2,11 +2,13 @@ package integration_tests
 
 import (
 	"context"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types"
@@ -143,17 +145,27 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 				}
 				return false
 			}
+
+			s.Require().Eventuallyf(func() bool {
+				output, err := authtx.QueryTx(*clientCtx, response.TxHash)
+				if err != nil {
+					s.T().Logf("error: %s", err)
+					return false
+				}
+				if output.Code != 0 {
+					return false
+				}
+				return true
+			}, 105*time.Second, 10*time.Second, "wait for send to ethereum get executed")
+
 			return true
 		}, 105*time.Second, 10*time.Second, "unable to send to ethereum")
 
 		s.T().Logf("funding community pool")
 		orch := s.chain.orchestrators[0]
-		orchaAddress, err := orch.keyInfo.GetAddress()
-		s.Require().NoError(err)
-		clientCtx, err := s.chain.clientContext("tcp://localhost:26657", orch.keyring, "orch", orchaAddress)
-		s.Require().NoError(err)
-
 		orchAddress, err := orch.keyInfo.GetAddress()
+		s.Require().NoError(err)
+		clientCtx, err := s.chain.clientContext("tcp://localhost:26657", orch.keyring, "orch", orchAddress)
 		s.Require().NoError(err)
 		fundCommunityPoolMsg := distrtypes.NewMsgFundCommunityPool(
 			sdk.NewCoins(sdk.NewCoin(testDenom, sdk.NewInt(1000000000))),
@@ -172,6 +184,20 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 				}
 				return false
 			}
+
+			s.Require().Eventuallyf(func() bool {
+				output, err := authtx.QueryTx(*clientCtx, response.TxHash)
+				if err != nil {
+					s.T().Logf("error: %s", err)
+					return false
+				}
+				if output.Code != 0 {
+					return false
+				}
+				return true
+			}, 105*time.Second, 10*time.Second, "tx to fund community pool not executed")
+
+			// wait msg to be executed
 			return true
 		}, 105*time.Second, 10*time.Second, "unable to fund community pool")
 
@@ -210,9 +236,9 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 
 		s.T().Logf("create governance proposal to fund an ethereum address")
 		orch = s.chain.orchestrators[0]
-		orchaAddress, err = orch.keyInfo.GetAddress()
+		orchAddress, err = orch.keyInfo.GetAddress()
 		s.Require().NoError(err)
-		clientCtx, err = s.chain.clientContext("tcp://localhost:26657", orch.keyring, "orch", orchaAddress)
+		clientCtx, err = s.chain.clientContext("tcp://localhost:26657", orch.keyring, "orch", orchAddress)
 		s.Require().NoError(err)
 
 		proposal := types.CommunityPoolEthereumSpendProposal{
@@ -236,17 +262,49 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		s.Require().NoError(err, "unable to create governance proposal")
 
 		s.T().Log("submit proposal spending community pool funds")
-		submitProposalResponse, err := s.chain.sendMsgs(*clientCtx, proposalMsg)
-		s.Require().NoError(err)
-		s.Require().Zero(submitProposalResponse.Code, "raw log: %s", submitProposalResponse.RawLog)
+		s.Require().Eventuallyf(func() bool {
+			submitProposalResponse, err := s.chain.sendMsgs(*clientCtx, proposalMsg)
+			if err != nil {
+				s.T().Logf("error: %s", err)
+				return false
+			}
+			if submitProposalResponse.Code != 0 {
+				if submitProposalResponse.Code != 32 {
+					s.T().Log(submitProposalResponse)
+				}
+				return false
+			}
 
-		s.T().Log("check proposal was submitted correctly")
-		govQueryClient := govtypes.NewQueryClient(clientCtx)
-		proposalsQueryResponse, err := govQueryClient.Proposals(context.Background(), &govtypes.QueryProposalsRequest{})
-		s.Require().NoError(err)
-		s.Require().NotEmpty(proposalsQueryResponse.Proposals)
-		s.Require().Equal(uint64(1), proposalsQueryResponse.Proposals[0].ProposalId, "not proposal id 1")
-		s.Require().Equal(govtypes.StatusVotingPeriod, proposalsQueryResponse.Proposals[0].Status, "proposal not in voting period")
+			s.Require().Eventuallyf(func() bool {
+				output, err := authtx.QueryTx(*clientCtx, submitProposalResponse.TxHash)
+				if err != nil {
+					s.T().Logf("error: %s", err)
+					return false
+				}
+				if output.Code != 0 {
+					s.T().Logf("output: %s", output)
+					return false
+				}
+				return true
+			}, 105*time.Second, 10*time.Second, "tx to fund community pool not executed")
+
+			// wait msg to be executed
+			return true
+		}, 105*time.Second, 10*time.Second, "unable to fund community pool")
+		govQueryClient := govtypesv1.NewQueryClient(clientCtx)
+		s.Require().Eventuallyf(func() bool {
+			proposalsQueryResponse, err := govQueryClient.Proposals(context.Background(), &govtypesv1.QueryProposalsRequest{})
+			if err != nil {
+				s.T().Logf("error: %s", err)
+				return false
+			}
+			if len(proposalsQueryResponse.Proposals) == 0 {
+				return false
+			}
+			s.Require().Equal(uint64(1), proposalsQueryResponse.Proposals[0].Id, "not proposal id 1")
+			s.Require().Equal(govtypesv1.StatusVotingPeriod, proposalsQueryResponse.Proposals[0].Status, "proposal not in voting period")
+			return true
+		}, 105*time.Second, 10*time.Second, "proposal not executed")
 
 		s.T().Log("vote for community spend proposal")
 		for _, val := range s.chain.validators {
@@ -265,9 +323,9 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 
 		s.T().Log("wait for community spend proposal to be approved")
 		s.Require().Eventuallyf(func() bool {
-			proposalQueryResponse, err := govQueryClient.Proposal(context.Background(), &govtypes.QueryProposalRequest{ProposalId: 1})
+			proposalQueryResponse, err := govQueryClient.Proposal(context.Background(), &govtypesv1.QueryProposalRequest{ProposalId: 1})
 			s.Require().NoError(err)
-			return govtypes.StatusPassed == proposalQueryResponse.Proposal.Status
+			return govtypesv1.StatusPassed == proposalQueryResponse.Proposal.Status
 		}, time.Second*30, time.Second*5, "proposal was never accepted")
 
 		erc20Res, err := gbQueryClient.DenomToERC20(context.Background(),

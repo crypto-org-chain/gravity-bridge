@@ -37,7 +37,9 @@ func (AppModuleBasic) Name() string {
 }
 
 // RegisterLegacyAminoCodec implements app module basic
-func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
+func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	types.RegisterLegacyAminoCodec(cdc)
+}
 
 // DefaultGenesis implements app module basic
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {

@@ -80,6 +80,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v6/modules/core"
 	ibcclient "github.com/cosmos/ibc-go/v6/modules/core/02-client"
+	ibcclientclient "github.com/cosmos/ibc-go/v6/modules/core/02-client/client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
 	ibcporttypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v6/modules/core/exported"
@@ -132,9 +133,10 @@ var (
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic([]govclient.ProposalHandler{
 			paramsclient.ProposalHandler,
-			paramsclient.ProposalHandler,
 			upgradeclient.LegacyProposalHandler,
 			upgradeclient.LegacyCancelProposalHandler,
+			ibcclientclient.UpdateClientProposalHandler,
+			ibcclientclient.UpgradeProposalHandler,
 			gravityclient.ProposalHandler,
 		}),
 		params.AppModuleBasic{},
@@ -206,7 +208,7 @@ type Gravity struct {
 	slashingKeeper        slashingkeeper.Keeper
 	mintKeeper            mintkeeper.Keeper
 	distrKeeper           distrkeeper.Keeper
-	govKeeper             *govkeeper.Keeper
+	govKeeper             govkeeper.Keeper
 	crisisKeeper          *crisiskeeper.Keeper
 	upgradeKeeper         *upgradekeeper.Keeper
 	paramsKeeper          paramskeeper.Keeper
@@ -438,7 +440,7 @@ func NewGravityApp(
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper)).
 		AddRoute(gravitytypes.RouterKey, gravity.NewCommunityPoolEthereumSpendProposalHandler(app.gravityKeeper))
 
-	app.govKeeper = govkeeper.NewKeeper(
+	govKeeper := govkeeper.NewKeeper(
 		appCodec,
 		keys[govtypes.StoreKey],
 		app.accountKeeper,
@@ -450,10 +452,11 @@ func NewGravityApp(
 	)
 
 	// Set legacy router for backwards compatibility with gov v1beta1
-	app.govKeeper.SetLegacyRouter(govRouter)
-	app.govKeeper.SetHooks(
+	govKeeper.SetLegacyRouter(govRouter)
+
+	app.govKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-			// register the governance hooks
+		// register the governance hooks
 		),
 	)
 
@@ -496,7 +499,7 @@ func NewGravityApp(
 		),
 		gov.NewAppModule(
 			appCodec,
-			app.govKeeper,
+			&app.govKeeper,
 			app.accountKeeper,
 			app.bankKeeper,
 			app.GetSubspace(govtypes.ModuleName),

@@ -22,6 +22,7 @@ func init() {
 }
 
 // NewCommunityPoolEthereumSpendProposal creates a new community pool spend proposal.
+//
 //nolint:interfacer
 func NewCommunityPoolEthereumSpendProposal(title, description string, recipient string, amount sdk.Coin, bridgeFee sdk.Coin) *CommunityPoolEthereumSpendProposal {
 	return &CommunityPoolEthereumSpendProposal{title, description, recipient, amount, bridgeFee}
@@ -33,7 +34,7 @@ func (csp *CommunityPoolEthereumSpendProposal) GetTitle() string { return csp.Ti
 // GetDescription returns the description of a community pool Ethereum spend proposal.
 func (csp *CommunityPoolEthereumSpendProposal) GetDescription() string { return csp.Description }
 
-// GetDescription returns the routing key of a community pool Ethereum spend proposal.
+// ProposalRoute returns the routing key of a community pool Ethereum spend proposal.
 func (csp *CommunityPoolEthereumSpendProposal) ProposalRoute() string { return RouterKey }
 
 // ProposalType returns the type of a community pool Ethereum spend proposal.

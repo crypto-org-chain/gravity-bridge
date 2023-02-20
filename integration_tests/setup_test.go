@@ -84,7 +84,9 @@ func TestIntegrationTestSuite(t *testing.T) {
 func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
 
-	cdc := moduletestutil.MakeTestEncodingConfig().Codec
+	config := moduletestutil.MakeTestEncodingConfig()
+	cdc := config.Codec
+	gravitytypes.RegisterInterfaces(config.InterfaceRegistry)
 	var err error
 	s.chain, err = newChain(cdc)
 	s.Require().NoError(err)

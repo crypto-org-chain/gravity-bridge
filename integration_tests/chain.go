@@ -213,6 +213,7 @@ func (c *chain) clientContext(nodeURI string, kb *keyring.Keyring, fromName stri
 	}
 	simapp.ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	simapp.ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	gravitytypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 
 	rpcClient, err := rpchttp.New(nodeURI, "/websocket")
 	if err != nil {
