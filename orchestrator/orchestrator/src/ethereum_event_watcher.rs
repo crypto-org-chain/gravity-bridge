@@ -2,7 +2,7 @@
 //! or a transaction batch update. It then responds to these events by performing actions on the Cosmos chain if required
 
 use crate::get_with_retry::get_block_number_with_retry;
-use crate::get_with_retry::get_chain_id_with_retry;
+use crate::get_with_retry::get_network_id_with_retry;
 use crate::metrics;
 use cosmos_gravity::build;
 use cosmos_gravity::crypto::CosmosSigner;
@@ -13,7 +13,6 @@ use ethers::prelude::*;
 use ethers::types::Address as EthAddress;
 use gravity_abi::gravity::*;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
-use gravity_utils::ethereum::downcast_to_u64;
 use gravity_utils::types::EventNonceFilter;
 use gravity_utils::types::{FromLogs, FromLogsWithPrefix};
 use gravity_utils::{
@@ -42,7 +41,7 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
     let prefix = contact.get_prefix();
     let our_cosmos_address = cosmos_key.to_address(&prefix).unwrap();
     let latest_block = get_block_number_with_retry(eth_client.clone()).await;
-    let latest_block = latest_block - block_delay;
+    let latest_block = latest_block.saturating_sub(block_delay);
 
     let mut ending_block = starting_block + blocks_to_search;
     if ending_block > latest_block {
@@ -72,6 +71,8 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
 
     let search_range = starting_block..ending_block;
 
+    info!("check_for_events from {starting_block:?} to {ending_block:?}");
+
     // select uses an inclusive version of the range
     erc20_deployed_filter = erc20_deployed_filter.select(search_range.clone());
     logic_call_filter = logic_call_filter.select(search_range.clone());
@@ -80,30 +81,30 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
     valset_updated_filter = valset_updated_filter.select(search_range.clone());
 
     let erc20_deployed_events = eth_client.get_logs(&erc20_deployed_filter).await?;
-    debug!("ERC20 events detected {:?}", erc20_deployed_events);
+    debug!("ERC20 events detected {erc20_deployed_events:?}");
     let erc20_deployed_events = Erc20DeployedEvent::from_logs(&erc20_deployed_events)?;
-    debug!("parsed erc20 deploys {:?}", erc20_deployed_events);
+    debug!("parsed erc20 deploys {erc20_deployed_events:?}");
 
     let logic_call_events = eth_client.get_logs(&logic_call_filter).await?;
-    debug!("Logic call events detected {:?}", logic_call_events);
+    debug!("Logic call events detected {logic_call_events:?}");
     let logic_call_events = LogicCallExecutedEvent::from_logs(&logic_call_events)?;
-    debug!("parsed logic call executions {:?}", logic_call_events);
+    debug!("parsed logic call executions {logic_call_events:?}");
 
     let send_to_cosmos_events = eth_client.get_logs(&send_to_cosmos_filter).await?;
-    debug!("Send to Cosmos events detected {:?}", send_to_cosmos_events);
+    debug!("Send to Cosmos events detected {send_to_cosmos_events:?}");
     let send_to_cosmos_events = SendToCosmosEvent::from_logs(&send_to_cosmos_events, &prefix)?;
-    debug!("parsed send to cosmos events {:?}", send_to_cosmos_events);
+    debug!("parsed send to cosmos events {send_to_cosmos_events:?}");
 
     let transaction_batch_events = eth_client.get_logs(&transaction_batch_filter).await?;
-    debug!("Batch events detected {:?}", transaction_batch_events);
+    debug!("Batch events detected {transaction_batch_events:?}");
     let transaction_batch_events =
         TransactionBatchExecutedEvent::from_logs(&transaction_batch_events)?;
-    debug!("parsed batches {:?}", transaction_batch_events);
+    debug!("parsed batches {transaction_batch_events:?}");
 
     let valset_updated_events = eth_client.get_logs(&valset_updated_filter).await?;
-    debug!("Valset events detected {:?}", valset_updated_events);
+    debug!("Valset events detected {valset_updated_events:?}");
     let valset_updated_events = ValsetUpdatedEvent::from_logs(&valset_updated_events)?;
-    debug!("parsed valsets {:?}", valset_updated_events);
+    debug!("parsed valsets {valset_updated_events:?}");
 
     // note that starting block overlaps with our last checked block, because we have to deal with
     // the possibility that the relayer was killed after relaying only one of multiple events in a single
@@ -223,7 +224,6 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
             .await
             .expect("Could not send messages");
 
-
         let mut error_count: u32 = 0;
         let timeout = time::Duration::from_secs(30);
         contact.wait_for_next_block(timeout).await?;
@@ -232,19 +232,19 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
         while new_event_nonce != last_message_nonce {
             if error_count == 10 {
                 return Err(GravityError::InvalidBridgeStateError(
-                    format!("Claims did not process, trying to update but still on event nonce {},\
-                     retrying from block {} to block {} in a moment"
-                            , new_event_nonce , starting_block , ending_block),
+                    format!("Claims did not process, trying to update but still on event nonce {new_event_nonce},\
+                     retrying from block {starting_block} to block {ending_block} in a moment")
                 ));
             }
-            info!("Waiting for claims to process, current on event nonce {}, trying to update to {}"
-                , new_event_nonce, last_message_nonce);
+            info!(
+                "Waiting for claims to process, current on event nonce {new_event_nonce}, trying to update to {last_message_nonce}"
+            );
 
             error_count += 1;
             contact.wait_for_next_block(timeout).await?;
             new_event_nonce = get_last_event_nonce(grpc_client, our_cosmos_address).await?;
         }
-        info!("Claims processed, new nonce: {}", new_event_nonce);
+        info!("Claims processed, new nonce: {new_event_nonce}");
     }
 
     Ok(ending_block)
@@ -272,18 +272,16 @@ pub async fn check_for_events<S: Signer + 'static, CS: CosmosSigner>(
 ///
 ///
 pub async fn get_block_delay<S: Signer>(eth_client: EthClient<S>) -> Result<U64, GravityError> {
-    // TODO(bolten): get_net_version() exists on the version of ethers we are currently
-    // depending on, but it's broken, so we're relying on chain ID
-    let chain_id_result = get_chain_id_with_retry(eth_client.clone()).await;
-    let chain_id = downcast_to_u64(chain_id_result);
-    if chain_id.is_none() {
+    let network_id_string = get_network_id_with_retry(eth_client.clone()).await;
+    let network_id = network_id_string.parse::<u64>();
+    if network_id.is_err() {
         return Err(GravityError::EthereumBadDataError(format!(
-            "Chain ID is larger than u64 max: {}",
-            chain_id_result
+            "Chain ID is not valid {}",
+            network_id.err().unwrap()
         )));
     }
 
-    match chain_id.unwrap() {
+    match network_id.unwrap() {
         // Mainline Ethereum, Ethereum classic, or the Ropsten, Kotti, Mordor testnets
         // all Ethereum proof of stake Chains
         1 | 3 | 6 | 7 => Ok(96u8.into()),

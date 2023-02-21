@@ -20,6 +20,7 @@ pub async fn send_eth_logic_call<S: Signer + 'static>(
     confirms: &[LogicCallConfirmResponse],
     timeout: Duration,
     gravity_contract_address: EthAddress,
+    payment_address: EthAddress,
     gravity_id: String,
     gas_cost: GasCost,
     eth_client: EthClient<S>,
@@ -66,6 +67,7 @@ pub async fn send_eth_logic_call<S: Signer + 'static>(
         &call,
         confirms,
         gravity_contract_address,
+        payment_address,
         gravity_id,
         eth_client.clone(),
     )?;
@@ -117,6 +119,7 @@ pub async fn estimate_logic_call_cost<S: Signer + 'static>(
     call: LogicCall,
     confirms: &[LogicCallConfirmResponse],
     gravity_contract_address: EthAddress,
+    payment_address: EthAddress,
     gravity_id: String,
     eth_client: EthClient<S>,
 ) -> Result<GasCost, GravityError> {
@@ -125,6 +128,7 @@ pub async fn estimate_logic_call_cost<S: Signer + 'static>(
         &call,
         confirms,
         gravity_contract_address,
+        payment_address,
         gravity_id,
         eth_client.clone(),
     )?;
@@ -140,6 +144,7 @@ pub fn build_send_logic_call_contract_call<S: Signer + 'static>(
     call: &LogicCall,
     confirms: &[LogicCallConfirmResponse],
     gravity_contract_address: EthAddress,
+    payment_address: EthAddress,
     gravity_id: String,
     eth_client: EthClient<S>,
 ) -> Result<ContractCall<EthSignerMiddleware<S>, ()>, GravityError> {
@@ -180,6 +185,7 @@ pub fn build_send_logic_call_contract_call<S: Signer + 'static>(
                 .iter()
                 .map(|sig_data| sig_data.to_val_sig())
                 .collect(),
+            payment_address,
             LogicCallArgs {
                 transfer_amounts,
                 transfer_token_contracts,
@@ -198,7 +204,7 @@ pub fn build_send_logic_call_contract_call<S: Signer + 'static>(
     Ok(contract_call)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct LogicCallSkips {
     skip_map: HashMap<Vec<u8>, HashMap<u64, LogicCallSkipState>>,
 }
@@ -212,30 +218,19 @@ pub struct LogicCallSkipState {
 }
 
 impl LogicCallSkips {
-    pub fn new() -> Self {
-        LogicCallSkips {
-            skip_map: HashMap::new(),
-        }
-    }
-
     pub fn skips_left(&self, call: &LogicCall) -> u32 {
-        let id_skips = self.skip_map.get(&call.invalidation_id);
-        if id_skips.is_some() {
-            let skip_state = id_skips.unwrap().get(&call.invalidation_nonce);
-            if skip_state.is_some() {
-                return skip_state.unwrap().skips_left;
+        if let Some(id_skips) = self.skip_map.get(&call.invalidation_id) {
+            if let Some(skip_state) = id_skips.get(&call.invalidation_nonce) {
+                return skip_state.skips_left;
             }
         }
-
         0
     }
 
     pub fn permanently_skipped(&self, call: &LogicCall) -> bool {
-        let id_skips = self.skip_map.get(&call.invalidation_id);
-        if id_skips.is_some() {
-            let skip_state = id_skips.unwrap().get(&call.invalidation_nonce);
-            if skip_state.is_some() {
-                return skip_state.unwrap().permanently_skipped;
+        if let Some(id_skips) = self.skip_map.get(&call.invalidation_id) {
+            if let Some(skip_state) = id_skips.get(&call.invalidation_nonce) {
+                return skip_state.permanently_skipped;
             }
         }
 
@@ -258,20 +253,8 @@ impl LogicCallSkips {
             permanently_skipped: permanently_skip,
         };
 
-        let id_skips = self.skip_map.get_mut(&call.invalidation_id);
-        if id_skips.is_none() {
-            // first time we've seen this invalidation id, start at 2 skips
-            let new_id_skips = HashMap::from([(call.invalidation_nonce, new_skip_state)]);
-            self.skip_map
-                .insert(call.invalidation_id.clone(), new_id_skips);
-        } else {
-            let id_skips = id_skips.unwrap();
-            let skip_state = id_skips.get_mut(&call.invalidation_nonce);
-            if skip_state.is_none() {
-                // first time we've seen this invalidation id and nonce combo, start at 2 skips
-                id_skips.insert(call.invalidation_nonce.clone(), new_skip_state);
-            } else {
-                let mut skip_state = skip_state.unwrap();
+        if let Some(id_skips) = self.skip_map.get_mut(&call.invalidation_id) {
+            if let Some(skip_state) = id_skips.get_mut(&call.invalidation_nonce) {
                 if !skip_state.permanently_skipped {
                     if skip_state.skips_left == 0 {
                         // exponential backoff: double the number of skips and reset the skip counter
@@ -282,7 +265,15 @@ impl LogicCallSkips {
                         skip_state.skips_left -= 1;
                     }
                 }
+            } else {
+                // first time we've seen this invalidation id and nonce combo, start at 2 skips
+                id_skips.insert(call.invalidation_nonce, new_skip_state);
             }
+        } else {
+            // first time we've seen this invalidation id, start at 2 skips
+            let new_id_skips = HashMap::from([(call.invalidation_nonce, new_skip_state)]);
+            self.skip_map
+                .insert(call.invalidation_id.clone(), new_id_skips);
         }
     }
 
@@ -346,7 +337,7 @@ fn test_logic_call_skips() {
         invalidation_nonce: 1,
     };
 
-    let mut skips = LogicCallSkips::new();
+    let mut skips = LogicCallSkips::default();
 
     assert_eq!(skips.skips_left(&logic_call_1_nonce_1), 0);
     assert_eq!(skips.skips_left(&logic_call_1_nonce_2), 0);

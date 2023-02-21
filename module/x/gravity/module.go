@@ -14,11 +14,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/client/cli"
 	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/keeper"
+	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/simulation"
 	"github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types"
 )
 
@@ -29,7 +29,9 @@ var (
 )
 
 // AppModuleBasic object for module implementation
-type AppModuleBasic struct{}
+type AppModuleBasic struct {
+	cdc codec.Codec
+}
 
 // Name implements app module basic
 func (AppModuleBasic) Name() string {
@@ -78,16 +80,18 @@ func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry
 // AppModule object for module implementation
 type AppModule struct {
 	AppModuleBasic
-	keeper     keeper.Keeper
-	bankKeeper bankkeeper.Keeper
+	keeper        keeper.Keeper
+	accountKeeper types.AccountKeeper
+	bankKeeper    types.BankKeeper
 }
 
 // NewAppModule creates a new AppModule Object
-func NewAppModule(k keeper.Keeper, bankKeeper bankkeeper.Keeper) AppModule {
+func NewAppModule(cdc codec.Codec, k keeper.Keeper, ak types.AccountKeeper, bk types.BankKeeper) AppModule {
 	return AppModule{
-		AppModuleBasic: AppModuleBasic{},
+		AppModuleBasic: AppModuleBasic{cdc: cdc},
 		keeper:         k,
-		bankKeeper:     bankKeeper,
+		accountKeeper:  ak,
+		bankKeeper:     bk,
 	}
 }
 
@@ -161,36 +165,34 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 
 // AppModuleSimulation functions
 
-// GenerateGenesisState creates a randomized GenState of the distribution module.
+// GenerateGenesisState creates a randomized GenState of the gravity module.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
-	// TODO: implement gravity simulation stuffs
-	// simulation.RandomizedGenState(simState)
+	simulation.RandomizedGenState(simState)
 }
 
-// ProposalContents returns all the distribution content functions used to
+// ProposalContents returns all the gravity content functions used to
 // simulate governance proposals.
 func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
-	// TODO: implement gravity simulation stuffs
 	return nil
 }
 
-// RandomizedParams creates randomized distribution param changes for the simulator.
+// RandomizedParams creates randomized gravity param changes for the simulator.
 func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
-	// TODO: implement gravity simulation stuffs
-	return nil
+	return simulation.ParamChanges(r)
 }
 
 // RegisterStoreDecoder registers a decoder for distribution module's types
 func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
-	// TODO: implement gravity simulation stuffs
-	// sdr[types.StoreKey] = simulation.NewDecodeStore(am.cdc)
+	sdr[types.StoreKey] = simulation.NewDecodeStore(am.cdc)
 }
 
 // WeightedOperations returns the all the gov module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
-	// TODO: implement gravity simulation stuffs
-	// return simulation.WeightedOperations(
-	// simState.AppParams, simState.Cdc, am.accountKeeper, am.bankKeeper, am.keeper, am.stakingKeeper,
-	// )
-	return nil
+	return simulation.WeightedOperations(
+		simState.AppParams,
+		am.cdc,
+		am.keeper,
+		am.accountKeeper,
+		am.bankKeeper,
+	)
 }

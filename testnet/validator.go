@@ -49,7 +49,7 @@ type Validator struct {
 
 	// Key management
 	Mnemonic         string
-	KeyInfo          keyring.Info
+	KeyInfo          keyring.Record
 	PrivateKey       cryptotypes.PrivKey
 	ConsensusKey     privval.FilePVKey
 	ConsensusPrivKey cryptotypes.PrivKey
@@ -179,20 +179,20 @@ func (v *Validator) createConsensusKey() (err error) {
 }
 
 // createMemoryKey creates a key but doesn't store it to any files
-func createMemoryKey() (mnemonic string, info *keyring.Info, err error) {
+func createMemoryKey(cdc codec.Codec) (mnemonic string, info *keyring.Record, err error) {
 	// Get bip39 mnemonic
 	mnemonic, err = createMnemonic()
 	if err != nil {
 		return
 	}
 
-	account, err := createMemoryKeyFromMnemonic(mnemonic)
+	account, err := createMemoryKeyFromMnemonic(mnemonic, cdc)
 	return mnemonic, account, err
 }
 
 // createMemoryKey creates a key but doesn't store it to any files
-func createMemoryKeyFromMnemonic(mnemonic string) (info *keyring.Info, err error) {
-	kb, err := keyring.New("testnet", keyring.BackendMemory, "", nil)
+func createMemoryKeyFromMnemonic(mnemonic string, cdc codec.Codec) (info *keyring.Record, err error) {
+	kb, err := keyring.New("testnet", keyring.BackendMemory, "", nil, cdc)
 	if err != nil {
 		return
 	}
@@ -204,12 +204,12 @@ func createMemoryKeyFromMnemonic(mnemonic string) (info *keyring.Info, err error
 	}
 
 	account, err := kb.NewAccount("", mnemonic, "", sdktypes.FullFundraiserPath, algo)
-	info = &account
+	info = account
 	return
 }
 
-func (v *Validator) createKeyFromMnemonic(name string, mnemonic string) (err error) {
-	kb, err := keyring.New("testnet", keyring.BackendTest, v.ConfigDir(), nil)
+func (v *Validator) createKeyFromMnemonic(name string, mnemonic string, cdc codec.Codec) (err error) {
+	kb, err := keyring.New("testnet", keyring.BackendTest, v.ConfigDir(), nil, cdc)
 	if err != nil {
 		return err
 	}
@@ -226,7 +226,7 @@ func (v *Validator) createKeyFromMnemonic(name string, mnemonic string) (err err
 	if err != nil {
 		return err
 	}
-	v.KeyInfo = info
+	v.KeyInfo = *info
 
 	privKeyArmor, err := kb.ExportPrivKeyArmor(name, "testpassphrase")
 	if err != nil {
@@ -242,13 +242,13 @@ func (v *Validator) createKeyFromMnemonic(name string, mnemonic string) (err err
 }
 
 // createKey creates a new account and writes it to a validator's config directory
-func (v *Validator) createKey(name string) (err error) {
+func (v *Validator) createKey(name string, cdc codec.Codec) (err error) {
 	// Get bip39 mnemonic
 	mnemonic, err := createMnemonic()
 	if err != nil {
 		return err
 	}
-	return v.createKeyFromMnemonic(name, mnemonic)
+	return v.createKeyFromMnemonic(name, mnemonic, cdc)
 }
 
 func addGenesisAccount(path string, moniker string, accAddr sdktypes.AccAddress, coinsStr string) (err error) {
@@ -370,8 +370,12 @@ func (v *Validator) buildCreateValidatorMsg(amount sdktypes.Coin) (sdktypes.Msg,
 		return nil, err
 	}
 
+	valaddr, err := v.KeyInfo.GetAddress()
+	if err != nil {
+		return nil, err
+	}
 	msg, err := types.NewMsgCreateValidator(
-		sdktypes.ValAddress(v.KeyInfo.GetAddress()), valPubKey, amount, description, commissionRates, minSelfDelegation,
+		sdktypes.ValAddress(valaddr), valPubKey, amount, description, commissionRates, minSelfDelegation,
 	)
 	return msg, err
 }
@@ -392,8 +396,12 @@ func (v *Validator) buildDelegateKeysMsg() sdktypes.Msg {
 		panic(fmt.Sprintf("failed to convert private key: %s", err))
 	}
 
+	valAddr, err := v.KeyInfo.GetAddress()
+	if err != nil {
+		panic(fmt.Sprintf("failed to get val address: %s", err))
+	}
 	signMsg := gravitytypes.DelegateKeysSignMsg{
-		ValidatorAddress: sdktypes.ValAddress(v.KeyInfo.GetAddress()).String(),
+		ValidatorAddress: sdktypes.ValAddress(valAddr).String(),
 		Nonce:            0,
 	}
 
@@ -404,9 +412,13 @@ func (v *Validator) buildDelegateKeysMsg() sdktypes.Msg {
 		panic(fmt.Sprintf("failed to create Ethereum signature: %s", err))
 	}
 
+	orchAddr, err := v.Chain.Orchestrators[v.Index].KeyInfo.GetAddress()
+	if err != nil {
+		panic(fmt.Sprintf("failed to get orch address: %s", err))
+	}
 	return gravitytypes.NewMsgDelegateKeys(
-		sdktypes.ValAddress(v.KeyInfo.GetAddress()),
-		v.Chain.Orchestrators[v.Index].KeyInfo.GetAddress(),
+		sdktypes.ValAddress(valAddr),
+		orchAddr,
 		v.EthereumKey.Address,
 		ethSig,
 	)
@@ -498,8 +510,12 @@ func (v *Validator) signMsg(msgs ...sdktypes.Msg) (*tx.Tx, error) {
 		SignMode:  txsigning.SignMode_SIGN_MODE_DIRECT,
 		Signature: nil,
 	}
+	pubkey, err := v.KeyInfo.GetPubKey()
+	if err != nil {
+		return nil, err
+	}
 	sig := txsigning.SignatureV2{
-		PubKey:   v.KeyInfo.GetPubKey(),
+		PubKey:   pubkey,
 		Data:     &sigData,
 		Sequence: 0,
 	}
@@ -525,7 +541,7 @@ func (v *Validator) signMsg(msgs ...sdktypes.Msg) (*tx.Tx, error) {
 		Signature: sigBytes,
 	}
 	sig = txsigning.SignatureV2{
-		PubKey:   v.KeyInfo.GetPubKey(),
+		PubKey:   pubkey,
 		Data:     &sigData,
 		Sequence: 0,
 	}

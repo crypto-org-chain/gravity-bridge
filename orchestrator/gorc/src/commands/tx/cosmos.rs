@@ -68,7 +68,7 @@ impl Runnable for SendToEth {
         // call it
         let cosmos_address = cosmos_key.to_address("//TODO add to config file").unwrap();
 
-        println!("Sending from Cosmos address {}", cosmos_address);
+        println!("Sending from Cosmos address {cosmos_address}");
         let config = APP.config();
         let cosmos_prefix = config.cosmos.prefix.clone();
         let cosmso_grpc = config.cosmos.grpc.clone();
@@ -121,15 +121,13 @@ impl Runnable for SendToEth {
                     found = Some(coin);
                 }
             }
-            println!("Cosmos balances {:?}", balances);
+            println!("Cosmos balances {balances:?}");
 
             if found.is_none() {
-                panic!("You don't have any {} tokens!", denom);
+                panic!("You don't have any {denom} tokens!");
             }
             println!(
-                "Locking {:?} / {} into the batch pool",
-                amount,
-                denom
+                "Locking {amount:?} / {denom} into the batch pool"
             );
             let res = send_to_eth(
                 cosmos_key,
@@ -138,13 +136,14 @@ impl Runnable for SendToEth {
                 amount.clone(),
                 bridge_fee.clone(),
                 config.cosmos.gas_price.as_tuple(),
+                config.cosmos.gas_limit,
                 &contact,
                 1.0
             )
             .await;
             match res {
                 Ok(tx_id) => println!("Send to Eth txid {}", tx_id.txhash),
-                Err(e) => println!("Failed to send tokens! {:?}", e),
+                Err(e) => println!("Failed to send tokens! {e:?}"),
             }
         })
         .unwrap_or_else(|e| {

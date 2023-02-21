@@ -61,9 +61,10 @@ type chain struct {
 	id            string
 	validators    []*validator
 	orchestrators []*orchestrator
+	codec         codec.Codec
 }
 
-func newChain() (*chain, error) {
+func newChain(codec codec.Codec) (*chain, error) {
 	var dir string
 	var err error
 	if _, found := os.LookupEnv("CI"); found {
@@ -81,6 +82,7 @@ func newChain() (*chain, error) {
 	return &chain{
 		id:      "chain-" + tmrand.NewRand().Str(6),
 		dataDir: tmpDir,
+		codec:   codec,
 	}, nil
 }
 
@@ -162,7 +164,7 @@ func (c *chain) createAndInitOrchestratorsWithMnemonics(mnemonics []string) erro
 		orchestrator := c.createOrchestrator(i)
 
 		// create keys
-		info, kb, err := createMemoryKeyFromMnemonic("orch", mnemonics[i], "", hdPath)
+		info, kb, err := createMemoryKeyFromMnemonic("orch", mnemonics[i], "", hdPath, c.codec)
 		if err != nil {
 			return err
 		}
@@ -273,7 +275,7 @@ func (c *chain) sendMsgs(clientCtx client.Context, msgs ...sdk.Msg) (*sdk.TxResp
 
 	txf.WithFees("246913560testgb")
 
-	txb, err := tx.BuildUnsignedTx(txf, msgs...)
+	txb, err := txf.BuildUnsignedTx(msgs...)
 	if err != nil {
 		return nil, err
 	}

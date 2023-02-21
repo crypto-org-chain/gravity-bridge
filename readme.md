@@ -68,23 +68,46 @@ Currently on every commit we send hundreds of transactions, dozens of validator 
 
 Because the tests build absolutely everything in this repository they do take a significant amount of time to run. You may wish to simply push to a branch and have Github CI take care of the actual running of the tests.
 
-To run the test simply have docker installed and run.
+### Building the images
 
-`bash tests/all-up-test.sh`
+To run the tests, you'll need to have docker installed. First, run the following to build the `gravity`, `orchestrator`, and `ethereum` containers:
 
-There are optional tests for specific features
+`make e2e_build_images`
+
+### Running the chains as a playground
+
+There is a "sandbox" style test, which simply brings up the chain and allows you as the developer to perform whatever operations you want. 
+
+To interact with the ethereum side of the chain, use the JSON-RPC server located at `http://localhost:8545`. You may choose to use `foundry` or `hardhat` to make this easier.
+
+To interact with the gravity module itself, you'll want to build the `gravity` module locally by running the following command.
+
+`
+cd module
+make build
+`
+
+You can then use the binary in the build directory to interact with the Cosmos side of the chain. Check out the Cosmos documentation for more information on this.
+
+### Other tests
+
+To run all the integration tests (except the sandbox test above), use the following command.
+
+`make e2e_slow_loris`
+
+There are optional tests for specific features. Check out the `Makefile` for a list of all of them.
 
 Valset stress changes the validating power randomly 25 times, in an attempt to break validator set syncing
 
-`bash tests/all-up-test.sh VALSET_STRESS`
+`make e2e_valset_stress`
 
 Batch stress sends 300 transactions over the bridge and then 3 batches back to Ethereum. This code can do up to 10k transactions but Github Actions does not have the horsepower.
 
-`bash tests/all-up-test.sh BATCH_STRESS`
+`make e2e_batch_stress`
 
 Validator out tests a validator that is not running the mandatory Ethereum node. This validator will be slashed and the bridge will remain functioning.
 
-`bash tests/all-up-test.sh VALIDATOR_OUT`
+`make e2e_validator_out`
 
 # Developer guide
 

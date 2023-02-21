@@ -39,12 +39,12 @@ pub async fn get_last_event_nonce_with_retry(
 }
 
 /// gets the chain ID, no matter how long it takes
-pub async fn get_chain_id_with_retry<S: Signer>(eth_client: EthClient<S>) -> U256 {
-    let mut res = eth_client.get_chainid().await;
+pub async fn get_network_id_with_retry<S: Signer>(eth_client: EthClient<S>) -> String {
+    let mut res = eth_client.get_net_version().await;
     while res.is_err() {
         error!("Failed to get chain ID! Is your Eth node working?");
         delay_for(RETRY_TIME).await;
-        res = eth_client.get_chainid().await;
+        res = eth_client.get_net_version().await;
     }
     res.unwrap()
 }

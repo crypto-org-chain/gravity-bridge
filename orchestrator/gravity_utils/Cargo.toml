@@ -8,10 +8,10 @@ edition = "2018"
 
 [dependencies]
 gravity_abi = { path = "../gravity_abi" }
-gravity_proto = { path = "../gravity_proto/" }
+gravity_proto = { path = "../gravity_proto" }
 cosmos-sdk-proto = "0.6.3"
 deep_space = { git = "https://github.com/crypto-org-chain/deep_space/", branch = "update/deps" }
-ethers = { git = "https://github.com/gakonst/ethers-rs.git", branch = "master", features = ["abigen"] }
+ethers = { version = "1", features = ["abigen"] }
 web30 = "0.15"
 clarity = "0.4.11"
 lazy_static = "1.4.0"
@@ -20,7 +20,7 @@ serde_derive = "1.0"
 serde_json = "1.0.69"
 serde = "1.0"
 tokio = "1.4"
-tonic = "0.4"
+tonic = { version = "0.4.0", features = ["tls", "tls-roots"] }
 num-bigint = "0.4"
 log = "0.4"
 url = "2"

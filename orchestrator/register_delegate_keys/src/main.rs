@@ -127,6 +127,7 @@ async fn main() {
         cosmos_granter,
         ethereum_wallet,
         (0f64, "".to_string()),
+        500_000,
         1.0f64,
     )
     .await

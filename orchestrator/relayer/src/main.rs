@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::fee_manager::FeeManager;
 use crate::main_loop::relayer_main_loop;
 use crate::main_loop::LOOP_SPEED;
+use cosmos_gravity::crypto::EthPubkey;
 use docopt::Docopt;
 use env_logger::Env;
 use ethers::prelude::*;
@@ -35,12 +36,13 @@ struct Args {
     flag_address_prefix: String,
     flag_ethereum_rpc: String,
     flag_contract_address: String,
+    flag_payment_address: String,
     flag_mode: RelayerMode,
 }
 
 lazy_static! {
     pub static ref USAGE: String = format!(
-    "Usage: {} --ethereum-key=<key> --cosmos-grpc=<url> --address-prefix=<prefix> --ethereum-rpc=<url> --contract-address=<addr> --mode=<mode>
+    "Usage: {} --ethereum-key=<key> --cosmos-grpc=<url> --address-prefix=<prefix> --ethereum-rpc=<url> --contract-address=<addr> --payment-address=<addr> --mode=<mode>
         Options:
             -h --help                    Show this screen.
             --ethereum-key=<ekey>        An Ethereum private key containing non-trivial funds
@@ -48,6 +50,7 @@ lazy_static! {
             --address-prefix=<prefix>    The prefix for addresses on this Cosmos chain
             --ethereum-grpc=<eurl>       The Ethereum RPC url, Geth light clients work and sync fast
             --contract-address=<addr>    The Ethereum contract address for Gravity
+            --payment-address=<addr>     The address to collect the batch fee
             --mode=<mode>                The relayer mode, valid values are : AlwaysRelay, Api, File
         About:
             The Gravity relayer component, responsible for relaying data from the Cosmos blockchain
@@ -80,6 +83,11 @@ async fn main() {
         .flag_contract_address
         .parse()
         .expect("Invalid contract address!");
+    let mut payment_address: EthAddress = args
+        .flag_payment_address
+        .parse()
+        .expect("Invalid payment address!");
+
     let mode = args.flag_mode;
     info!("Relayer using mode: {:?}", mode);
 
@@ -106,6 +114,12 @@ async fn main() {
 
     let contact = connections.contact.clone().unwrap();
 
+    // if payment address is zero, then use the ethereum key address used for signing tx
+    if payment_address == EthAddress::zero() {
+        info!("relayer payment address is zero, use signing ethereum address instead");
+        payment_address = eth_client.address()
+    }
+
     // check if the cosmos node is syncing, if so wait for it
     // we can't move any steps above this because they may fail on an incorrect
     // historic chain state while syncing occurs
@@ -117,10 +131,12 @@ async fn main() {
         eth_client,
         connections.grpc.unwrap(),
         gravity_contract_address,
+        payment_address,
         1f32,
         &mut fee_manager,
         1.1f32,
         5_000u64,
+        Vec::new(),
     )
     .await
 }

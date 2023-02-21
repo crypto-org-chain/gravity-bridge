@@ -6,6 +6,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/simapp"
 	"log"
 	"math/big"
 	"os"
@@ -29,6 +30,7 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ory/dockertest/v3"
@@ -43,7 +45,7 @@ import (
 
 const (
 	testDenom           = "testgb"
-	initBalanceStr      = "1000000000000testgb"
+	initBalanceStr      = "100000000000000testgb"
 	minGasPrice         = "2"
 	ethChainID     uint = 15
 )
@@ -58,7 +60,7 @@ func MNEMONICS() []string {
 }
 
 var (
-	stakeAmount, _    = sdk.NewIntFromString("100000000000")
+	stakeAmount, _    = sdk.NewIntFromString("100000000")
 	stakeAmountCoin   = sdk.NewCoin(testDenom, stakeAmount)
 	gravityContract   = common.HexToAddress("0x04C89607413713Ec9775E14b954286519d836FEf")
 	testERC20contract = common.HexToAddress("0x4C4a2f8c81640e47606d3fd77B353E87Ba015584")
@@ -82,8 +84,9 @@ func TestIntegrationTestSuite(t *testing.T) {
 func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
 
+	cdc := simapp.MakeTestEncodingConfig().Codec
 	var err error
-	s.chain, err = newChain()
+	s.chain, err = newChain(cdc)
 	s.Require().NoError(err)
 
 	s.T().Logf("starting e2e infrastructure; chain-id: %s; datadir: %s", s.chain.id, s.chain.dataDir)
@@ -120,7 +123,6 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 	s.T().Log("tearing down e2e integration test suite...")
 
-	s.Require().NoError(os.RemoveAll(s.chain.dataDir))
 	s.Require().NoError(s.dockerPool.Purge(s.ethResource))
 
 	for _, vc := range s.valResources {
@@ -132,6 +134,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	}
 
 	s.Require().NoError(s.dockerPool.RemoveNetwork(s.dockerNetwork))
+	s.Require().NoError(os.RemoveAll(s.chain.dataDir))
 }
 
 func (s *IntegrationTestSuite) initNodes(nodeCount int) {
@@ -141,15 +144,19 @@ func (s *IntegrationTestSuite) initNodes(nodeCount int) {
 	// initialize a genesis file for the first validator
 	val0ConfigDir := s.chain.validators[0].configDir()
 	for _, val := range s.chain.validators {
+		valAddress, err := val.keyInfo.GetAddress()
+		s.Require().NoError(err)
 		s.Require().NoError(
-			addGenesisAccount(val0ConfigDir, "", initBalanceStr, val.keyInfo.GetAddress()),
+			addGenesisAccount(val0ConfigDir, "", initBalanceStr, valAddress),
 		)
 	}
 
 	// add orchestrator accounts to genesis file
 	for _, orch := range s.chain.orchestrators {
+		orchAddress, err := orch.keyInfo.GetAddress()
+		s.Require().NoError(err)
 		s.Require().NoError(
-			addGenesisAccount(val0ConfigDir, "", initBalanceStr, orch.keyInfo.GetAddress()),
+			addGenesisAccount(val0ConfigDir, "", initBalanceStr, orchAddress),
 		)
 	}
 
@@ -170,15 +177,19 @@ func (s *IntegrationTestSuite) initNodesWithMnemonics(mnemonics ...string) {
 	//initialize a genesis file for the first validator
 	val0ConfigDir := s.chain.validators[0].configDir()
 	for _, val := range s.chain.validators {
+		valAddress, err := val.keyInfo.GetAddress()
+		s.Require().NoError(err)
 		s.Require().NoError(
-			addGenesisAccount(val0ConfigDir, "", initBalanceStr, val.keyInfo.GetAddress()),
+			addGenesisAccount(val0ConfigDir, "", initBalanceStr, valAddress),
 		)
 	}
 
 	// add orchestrator accounts to genesis file
 	for _, orch := range s.chain.orchestrators {
+		orchAddress, err := orch.keyInfo.GetAddress()
+		s.Require().NoError(err)
 		s.Require().NoError(
-			addGenesisAccount(val0ConfigDir, "", initBalanceStr, orch.keyInfo.GetAddress()),
+			addGenesisAccount(val0ConfigDir, "", initBalanceStr, orchAddress),
 		)
 	}
 
@@ -279,7 +290,7 @@ func (s *IntegrationTestSuite) initGenesis() {
 	s.Require().NoError(err)
 	appGenState[banktypes.ModuleName] = bz
 
-	var govGenState govtypes.GenesisState
+	var govGenState govtypesv1beta1.GenesisState
 	s.Require().NoError(cdc.UnmarshalJSON(appGenState[govtypes.ModuleName], &govGenState))
 
 	// set short voting period to allow gov proposals in tests
@@ -345,6 +356,7 @@ func (s *IntegrationTestSuite) initGenesis() {
 	s.Require().NoError(cdc.UnmarshalJSON(appGenState[gravitytypes.ModuleName], &gravityGenState))
 	gravityGenState.Params.GravityId = "gravitytest"
 	gravityGenState.Params.BridgeEthereumAddress = gravityContract.String()
+	gravityGenState.Params.SignedBatchesWindow = 15
 
 	bz, err = cdc.MarshalJSON(&gravityGenState)
 	s.Require().NoError(err)
@@ -667,7 +679,7 @@ msg_batch_size = 5
 		s.Require().NoError(err)
 
 		s.orchResources[i] = resource
-		s.T().Logf("started orchestrator container: %s", resource.Container.ID)
+		s.T().Logf("started orchestrator container: id %s, name %s", resource.Container.ID, resource.Container.Name)
 	}
 
 	// TODO(mvid) Determine if there is a way to check the health or status of
@@ -728,15 +740,15 @@ func (s *IntegrationTestSuite) TestBasicChain() {
 }
 
 func (s *IntegrationTestSuite) deployERC20(denom string, name string, symbol string, decimals uint8) error {
-	return s.SendEthTransaction(s.chain.validators[0], gravityContract, PackDeployERC20(denom, name, symbol, decimals))
+	return s.SendEthTransaction(&s.chain.validators[0].ethereumKey, gravityContract, PackDeployERC20(denom, name, symbol, decimals))
 }
 
 func (s *IntegrationTestSuite) approveERC20() error {
-	return s.SendEthTransaction(s.chain.validators[0], testERC20contract, PackApproveERC20(gravityContract))
+	return s.SendEthTransaction(&s.chain.validators[0].ethereumKey, testERC20contract, PackApproveERC20(gravityContract))
 }
 
 func (s *IntegrationTestSuite) sendToCosmos(destination sdk.AccAddress, amount sdk.Int) error {
-	return s.SendEthTransaction(s.chain.validators[0], gravityContract, PackSendToCosmos(testERC20contract, destination, amount))
+	return s.SendEthTransaction(&s.chain.validators[0].ethereumKey, gravityContract, PackSendToCosmos(testERC20contract, destination, amount))
 }
 
 func (s *IntegrationTestSuite) getEthTokenBalanceOf(account common.Address, erc20contract common.Address) (*sdk.Int, error) {
@@ -785,13 +797,13 @@ func (s *IntegrationTestSuite) getERC20AllowanceOf(owner common.Address, spender
 	return &allowance, err
 }
 
-func (s *IntegrationTestSuite) SendEthTransaction(validator *validator, toAddress common.Address, data []byte) error {
+func (s *IntegrationTestSuite) SendEthTransaction(ethereumKey *ethereumKey, toAddress common.Address, data []byte) error {
 	ethClient, err := ethclient.Dial(fmt.Sprintf("http://%s", s.ethResource.GetHostPort("8545/tcp")))
 	if err != nil {
 		return err
 	}
 
-	privateKey, err := crypto.HexToECDSA(validator.ethereumKey.privateKey[2:])
+	privateKey, err := crypto.HexToECDSA(ethereumKey.privateKey[2:])
 	if err != nil {
 		return err
 	}
@@ -833,4 +845,26 @@ func (s *IntegrationTestSuite) SendEthTransaction(validator *validator, toAddres
 	}
 
 	return nil
+}
+
+func (s *IntegrationTestSuite) getLastValsetNonce(erc20contract common.Address) (*sdk.Int, error) {
+	ethClient, err := ethclient.Dial(fmt.Sprintf("http://%s", s.ethResource.GetHostPort("8545/tcp")))
+	if err != nil {
+		return nil, err
+	}
+
+	data := PackLastValsetNonce()
+
+	response, err := ethClient.CallContract(context.Background(), ethereum.CallMsg{
+		To:   &erc20contract,
+		Gas:  0,
+		Data: data,
+	}, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce := UnpackEthUInt(response)
+
+	return &nonce, err
 }

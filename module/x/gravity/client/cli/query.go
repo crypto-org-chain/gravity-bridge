@@ -22,6 +22,7 @@ func GetQueryCmd() *cobra.Command {
 	}
 	gravityQueryCmd.AddCommand(
 		CmdBatchTx(),
+		CmdLastBatchTx(),
 		CmdBatchTxConfirmations(),
 		CmdBatchTxFees(),
 		CmdBatchTxs(),
@@ -130,6 +131,38 @@ func CmdBatchTx() *cobra.Command {
 			res, err := queryClient.BatchTx(cmd.Context(), &types.BatchTxRequest{
 				TokenContract: contractAddress,
 				BatchNonce:    nonce,
+			})
+
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdLastBatchTx() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "last-batch-tx [contract-address]",
+		Args:  cobra.ExactArgs(1),
+		Short: "query the last most profitable batch by contract address",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, queryClient, err := newContextAndQueryClient(cmd)
+			if err != nil {
+				return err
+			}
+
+			contractAddress, err := parseContractAddress(args[0])
+			if err != nil {
+				return nil
+			}
+
+			res, err := queryClient.LastBatchTx(cmd.Context(), &types.LastBatchTxRequest{
+				TokenContract: contractAddress,
 			})
 
 			if err != nil {

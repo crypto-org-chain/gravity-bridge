@@ -22,6 +22,7 @@ pub async fn relay_logic_calls<S: Signer + 'static>(
     eth_client: EthClient<S>,
     grpc_client: &mut GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
+    payment_address: EthAddress,
     gravity_id: String,
     timeout: Duration,
     eth_gas_price_multiplier: f32,
@@ -115,6 +116,7 @@ pub async fn relay_logic_calls<S: Signer + 'static>(
             oldest_signed_call.clone(),
             &oldest_signatures,
             gravity_contract_address,
+            payment_address,
             gravity_id.clone(),
             eth_client.clone(),
         )
@@ -162,6 +164,7 @@ pub async fn relay_logic_calls<S: Signer + 'static>(
             &oldest_signatures,
             timeout,
             gravity_contract_address,
+            payment_address,
             gravity_id.clone(),
             cost,
             eth_client.clone(),

@@ -8,6 +8,7 @@ use aws_sdk_kms::{
     Client as KmsClient,
 };
 use cosmos_gravity::crypto::{CosmosSigner, EthPubkey, PrivateKey};
+#[allow(unused_imports)]
 use deep_space::{
     private_key::{SignType, TxParts},
     utils::encode_any,
@@ -399,7 +400,7 @@ where
     Ok(resp)
 }
 
-#[instrument(err, skip(kms, digest, key_id), fields(digest = %hex::encode(&digest), key_id = %key_id.as_ref()))]
+#[instrument(err, skip(kms, digest, key_id), fields(digest = %hex::encode(digest), key_id = %key_id.as_ref()))]
 async fn request_sign_digest<T>(
     kms: &KmsClient,
     key_id: T,
@@ -476,7 +477,7 @@ impl AwsSigner {
 
     /// Sign a digest with this signer's key and add the eip155 `v` value
     /// corresponding to the input chain_id
-    #[instrument(err, skip(digest), fields(digest = %hex::encode(&digest)))]
+    #[instrument(err, skip(digest), fields(digest = %hex::encode(digest)))]
     async fn sign_digest_with_eip155(
         &self,
         digest: H256,

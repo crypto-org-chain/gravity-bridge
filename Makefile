@@ -2,7 +2,7 @@
 
 e2e_build_images:
 	@docker build -t gravity:prebuilt -f module/Dockerfile module/
-	@docker build -t ethereum:prebuilt -f integration_tests/ethereum/Dockerfile integration_tests/ethereum/
+	@docker build -t ethereum:prebuilt -f integration_tests/ethereum/Dockerfile .
 	@docker build -t orchestrator:prebuilt -f orchestrator/Dockerfile orchestrator/
 
 
@@ -13,6 +13,7 @@ e2e_slow_loris:
 	@make -s e2e_validator_out
 	@make -s e2e_batch_stress
 	@make -s e2e_valset_stress
+	@make -s e2e_transaction_stress
 
 e2e_clean_slate:
 	@docker rm --force \
@@ -64,4 +65,17 @@ fail:
 	@false
 
 e2e_happy_path: e2e_clean_slate
-	@E2E_SKIP_CLEANUP=true integration_tests/integration_tests.test -test.failfast -test.v -test.run IntegrationTestSuite -testify.m TestHappyPath || make -s fail
+	integration_tests/integration_tests.test -test.failfast -test.v -test.run IntegrationTestSuite -testify.m TestHappyPath || make -s fail
+
+e2e_valset_update: e2e_clean_slate
+	integration_tests/integration_tests.test -test.failfast -test.v -test.run IntegrationTestSuite -testify.m TestValsetUpdate || make -s fail
+
+e2e_validator_out: e2e_clean_slate
+	integration_tests/integration_tests.test -test.failfast -test.v -test.run IntegrationTestSuite -testify.m TestValidatorOut || make -s fail
+
+e2e_transaction_stress: e2e_clean_slate
+	integration_tests/integration_tests.test -test.failfast -test.v -test.run IntegrationTestSuite -testify.m TestTransactionStress || make -s fail
+
+e2e_sandbox: e2e_clean_slate
+	integration_tests/integration_tests.test -test.failfast -test.v -test.run IntegrationTestSuite -testify.m TestSandbox || make -s fail
+

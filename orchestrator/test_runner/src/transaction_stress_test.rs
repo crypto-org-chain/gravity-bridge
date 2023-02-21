@@ -174,6 +174,7 @@ pub async fn transaction_stress_test(
                 send_coin,
                 send_fee,
                 (0f64, "".to_string()),
+                500_000,
                 contact,
                 1.0,
             );
@@ -197,6 +198,7 @@ pub async fn transaction_stress_test(
             None,
             denom,
             (0f64, "".to_string()),
+            500_000,
             contact,
             1.0,
         )

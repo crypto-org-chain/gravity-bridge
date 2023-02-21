@@ -30,7 +30,7 @@ impl Runnable for AddEthKeyCmd {
             }
         }
 
-        let mnemonic = bip32::Mnemonic::random(&mut OsRng, Default::default());
+        let mnemonic = bip32::Mnemonic::random(OsRng, Default::default());
         match &config.keystore {
             Keystore::File(_path) => {
                 eprintln!("**Important** record this bip39-mnemonic in a safe place:");

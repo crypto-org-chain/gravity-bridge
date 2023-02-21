@@ -51,7 +51,13 @@ impl Runnable for StartCommand {
             .gravity
             .contract
             .parse()
-            .expect("Could not parse gravity contract address");
+            .expect("Could not parse gravity contract address in config");
+
+        let mut payment_address: EthAddress = config
+            .relayer
+            .payment_address
+            .parse()
+            .expect("Could not parse relayer payment address in config");
 
         let fees_denom = config.gravity.fees_denom.clone();
 
@@ -82,6 +88,26 @@ impl Runnable for StartCommand {
                 SignerMiddleware::new(provider, ethereum_wallet.clone().with_chain_id(chain_id));
             let eth_client = Arc::new(eth_client);
 
+            // if payment address is zero, then use the ethereum key address used for signing tx
+            if payment_address == EthAddress::zero() {
+                info!("relayer payment address is zero, use signing ethereum address instead");
+                payment_address = eth_client.address()
+            }
+
+            let mut supported_contract: Vec<EthAddress> = Vec::new();
+            for contract in &config.relayer.ethereum_contracts {
+                if let Ok(c) = H160::from_str(contract) {
+                    supported_contract.push(c);
+                } else {
+                    error!("error parsing contract in config {contract}")
+                }
+            }
+            if supported_contract.is_empty() {
+                info!("no contracts found in config, relayer will relay all contracts");
+            } else {
+                info!("supported contracts by the relayer {supported_contract:?}");
+            }
+
             info!("Starting Relayer + Oracle + Ethereum Signer");
             info!("Ethereum Address: {}", format_eth_address(ethereum_address));
             info!("Cosmos Address {}", cosmos_address);
@@ -106,10 +132,16 @@ impl Runnable for StartCommand {
 
             let gas_price = config.cosmos.gas_price.as_tuple();
 
-            let mode_str = self.mode.as_deref().unwrap_or("Api");
+            let mode_config: String = config
+                .relayer
+                .mode
+                .parse()
+                .expect("Could not parse mode in config");
+
+            let mode_str = self.mode.as_deref().unwrap_or(&*mode_config);
             let mode = RelayerMode::from_str(mode_str)
                 .expect("Incorrect mode, possible value are: AlwaysRelay, Api or File");
-            info!("Relayer using mode {:?}", mode);
+            info!("Relayer using mode {mode:?}");
 
             orchestrator_main_loop(
                 cosmos_key,
@@ -118,7 +150,9 @@ impl Runnable for StartCommand {
                 eth_client,
                 grpc,
                 contract_address,
+                payment_address,
                 gas_price,
+                config.cosmos.gas_limit,
                 &config.metrics.listen_addr,
                 config.ethereum.gas_price_multiplier,
                 config.ethereum.gas_multiplier,
@@ -127,6 +161,7 @@ impl Runnable for StartCommand {
                 self.orchestrator_only,
                 config.cosmos.msg_batch_size,
                 mode,
+                supported_contract,
             )
             .await;
         })

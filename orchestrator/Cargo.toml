@@ -50,6 +50,3 @@ ethermint = [
     "gorc/ethermint",
     "register_delegate_keys/ethermint",
 ]
-
-[patch.crates-io]
-eth-keystore = { git = "https://github.com/crypto-org-chain/eth-keystore-rs.git", rev = "1e32f6f279c1878ce5be0750e5fd346e50f0fc12" }

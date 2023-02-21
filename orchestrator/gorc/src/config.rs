@@ -150,7 +150,7 @@ impl Keystore {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct GorcConfig {
     pub keystore: Keystore,
@@ -158,6 +158,7 @@ pub struct GorcConfig {
     pub ethereum: EthereumSection,
     pub cosmos: CosmosSection,
     pub metrics: MetricsSection,
+    pub relayer: RelayerSection,
 }
 
 impl GorcConfig {
@@ -193,18 +194,6 @@ impl GorcConfig {
             let pk: cosmos_gravity::crypto::PrivateKey =
                 key.parse().expect("Could not parse private key");
             WrapperSigner::LocalCosmos(pk)
-        }
-    }
-}
-
-impl Default for GorcConfig {
-    fn default() -> Self {
-        Self {
-            keystore: Keystore::default(),
-            gravity: GravitySection::default(),
-            ethereum: EthereumSection::default(),
-            cosmos: CosmosSection::default(),
-            metrics: MetricsSection::default(),
         }
     }
 }
@@ -256,6 +245,7 @@ pub struct CosmosSection {
     pub gas_adjustment: f64,
     pub msg_batch_size: u32,
     pub gas_price: GasPrice,
+    pub gas_limit: u64,
     pub granter: Option<String>,
 }
 
@@ -266,6 +256,7 @@ impl Default for CosmosSection {
             grpc: "http://localhost:9090".to_owned(),
             prefix: "cosmos".to_owned(),
             gas_price: GasPrice::default(),
+            gas_limit: 300000,
             gas_adjustment: 1.0f64,
             msg_batch_size: 5,
             granter: None,
@@ -305,6 +296,24 @@ impl Default for MetricsSection {
     fn default() -> Self {
         Self {
             listen_addr: "127.0.0.1:3000".parse().unwrap(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct RelayerSection {
+    pub mode: String,
+    pub payment_address: String,
+    pub ethereum_contracts: Vec<String>,
+}
+
+impl Default for RelayerSection {
+    fn default() -> Self {
+        Self {
+            mode: "AlwaysRelay".to_owned(),
+            payment_address: "0x0000000000000000000000000000000000000000".to_owned(),
+            ethereum_contracts: vec![],
         }
     }
 }

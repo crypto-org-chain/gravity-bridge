@@ -506,10 +506,8 @@ func TestKeeper_GetEthereumSignatures(t *testing.T) {
 }
 
 func TestKeeper_Migration(t *testing.T) {
-
-	input := CreateTestEnv(t)
+	input, ctx := SetupFiveValChain(t)
 	gk := input.GravityKeeper
-	ctx := input.Context
 
 	stce := &types.SendToCosmosEvent{
 		EventNonce:     1,
@@ -545,9 +543,9 @@ func TestKeeper_Migration(t *testing.T) {
 	evr2 := &types.EthereumEventVoteRecord{
 		Event: cctxea,
 		Votes: []string{
+			ValAddrs[1].String(),
 			ValAddrs[2].String(),
 			ValAddrs[3].String(),
-			ValAddrs[4].String(),
 		},
 	}
 
@@ -568,7 +566,7 @@ func TestKeeper_Migration(t *testing.T) {
 		Votes: []string{
 			ValAddrs[0].String(),
 			ValAddrs[1].String(),
-			ValAddrs[2].String(),
+			ValAddrs[3].String(),
 		},
 		Accepted: false,
 	}
@@ -675,6 +673,7 @@ func TestKeeper_Migration(t *testing.T) {
 	nonce2 := gk.GetLastObservedEventNonce(ctx)
 	require.Equal(t, uint64(0), nonce2)
 
+	// make sure all event nonce are reset. Even val5 which did not participate any votes
 	for _, val := range ValAddrs {
 		require.Equal(t, uint64(0), gk.getLastEventNonceByValidator(ctx, val))
 	}

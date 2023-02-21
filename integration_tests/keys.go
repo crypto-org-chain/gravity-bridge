@@ -1,6 +1,7 @@
 package integration_tests
 
 import (
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,8 +24,8 @@ func createMnemonic() (string, error) {
 	return mnemonic, nil
 }
 
-func createMemoryKeyFromMnemonic(name string, mnemonic string, passphrase string, hdPath *hd.BIP44Params) (*keyring.Info, *keyring.Keyring, error) {
-	kb, err := keyring.New("testnet", keyring.BackendMemory, "", nil)
+func createMemoryKeyFromMnemonic(name string, mnemonic string, passphrase string, hdPath *hd.BIP44Params, codec codec.Codec) (*keyring.Record, *keyring.Keyring, error) {
+	kb, err := keyring.New("testnet", keyring.BackendMemory, "", nil, codec)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -46,7 +47,7 @@ func createMemoryKeyFromMnemonic(name string, mnemonic string, passphrase string
 		return nil, nil, err
 	}
 
-	return &account, &kb, nil
+	return account, &kb, nil
 }
 
 func ethereumKeyFromMnemonic(mnemonic string) (*ethereumKey, error) {

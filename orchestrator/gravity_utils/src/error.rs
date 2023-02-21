@@ -62,61 +62,61 @@ pub enum GravityError {
 impl fmt::Display for GravityError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            GravityError::GravityGrpcError(val) => write!(f, "Gravity gRPC error {}", val),
-            GravityError::CosmosGrpcError(val) => write!(f, "Cosmos gRPC error {}", val),
-            GravityError::CosmosAddressError(val) => write!(f, "Cosmos Address error {}", val),
+            GravityError::GravityGrpcError(val) => write!(f, "Gravity gRPC error {val}"),
+            GravityError::CosmosGrpcError(val) => write!(f, "Cosmos gRPC error {val}"),
+            GravityError::CosmosAddressError(val) => write!(f, "Cosmos Address error {val}"),
             GravityError::CosmosPrivateKeyError(val) => {
-                write!(f, "Cosmos private key error:  {}", val)
+                write!(f, "Cosmos private key error:  {val}")
             }
             GravityError::CosmosSignerError(val) => {
-                write!(f, "Cosmos signer key error:  {}", val)
+                write!(f, "Cosmos signer key error:  {val}")
             }
             GravityError::EthereumBadDataError(val) => {
-                write!(f, "Received unexpected data from Ethereum: {}", val)
+                write!(f, "Received unexpected data from Ethereum: {val}")
             }
-            GravityError::EthereumRestError(val) => write!(f, "Ethereum REST error: {}", val),
-            GravityError::EthersAbiError(val) => write!(f, "Ethers ABI error: {}", val),
+            GravityError::EthereumRestError(val) => write!(f, "Ethereum REST error: {val}"),
+            GravityError::EthersAbiError(val) => write!(f, "Ethers ABI error: {val}"),
             GravityError::EthersContractAbiError(val) => {
-                write!(f, "Ethers contract ABI error: {}", val)
+                write!(f, "Ethers contract ABI error: {val}")
             }
-            GravityError::EthersContractError(val) => write!(f, "Ethers contract error: {}", val),
+            GravityError::EthersContractError(val) => write!(f, "Ethers contract error: {val}"),
             GravityError::EthersGasOracleError(val) => {
-                write!(f, "Ethers gas oracle error: {}", val)
+                write!(f, "Ethers gas oracle error: {val}")
             }
             GravityError::EthersParseAddressError(val) => {
-                write!(f, "Ethers H160 address parse error: {}", val)
+                write!(f, "Ethers H160 address parse error: {val}")
             }
             GravityError::EthersParseUintError(val) => {
-                write!(f, "Ethers U256 parse error: {}", val)
+                write!(f, "Ethers U256 parse error: {val}")
             }
-            GravityError::EthersProviderError(val) => write!(f, "Ethers provider error: {}", val),
-            GravityError::EthersSignatureError(val) => write!(f, "Ethers signature error: {}", val),
-            GravityError::EthersWalletError(val) => write!(f, "Ethers wallet error: {}", val),
-            GravityError::EtherscanError(val) => write!(f, "Etherscan error: {}", val),
-            GravityError::GravityContractError(val) => write!(f, "Gravity contract error: {}", val),
-            GravityError::InvalidArgumentError(val) => write!(f, "Invalid argument error: {}", val),
+            GravityError::EthersProviderError(val) => write!(f, "Ethers provider error: {val}"),
+            GravityError::EthersSignatureError(val) => write!(f, "Ethers signature error: {val}"),
+            GravityError::EthersWalletError(val) => write!(f, "Ethers wallet error: {val}"),
+            GravityError::EtherscanError(val) => write!(f, "Etherscan error: {val}"),
+            GravityError::GravityContractError(val) => write!(f, "Gravity contract error: {val}"),
+            GravityError::InvalidArgumentError(val) => write!(f, "Invalid argument error: {val}"),
             GravityError::InvalidOptionsError(val) => {
-                write!(f, "Invalid TX options for this call {}", val)
+                write!(f, "Invalid TX options for this call {val}")
             }
             GravityError::InvalidBridgeStateError(val) => {
-                write!(f, "Invalid bridge state! {}", val)
+                write!(f, "Invalid bridge state! {val}")
             }
             GravityError::FailedToUpdateValset => write!(f, "ValidatorSetUpdate Failed!"),
             GravityError::TimeoutError => write!(f, "Operation timed out!"),
-            GravityError::ClarityError(val) => write!(f, "Clarity Error {}", val),
-            GravityError::InvalidEventLogError(val) => write!(f, "InvalidEvent: {}", val),
+            GravityError::ClarityError(val) => write!(f, "Clarity Error {val}"),
+            GravityError::InvalidEventLogError(val) => write!(f, "InvalidEvent: {val}"),
             GravityError::EthereumContractError(val) => {
-                write!(f, "Contract operation failed: {}", val)
+                write!(f, "Contract operation failed: {val}")
             }
             GravityError::InsufficientVotingPowerToPass(val) => {
-                write!(f, "{}", val)
+                write!(f, "{val}")
             }
-            GravityError::ParseBigIntError(val) => write!(f, "Failed to parse big integer {}", val),
-            GravityError::ParseIntError(val) => write!(f, "Failed to parse integer: {}", val),
+            GravityError::ParseBigIntError(val) => write!(f, "Failed to parse big integer {val}"),
+            GravityError::ParseIntError(val) => write!(f, "Failed to parse integer: {val}"),
             GravityError::FromUtf8Error(val) => {
-                write!(f, "Failed to parse bytes to UTF-8: {}", val)
+                write!(f, "Failed to parse bytes to UTF-8: {val}")
             }
-            GravityError::OverflowError(val) => write!(f, "Overflow error: {}", val),
+            GravityError::OverflowError(val) => write!(f, "Overflow error: {val}"),
         }
     }
 }

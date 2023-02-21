@@ -1,15 +1,19 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/cosmos/cosmos-sdk/codec"
+)
 
 type Chain struct {
-	DataDir    string
-	ID         string
-	Validators []*Validator
+	DataDir       string
+	ID            string
+	Validators    []*Validator
 	Orchestrators []*Orchestrator
+	Codec         codec.Codec
 }
 
-func (c *Chain) CreateAndInitializeValidators(count uint8) (err error){
+func (c *Chain) CreateAndInitializeValidators(count uint8) (err error) {
 	for i := uint8(0); i < count; i++ {
 		// create node
 		node := c.createValidator(i)
@@ -23,7 +27,7 @@ func (c *Chain) CreateAndInitializeValidators(count uint8) (err error){
 		c.Validators = append(c.Validators, &node)
 
 		// create keys
-		if err := node.createKey("val"); err != nil {
+		if err := node.createKey("val", c.Codec); err != nil {
 			return err
 		}
 		if err := node.createNodeKey(); err != nil {
@@ -36,7 +40,7 @@ func (c *Chain) CreateAndInitializeValidators(count uint8) (err error){
 	return
 }
 
-func (c *Chain) CreateAndInitializeValidatorsWithMnemonics(count uint8, mnemonics []string) (err error){
+func (c *Chain) CreateAndInitializeValidatorsWithMnemonics(count uint8, mnemonics []string) (err error) {
 	for i := uint8(0); i < count; i++ {
 		// create node
 		node := c.createValidator(i)
@@ -50,7 +54,7 @@ func (c *Chain) CreateAndInitializeValidatorsWithMnemonics(count uint8, mnemonic
 		c.Validators = append(c.Validators, &node)
 
 		// create keys
-		if err := node.createKeyFromMnemonic("val", mnemonics[i]); err != nil {
+		if err := node.createKeyFromMnemonic("val", mnemonics[i], c.Codec); err != nil {
 			return err
 		}
 		if err := node.createNodeKey(); err != nil {
@@ -63,13 +67,13 @@ func (c *Chain) CreateAndInitializeValidatorsWithMnemonics(count uint8, mnemonic
 	return
 }
 
-func (c *Chain) CreateAndInitializeOrchestrators(count uint8) (err error){
+func (c *Chain) CreateAndInitializeOrchestrators(count uint8) (err error) {
 	for i := uint8(0); i < count; i++ {
 		// create orchestrator
 		orchestrator := c.createOrchestrator(i)
 
 		// create keys
-		mnemonic, info, err := createMemoryKey();
+		mnemonic, info, err := createMemoryKey(c.Codec)
 		if err != nil {
 			return err
 		}
@@ -81,14 +85,13 @@ func (c *Chain) CreateAndInitializeOrchestrators(count uint8) (err error){
 	return
 }
 
-
-func (c *Chain) CreateAndInitializeOrchestratorsWithMnemonics(count uint8, mnemonics []string) (err error){
+func (c *Chain) CreateAndInitializeOrchestratorsWithMnemonics(count uint8, mnemonics []string) (err error) {
 	for i := uint8(0); i < count; i++ {
 		// create orchestrator
 		orchestrator := c.createOrchestrator(i)
 
 		// create keys
-		info, err := createMemoryKeyFromMnemonic(mnemonics[i]);
+		info, err := createMemoryKeyFromMnemonic(mnemonics[i], c.Codec)
 		if err != nil {
 			return err
 		}
@@ -116,8 +119,8 @@ func (c *Chain) createValidator(index uint8) (validator Validator) {
 
 func (c *Chain) createOrchestrator(index uint8) (orchestrator Orchestrator) {
 	orchestrator = Orchestrator{
-		Chain:   c,
-		Index:   index,
+		Chain: c,
+		Index: index,
 	}
 
 	return

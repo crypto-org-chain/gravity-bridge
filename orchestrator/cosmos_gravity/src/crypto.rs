@@ -83,9 +83,9 @@ impl FromStr for PrivateKey {
     }
 }
 
-impl Into<InnerPrivateKey> for PrivateKey {
-    fn into(self) -> InnerPrivateKey {
-        self.0
+impl From<PrivateKey> for InnerPrivateKey {
+    fn from(val: PrivateKey) -> Self {
+        val.0
     }
 }
 

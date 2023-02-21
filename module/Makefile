@@ -5,6 +5,7 @@ DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 HTTPS_GIT := https://github.com/peggyjv/gravity-bridge.git
 COVERAGE ?= coverage.txt
+PROJECT_NAME = $(shell git remote get-url origin | xargs basename -s .git)
 
 build_tags = netgo
 ifeq ($(LEDGER_ENABLED),true)
@@ -88,12 +89,9 @@ proto-format:
 	--workdir /workspace tendermintdev/docker-build-proto \
 	find ./ -not -path "./third_party/*" -name *.proto -exec clang-format -i {} \;
 
-
 proto-gen:
 	@echo "Generating Protobuf files"
-	# todo: figure out why this old method was failing
-	# $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace tendermintdev/sdk-proto-gen:v0.1 sh ./contrib/local/protocgen.sh
-	@sh ./contrib/local/protocgen.sh
+	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace tendermintdev/sdk-proto-gen:v0.7 sh ./contrib/local/protocgen.sh
 
 proto-lint:
 	@$(DOCKER_BUF) lint --error-format=json
@@ -165,3 +163,14 @@ proto-update-deps:
 
 	mkdir -p $(PROTOBUF_GOOGLE_TYPES)
 	curl -sSL $(PROTOBUF_GOOGLE_URL)/any.proto > $(PROTOBUF_GOOGLE_TYPES)/any.proto
+
+###############################################################################
+###                                Sim Test                                 ###
+###############################################################################
+
+SIMAPP = github.com/peggyjv/gravity-bridge/module/v2/app
+
+test-sim-nondeterminism:
+	@echo "Running non-determinism test..."
+	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
+		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h

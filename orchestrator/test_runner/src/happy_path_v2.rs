@@ -156,6 +156,7 @@ pub async fn happy_path_test_v2(
         send_to_eth_coin,
         get_fee(),
         (10f64, "footoken".to_string()),
+        500_000,
         contact,
         1.0,
     )
@@ -172,6 +173,7 @@ pub async fn happy_path_test_v2(
         None,
         token_to_send_to_eth.clone(),
         (10f64, "footoken".to_string()),
+        500_000,
         contact,
         1.0,
     )

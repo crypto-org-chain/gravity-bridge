@@ -30,8 +30,7 @@ fn block_height_from_log(log: &Log) -> Result<U256, GravityError> {
     match log.block_number {
         Some(block_height) => Ok(block_height.as_u64().into()),
         None => Err(GravityError::InvalidEventLogError(format!(
-            "Log does not have block number, we only search logs already in blocks? {:?}",
-            log
+            "Log does not have block number, we only search logs already in blocks? {log:?}"
         ))),
     }
 }
@@ -104,8 +103,7 @@ impl FromLog for ValsetUpdatedEvent {
         let event: ValsetUpdatedEventFilter = log_to_ethers_event(input)?;
         if event.powers.len() != event.validators.len() {
             return Err(GravityError::InvalidEventLogError(format!(
-                "ValsetUpdatedEvent powers and validators have different length: {:?}",
-                event
+                "ValsetUpdatedEvent powers and validators have different length: {event}"
             )));
         }
 
@@ -115,8 +113,7 @@ impl FromLog for ValsetUpdatedEvent {
                 powers.push(downcast_power);
             } else {
                 return Err(GravityError::InvalidEventLogError(format!(
-                    "ValsetUpdatedEvent contains powers that cannot be downcast to u64: {:?}",
-                    event
+                    "ValsetUpdatedEvent contains powers that cannot be downcast to u64: {event}"
                 )));
             }
         }

@@ -37,7 +37,7 @@ type validator struct {
 	index            int
 	moniker          string
 	mnemonic         string
-	keyInfo          keyring.Info
+	keyInfo          keyring.Record
 	privateKey       cryptotypes.PrivKey
 	consensusKey     privval.FilePVKey
 	consensusPrivKey cryptotypes.PrivKey
@@ -137,7 +137,7 @@ func (v *validator) createConsensusKey() error {
 }
 
 func (v *validator) createKeyFromMnemonic(name, mnemonic string, passphrase string) error {
-	kb, err := keyring.New(keyringAppName, keyring.BackendTest, v.configDir(), nil)
+	kb, err := keyring.New(keyringAppName, keyring.BackendTest, v.configDir(), nil, v.chain.codec)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func (v *validator) createKeyFromMnemonic(name, mnemonic string, passphrase stri
 		return err
 	}
 
-	v.keyInfo = info
+	v.keyInfo = *info
 	v.mnemonic = mnemonic
 	v.privateKey = privKey
 
@@ -228,8 +228,12 @@ func (v *validator) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
 		return nil, err
 	}
 
+	addr, err := v.keyInfo.GetAddress()
+	if err != nil {
+		return nil, err
+	}
 	return stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(v.keyInfo.GetAddress()),
+		sdk.ValAddress(addr),
 		valPubKey,
 		amount,
 		description,
@@ -249,8 +253,12 @@ func (v *validator) buildDelegateKeysMsg() sdk.Msg {
 		panic(fmt.Sprintf("failed to convert private key: %s", err))
 	}
 
+	addr, err := v.keyInfo.GetAddress()
+	if err != nil {
+		panic(fmt.Sprintf("failed to get addr: %s", err))
+	}
 	signMsg := gravitytypes.DelegateKeysSignMsg{
-		ValidatorAddress: sdk.ValAddress(v.keyInfo.GetAddress()).String(),
+		ValidatorAddress: sdk.ValAddress(addr).String(),
 		Nonce:            0,
 	}
 
@@ -261,9 +269,13 @@ func (v *validator) buildDelegateKeysMsg() sdk.Msg {
 		panic(fmt.Sprintf("failed to create Ethereum signature: %s", err))
 	}
 
+	orchAddr, err := v.chain.orchestrators[v.index].keyInfo.GetAddress()
+	if err != nil {
+		panic(fmt.Sprintf("failed to get orchestrator address: %s", err))
+	}
 	return gravitytypes.NewMsgDelegateKeys(
-		sdk.ValAddress(v.keyInfo.GetAddress()),
-		v.chain.orchestrators[v.index].keyInfo.GetAddress(),
+		sdk.ValAddress(addr),
+		orchAddr,
 		v.ethereumKey.address,
 		ethSig,
 	)
@@ -294,8 +306,12 @@ func (v *validator) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 	// Note: This line is not needed for SIGN_MODE_LEGACY_AMINO, but putting it
 	// also doesn't affect its generated sign bytes, so for code's simplicity
 	// sake, we put it here.
+	pubKey, err := v.keyInfo.GetPubKey()
+	if err != nil {
+		return nil, err
+	}
 	sig := txsigning.SignatureV2{
-		PubKey: v.keyInfo.GetPubKey(),
+		PubKey: pubKey,
 		Data: &txsigning.SingleSignatureData{
 			SignMode:  txsigning.SignMode_SIGN_MODE_DIRECT,
 			Signature: nil,
@@ -322,7 +338,7 @@ func (v *validator) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 	}
 
 	sig = txsigning.SignatureV2{
-		PubKey: v.keyInfo.GetPubKey(),
+		PubKey: pubKey,
 		Data: &txsigning.SingleSignatureData{
 			SignMode:  txsigning.SignMode_SIGN_MODE_DIRECT,
 			Signature: sigBytes,
@@ -343,7 +359,7 @@ func (v *validator) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 }
 
 func (v *validator) keyring() (keyring.Keyring, error) {
-	return keyring.New(keyringAppName, keyring.BackendTest, v.configDir(), nil)
+	return keyring.New(keyringAppName, keyring.BackendTest, v.configDir(), nil, v.chain.codec)
 }
 
 func (v *validator) clientContext(nodeURI string) (*client.Context, error) {
@@ -351,5 +367,9 @@ func (v *validator) clientContext(nodeURI string) (*client.Context, error) {
 	if err != nil {
 		return nil, err
 	}
-	return v.chain.clientContext(nodeURI, &kb, "val", v.keyInfo.GetAddress())
+	addr, err := v.keyInfo.GetAddress()
+	if err != nil {
+		return nil, err
+	}
+	return v.chain.clientContext(nodeURI, &kb, "val", addr)
 }
