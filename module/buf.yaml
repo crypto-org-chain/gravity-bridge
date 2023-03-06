@@ -24,17 +24,22 @@ lint:
     - RPC_RESPONSE_STANDARD_NAME
     - RPC_REQUEST_RESPONSE_UNIQUE
   ignore:
-    - tendermint
-    - gogoproto
+    - amino
+    - cosmos
     - cosmos_proto
+    - gogoproto
     - google
+    - tendermint
 breaking:
   use:
     - FILE
   except:
     - FIELD_NO_DELETE
   ignore:
-    - tendermint
-    - gogoproto
+    - amino
+    - cosmos
     - cosmos_proto
+    - gogoproto
     - google
+    - tendermint
+
