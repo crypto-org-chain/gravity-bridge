@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"cosmossdk.io/simapp"
+	tmrand "github.com/cometbft/cometbft/libs/rand"
+	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -24,8 +26,6 @@ import (
 	"github.com/peggyjv/gravity-bridge/module/v2/app"
 	"github.com/peggyjv/gravity-bridge/module/v2/app/params"
 	gravitytypes "github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types"
-	tmrand "github.com/tendermint/tendermint/libs/rand"
-	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 )
 
 const (

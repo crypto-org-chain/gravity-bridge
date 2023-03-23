@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/log"
 
 	simappparams "cosmossdk.io/simapp/params"
 	simcmd "cosmossdk.io/simapp/simd/cmd"

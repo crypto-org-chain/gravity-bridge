@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -16,7 +17,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/cli"
 )
 
 type KeyOutput struct {

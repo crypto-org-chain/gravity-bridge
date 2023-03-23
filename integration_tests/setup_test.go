@@ -22,6 +22,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	tmconfig "github.com/cometbft/cometbft/config"
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,9 +41,6 @@ import (
 	gravitytypes "github.com/peggyjv/gravity-bridge/module/v2/x/gravity/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
-	tmconfig "github.com/tendermint/tendermint/config"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 )
 
 const (
