@@ -3,8 +3,11 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/server/types"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	"github.com/spf13/cast"
 	"math/rand"
 	"os"
 	"testing"
@@ -45,12 +48,6 @@ type StoreKeysPrefixes struct {
 	Prefixes [][]byte
 }
 
-// fauxMerkleModeOpt returns a BaseApp option to use a dbStoreAdapter instead of
-// an IAVLStore for faster simulation speed.
-func fauxMerkleModeOpt(bapp *baseapp.BaseApp) {
-	bapp.SetFauxMerkleMode()
-}
-
 func TestFullAppSimulation(t *testing.T) {
 	config := simcli.NewConfigFromFlags()
 	config.ChainID = SimAppChainID
@@ -65,7 +62,8 @@ func TestFullAppSimulation(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	app := NewGravityApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, MakeEncodingConfig(), EmptyAppOptions{}, fauxMerkleModeOpt)
+	simOpt := SimAppOptions{config: config}
+	app := NewGravityApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, MakeEncodingConfig(), simOpt, SimBaseappOptions(simOpt)...)
 	require.Equal(t, appName, app.Name())
 
 	// run randomized simulation
@@ -103,7 +101,8 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	app := NewGravityApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, MakeEncodingConfig(), EmptyAppOptions{}, fauxMerkleModeOpt)
+	simOpt := SimAppOptions{config: config}
+	app := NewGravityApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, MakeEncodingConfig(), simOpt, SimBaseappOptions(simOpt)...)
 	require.Equal(t, appName, app.Name())
 
 	// Run randomized simulation
@@ -143,7 +142,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewGravityApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, MakeEncodingConfig(), EmptyAppOptions{}, fauxMerkleModeOpt)
+	newApp := NewGravityApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, MakeEncodingConfig(), simOpt, SimBaseappOptions(simOpt)...)
 	require.Equal(t, appName, newApp.Name())
 
 	var genesisState GenesisState
@@ -205,7 +204,8 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	app := NewGravityApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, MakeEncodingConfig(), EmptyAppOptions{}, fauxMerkleModeOpt)
+	simOpt := SimAppOptions{config: config}
+	app := NewGravityApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, MakeEncodingConfig(), simOpt, SimBaseappOptions(simOpt)...)
 	require.Equal(t, appName, app.Name())
 
 	// Run randomized simulation
@@ -250,7 +250,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewGravityApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, MakeEncodingConfig(), EmptyAppOptions{}, fauxMerkleModeOpt)
+	newApp := NewGravityApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, MakeEncodingConfig(), simOpt, SimBaseappOptions(simOpt)...)
 	require.Equal(t, appName, newApp.Name())
 
 	newApp.InitChain(abci.RequestInitChain{
@@ -299,7 +299,8 @@ func TestAppStateDeterminism(t *testing.T) {
 			}
 
 			db := dbm.NewMemDB()
-			app := NewGravityApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, MakeEncodingConfig(), EmptyAppOptions{}, fauxMerkleModeOpt)
+			simOpt := SimAppOptions{config: config}
+			app := NewGravityApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, MakeEncodingConfig(), simOpt, SimBaseappOptions(simOpt)...)
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
@@ -336,10 +337,33 @@ func TestAppStateDeterminism(t *testing.T) {
 	}
 }
 
-// EmptyAppOptions is a stub implementing AppOptions
-type EmptyAppOptions struct{}
+// SimAppOptions is a stub implementing AppOptions
+type SimAppOptions struct {
+	config simtypes.Config
+}
 
 // Get implements AppOptions
-func (ao EmptyAppOptions) Get(o string) interface{} {
+func (ao SimAppOptions) Get(option string) interface{} {
+	switch o := option; o {
+	case flags.FlagChainID:
+		return ao.config.ChainID
+	default:
+		return nil
+	}
 	return nil
+}
+
+// DefaultBaseappOptions returns the default baseapp options provided by the Cosmos SDK
+func SimBaseappOptions(appOpts types.AppOptions) []func(bapp *baseapp.BaseApp) {
+
+	return []func(*baseapp.BaseApp){
+		baseapp.SetChainID(cast.ToString(appOpts.Get(flags.FlagChainID))),
+		SetFauxMerkleMode(),
+	}
+}
+
+// SetFauxMerkleMode returns a BaseApp option to use a dbStoreAdapter instead of
+// an IAVLStore for faster simulation speed.
+func SetFauxMerkleMode() func(bapp *baseapp.BaseApp) {
+	return func(app *baseapp.BaseApp) { app.SetFauxMerkleMode() }
 }
