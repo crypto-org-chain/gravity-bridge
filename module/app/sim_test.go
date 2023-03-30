@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/types"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	"github.com/cosmos/ibc-go/v7/testing/simapp"
 	"github.com/spf13/cast"
 	"math/rand"
 	"os"
@@ -311,7 +312,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				t,
 				os.Stdout,
 				app.BaseApp,
-				AppStateFn(app.AppCodec(), app.SimulationManager()),
+				simapp.AppStateFn(app.AppCodec(), app.SimulationManager()),
 				simtypes.RandomAccounts,
 				simtestutil.SimulationOperations(app, app.AppCodec(), config),
 				app.ModuleAccountAddrs(),

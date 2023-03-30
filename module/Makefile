@@ -184,3 +184,10 @@ test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
 	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
 		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h
+
+
+test-sim-custom-genesis:
+	@echo "Running custom genesis simulation..."
+	@echo "By default, ${HOME}/.gravity/config/genesis.json will be used."
+	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Genesis=${HOME}/.gravity/config/genesis.json \
+		-Enabled=true -NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h
