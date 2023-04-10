@@ -48,7 +48,7 @@ func genRandomParams(r *rand.Rand) types.Params {
 		SlashFractionConflictingEthereumSignature: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		UnbondSlashingSignerSetTxsWindow:          uint64(r.Intn(maxBlocksInOneRound)),
 		BridgeActive:                              true,
-		BatchCreationPeriod:                       uint64(r.Intn(maxBlocksInOneRound)),
+		BatchCreationPeriod:                       uint64(r.Intn(maxBlocksInOneRound-1) + 1),
 		BatchMaxElement:                           uint64(r.Intn(100)),
 		ObserveEthereumHeightPeriod:               r.Uint64(),
 	}
