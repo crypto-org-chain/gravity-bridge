@@ -42,7 +42,7 @@ You can keep up with the latest development by watching our [public standups](ht
   - [x] Validator set update relaying
   - [x] Ethereum -> Cosmos Oracle
   - [x] Transaction batch relaying
-  - [] Tendermint KMS support
+  - [x] AWS KMS support
   - [x] Audit
 
 ## The design of Gravity Bridge
