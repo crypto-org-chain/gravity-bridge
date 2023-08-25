@@ -24,7 +24,7 @@ You can keep up with the latest development by watching our [public standups](ht
   - [x] Tested with 100+ validators
   - [x] Unit tests for every throw condition
   - [x] Audit for assets originating on Ethereum
-  - [ ] Support for issuing Cosmos assets on Ethereum
+  - [x] Support for issuing Cosmos assets on Ethereum
 - Cosmos Module
   - [x] Basic validator set syncing
   - [x] Basic transaction batch generation
@@ -36,14 +36,14 @@ You can keep up with the latest development by watching our [public standups](ht
   - [x] Slashing
   - [x] Relaying edge cases
   - [ ] Transaction batch edge cases
-  - [ ] Support for issuing Cosmos assets on Ethereum
-  - [ ] Audit
+  - [x] Support for issuing Cosmos assets on Ethereum
+  - [x] Audit
 - Orchestrator / Relayer
   - [x] Validator set update relaying
   - [x] Ethereum -> Cosmos Oracle
   - [x] Transaction batch relaying
-  - [ ] Tendermint KMS support
-  - [ ] Audit
+  - [x] AWS KMS support
+  - [x] Audit
 
 ## The design of Gravity Bridge
 
@@ -78,6 +78,10 @@ To run the tests, you'll need to have docker installed. First, run the following
 
 There is a "sandbox" style test, which simply brings up the chain and allows you as the developer to perform whatever operations you want. 
 
+`
+make e2e_sandbox
+`
+
 To interact with the ethereum side of the chain, use the JSON-RPC server located at `http://localhost:8545`. You may choose to use `foundry` or `hardhat` to make this easier.
 
 To interact with the gravity module itself, you'll want to build the `gravity` module locally by running the following command.
@@ -97,17 +101,6 @@ To run all the integration tests (except the sandbox test above), use the follow
 
 There are optional tests for specific features. Check out the `Makefile` for a list of all of them.
 
-Valset stress changes the validating power randomly 25 times, in an attempt to break validator set syncing
-
-`make e2e_valset_stress`
-
-Batch stress sends 300 transactions over the bridge and then 3 batches back to Ethereum. This code can do up to 10k transactions but Github Actions does not have the horsepower.
-
-`make e2e_batch_stress`
-
-Validator out tests a validator that is not running the mandatory Ethereum node. This validator will be slashed and the bridge will remain functioning.
-
-`make e2e_validator_out`
 
 # Developer guide
 
@@ -134,38 +127,8 @@ We provide a standard container-based development environment that automatically
 
 These do not run the entire chain but instead test parts of the Go module code in isolation. To run them, go into `/module` and run `make test`
 
-### To hand test your changes quickly
-
-This method is dictinct from the all up test described above. Although it runs the same components it's much faster when editing individual components.
-
-1. run `./tests/build-container.sh`
-2. run `./tests/start-chains.sh`
-3. switch to a new terminal and run `./tests/run-tests.sh`
-4. Or, `docker exec -it gravity_test_instance /bin/bash` should allow you to access a shell inside the test container
-
-Change the code, and when you want to test it again, restart `./tests/start-chains.sh` and run `./tests/run-tests.sh`.
-
-### Explanation:
-
-`./tests/build-container.sh` builds the base container and builds the Gravity test zone for the first time. This results in a Docker container which contains cached Go dependencies (the base container).
-
-`./tests/start-chains.sh` starts a test container based on the base container and copies the current source code (including any changes you have made) into it. It then builds the Gravity test zone, benefiting from the cached Go dependencies. It then starts the Cosmos chain running on your new code. It also starts an Ethereum node. These nodes stay running in the terminal you started it in, and it can be useful to look at the logs. Be aware that this also mounts the Gravity repo folder into the container, meaning changes you make will be reflected there.
-
-`./tests/run-tests.sh` connects to the running test container and runs the integration test found in `./tests/integration-tests.sh`
-
 ### Tips for IDEs:
 
 - Launch VS Code in /solidity with the solidity extension enabled to get inline typechecking of the solidity contract
 - Launch VS Code in /module/app with the go extension enabled to get inline typechecking of the dummy cosmos chain
 
-### Working inside the container
-
-It can be useful to modify, recompile, and restart the testnet without restarting the container, for example if you are running a text editor in the container and would not like it to exit, or if you are editing dependencies stored in the container's `/go/` folder.
-
-In this workflow, you can use `./tests/reload-code.sh` to recompile and restart the testnet without restarting the container.
-
-For example, you can use VS Code's "Remote-Container" extension to attach to the running container started with `./tests/start-chains.sh`, then edit the code inside the container, restart the testnet with `./tests/reload-code.sh`, and run the tests with `./tests/integration-tests.sh`.
-
-## Debugger
-
-To use a stepping debugger in VS Code, follow the "Working inside the container" instructions above, but set up a one node testnet using `./tests/reload-code.sh 1`. Now kill the node with `pkill gravityd`. Start the debugger from within VS Code, and you will have a 1 node debuggable testnet.
