@@ -130,19 +130,19 @@ func (k Keeper) GetLastUnbondingBlockHeight(ctx sdk.Context) uint64 {
 //     ETHEREUM SIGNATURES   //
 ///////////////////////////////
 
-// getEthereumSignature returns a valset confirmation by a nonce and validator address
+// getEthereumSignature returns  an ethereum signature by a nonce and validator address
 func (k Keeper) getEthereumSignature(ctx sdk.Context, storeIndex []byte, validator sdk.ValAddress) []byte {
 	return ctx.KVStore(k.storeKey).Get(types.MakeEthereumSignatureKey(storeIndex, validator))
 }
 
-// SetEthereumSignature sets a valset confirmation
+// SetEthereumSignature sets an ethereum signature
 func (k Keeper) SetEthereumSignature(ctx sdk.Context, sig types.EthereumTxConfirmation, val sdk.ValAddress) []byte {
 	key := types.MakeEthereumSignatureKey(sig.GetStoreIndex(), val)
 	ctx.KVStore(k.storeKey).Set(key, sig.GetSignature())
 	return key
 }
 
-// GetEthereumSignatures returns all etherum signatures for a given outgoing tx by store index
+// GetEthereumSignatures returns all ethereum signatures for a given outgoing tx by store index
 func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[string][]byte {
 	var signatures = make(map[string][]byte)
 	k.iterateEthereumSignatures(ctx, storeIndex, func(val sdk.ValAddress, h []byte) bool {
@@ -152,7 +152,18 @@ func (k Keeper) GetEthereumSignatures(ctx sdk.Context, storeIndex []byte) map[st
 	return signatures
 }
 
-// iterateEthereumSignatures iterates through all valset confirms by nonce in ASC order
+// DeleteEthereumSignatures deletes the ethereum signatures for a specific outgoing tx
+func (k Keeper) DeleteEthereumSignatures(ctx sdk.Context, otx types.OutgoingTx) {
+	prefixStoreSig := prefix.NewStore(ctx.KVStore(k.storeKey), append([]byte{types.EthereumSignatureKey}, otx.GetStoreIndex()...))
+	iterSig := prefixStoreSig.Iterator(nil, nil)
+	defer iterSig.Close()
+
+	for ; iterSig.Valid(); iterSig.Next() {
+		prefixStoreSig.Delete(iterSig.Key())
+	}
+}
+
+// iterateEthereumSignatures iterates through all ethereum signatures confirms by nonce in ASC order
 func (k Keeper) iterateEthereumSignatures(ctx sdk.Context, storeIndex []byte, cb func(sdk.ValAddress, []byte) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), append([]byte{types.EthereumSignatureKey}, storeIndex...))
 	iter := prefixStore.Iterator(nil, nil)
@@ -640,17 +651,6 @@ func (k Keeper) IterateEthereumHeightVotes(ctx sdk.Context, cb func(val sdk.ValA
 		if cb(val, height) {
 			break
 		}
-	}
-}
-
-// DeleteEthereumSignatures deletes the ethereum signatures for a specific outgoing tx
-func (k Keeper) DeleteEthereumSignatures(ctx sdk.Context, otx types.OutgoingTx) {
-	prefixStoreSig := prefix.NewStore(ctx.KVStore(k.storeKey), append([]byte{types.EthereumSignatureKey}, otx.GetStoreIndex()...))
-	iterSig := prefixStoreSig.Iterator(nil, nil)
-	defer iterSig.Close()
-
-	for ; iterSig.Valid(); iterSig.Next() {
-		prefixStoreSig.Delete(iterSig.Key())
 	}
 }
 

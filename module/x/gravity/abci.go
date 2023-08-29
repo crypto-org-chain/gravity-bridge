@@ -156,7 +156,7 @@ func eventVoteRecordPruneAndTally(ctx sdk.Context, k keeper.Keeper) {
 		// This order is not important.
 		for _, att := range attmap[nonce] {
 			// delete all before the last nonce
-			if nonce < lastNonce {
+			if nonce <= lastNonce {
 				k.DeleteEthereumEventVoteRecord(ctx, att)
 			}
 			// We check if the event nonce is exactly 1 higher than the last attestation that was
@@ -318,6 +318,7 @@ func cleanupTimedOutContractCallTxs(ctx sdk.Context, k keeper.Keeper) {
 	k.IterateOutgoingTxsByType(ctx, types.ContractCallTxPrefixByte, func(_ []byte, otx types.OutgoingTx) bool {
 		cctx, _ := otx.(*types.ContractCallTx)
 		if cctx.Timeout < ethereumHeight {
+			k.DeleteEthereumSignatures(ctx, cctx)
 			k.DeleteOutgoingTx(ctx, cctx.GetStoreIndex())
 		}
 		return true
