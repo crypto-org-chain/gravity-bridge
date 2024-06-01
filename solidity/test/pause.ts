@@ -17,7 +17,7 @@ const { expect } = chai;
 
 async function runTest(opts: {
   isRelayer?: boolean;
-  isOwner?: boolean;
+  isControl?: boolean;
   pause?: boolean;
   unpause?: boolean;
 }) {
@@ -37,8 +37,11 @@ async function runTest(opts: {
     checkpoint: deployCheckpoint
   } = await deployContracts(gravityId, validators, powers, powerThreshold);
 
-  if (opts.isOwner) {
-    await gravity.transferOwnership(signers[1].address);
+  if (opts.isControl) {
+    await gravity.grantRole(
+        await gravity.CONTROL(),
+        signers[1].address,
+    );
   }
 
   if (opts.pause) {
@@ -51,21 +54,21 @@ async function runTest(opts: {
 }
 
 describe("pause tests", function () {
-  it("non-owner cannot call pause()", async function () {
+  it("non control admin cannot call pause()", async function () {
     await expect(runTest({
       pause: true
-    })).to.be.revertedWith("Ownable: caller is not the owner");
+    })).to.be.revertedWith("AccessControl: account 0xead9c93b79ae7c1591b1fb5323bd777e86e150d4 is missing role 0xbdded29a54e6a5d6169bedea55373b06f57e35d7b0f67ac187565b435e2cc943");
   });
 
-  it("non-owner cannot call unpause()", async function () {
+  it("non control admin call unpause()", async function () {
     await expect(runTest({
       unpause: true
-    })).to.be.revertedWith("Ownable: caller is not the owner");
+    })).to.be.revertedWith("AccessControl: account 0xead9c93b79ae7c1591b1fb5323bd777e86e150d4 is missing role 0xbdded29a54e6a5d6169bedea55373b06f57e35d7b0f67ac187565b435e2cc943");
   });
 
-  it("owner can call pause() and unpause()", async function () {
+  it("control admin can call pause() and unpause()", async function () {
     await runTest({
-      isOwner: true,
+      isControl: true,
       pause: true,
       unpause: true,
     });

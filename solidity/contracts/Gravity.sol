@@ -85,7 +85,8 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 	using SafeERC20 for IERC20;
 
 	bytes32 public constant RELAYER = keccak256("RELAYER");
-	bytes32 public constant RELAYER_ADMIN = keccak256("RELAYER_ADMIN");
+	bytes32 public constant CONTROL = keccak256("CONTROL");
+	bytes32 public constant ADMIN = keccak256("ADMIN");
 
 	// These are updated often
 	bytes32 public state_lastValsetCheckpoint;
@@ -125,6 +126,11 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 		if (!anyoneCanRelay) {
 			_checkRole(RELAYER, msg.sender);
 		}
+		_;
+	}
+
+	modifier checkControl() {
+		_checkRole(CONTROL, msg.sender);
 		_;
 	}
 
@@ -686,7 +692,7 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 		string calldata _name,
 		string calldata _symbol,
 		uint8 _decimals
-	) external {
+	) external whenNotPaused checkWhiteList {
 		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
@@ -709,7 +715,7 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 	* Only owner
 	* pause will deactivate contract functionalities
 	*/
-	function pause() public onlyOwner {
+	function pause() public checkControl {
 		_pause();
 	}
 
@@ -717,7 +723,7 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 	* Only owner
 	* unpause will re activate contract functionalities
 	*/
-	function unpause() public onlyOwner {
+	function unpause() public checkControl {
 		_unpause();
 	}
 
@@ -765,16 +771,16 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 
 	function setAnyoneCanRelay (
 		bool _anyoneCanRelay
-	) public onlyRole(RELAYER_ADMIN) {
+	) public onlyRole(ADMIN) {
 		anyoneCanRelay = _anyoneCanRelay;
 		emit AnyoneCanRelay(anyoneCanRelay);
 	}
 
-	function transferRelayerAdmin (
+	function transferAdmin (
 		address _newAdmin
-	) public onlyRole(RELAYER_ADMIN) {
-		grantRole(RELAYER_ADMIN, _newAdmin);
-		revokeRole(RELAYER_ADMIN, msg.sender);
+	) public onlyRole(ADMIN) {
+		grantRole(ADMIN, _newAdmin);
+		revokeRole(ADMIN, msg.sender);
 	}
 
 	constructor(
@@ -785,7 +791,7 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 		// The validator set
 		address[] memory _validators,
 		uint256[] memory _powers,
-		address relayerAdmin
+		address _admin
 	) {
 		// CHECKS
 
@@ -824,9 +830,10 @@ contract Gravity is ReentrancyGuard, AccessControl, Pausable, Ownable {
 
 		// ACL
 
-		_setupRole(RELAYER_ADMIN, relayerAdmin);
-		_setRoleAdmin(RELAYER, RELAYER_ADMIN);
-		_setRoleAdmin(RELAYER_ADMIN, RELAYER_ADMIN);
+		_setupRole(ADMIN, _admin);
+		_setRoleAdmin(RELAYER, ADMIN);
+		_setRoleAdmin(CONTROL, ADMIN);
+		_setRoleAdmin(ADMIN, ADMIN);
 
 		// LOGS
 
